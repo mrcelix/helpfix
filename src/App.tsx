@@ -1,3 +1,4 @@
+import type { ComponentType } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { AppShell } from '@/components/layout/AppShell'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
@@ -5,6 +6,12 @@ import { LoginPage } from '@/pages/Login'
 import { ComingSoonPage } from '@/pages/ComingSoon'
 import { NAV_MODULES } from '@/components/layout/nav-modules'
 import { ServiceDeskPage } from '@/pages/service-desk/ServiceDeskPage'
+import { ProblemsPage } from '@/pages/problems/ProblemsPage'
+
+const MODULE_PAGES: Record<string, ComponentType> = {
+  'service-desk': ServiceDeskPage,
+  problems: ProblemsPage,
+}
 
 function App() {
   return (
@@ -14,16 +21,17 @@ function App() {
       <Route element={<ProtectedRoute />}>
         <Route element={<AppShell />}>
           <Route index element={<Navigate to="/service-desk" replace />} />
-          {NAV_MODULES.map((mod) => (
-            <Route
-              key={mod.code}
-              path={mod.path}
-              element={
-                mod.code === 'service-desk' ? <ServiceDeskPage /> : <ComingSoonPage moduleName={mod.name} />
-              }
-              handle={{ crumb: mod.name }}
-            />
-          ))}
+          {NAV_MODULES.map((mod) => {
+            const Page = MODULE_PAGES[mod.code]
+            return (
+              <Route
+                key={mod.code}
+                path={mod.path}
+                element={Page ? <Page /> : <ComingSoonPage moduleName={mod.name} />}
+                handle={{ crumb: mod.name }}
+              />
+            )
+          })}
         </Route>
       </Route>
 

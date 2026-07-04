@@ -16,6 +16,13 @@ export type TicketStatus =
   | 'merged'
 export type TicketChannel = 'portal' | 'email' | 'chat' | 'phone' | 'teams'
 export type UserRole = 'tenant_admin' | 'manager' | 'agent' | 'requester'
+export type ProblemStatus =
+  | 'investigating'
+  | 'root_cause_identified'
+  | 'known_error'
+  | 'monitoring'
+  | 'resolved'
+  | 'closed'
 
 export interface Database {
   public: {
@@ -132,9 +139,78 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['incident_timeline']['Insert']>
         Relationships: []
       }
+      problems: {
+        Row: {
+          id: string
+          tenant_id: string
+          ref: string // e.g. PRB-000031, trigger tarafından üretilir
+          title: string
+          description: string | null
+          status: ProblemStatus
+          priority: Priority
+          category: string | null
+          root_cause: string | null
+          is_known_error: boolean
+          known_error_workaround: string | null
+          owner_id: string | null
+          created_at: string
+          updated_at: string
+          resolved_at: string | null
+        }
+        Insert: Omit<
+          Database['public']['Tables']['problems']['Row'],
+          'id' | 'ref' | 'created_at' | 'updated_at'
+        > & {
+          id?: string
+          ref?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['problems']['Insert']>
+        Relationships: []
+      }
+      problem_incidents: {
+        Row: {
+          problem_id: string
+          incident_id: string
+          linked_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['problem_incidents']['Row'], 'linked_at'> & {
+          linked_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['problem_incidents']['Insert']>
+        Relationships: []
+      }
+      problem_timeline: {
+        Row: {
+          id: string
+          problem_id: string
+          actor_id: string | null
+          event_type: string
+          event_data: Record<string, unknown> | null
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['problem_timeline']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['problem_timeline']['Insert']>
+        Relationships: []
+      }
     }
     Views: Record<string, never>
-    Functions: Record<string, never>
+    Functions: {
+      get_incident_cluster_candidates: {
+        Args: { p_tenant_id: string }
+        Returns: {
+          category: string
+          incident_count: number
+          sample_incident_ids: string[]
+          sample_titles: string[]
+          earliest_created_at: string
+        }[]
+      }
+    }
     Enums: Record<string, never>
   }
 }
