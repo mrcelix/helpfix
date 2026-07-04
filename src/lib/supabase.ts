@@ -4,14 +4,21 @@ import type { Database } from '@/types/database'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-if (!supabaseUrl || !supabaseAnonKey) {
+export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey)
+
+if (!isSupabaseConfigured) {
   // eslint-disable-next-line no-console
-  console.warn(
-    '[HelpFix] Supabase ortam değişkenleri eksik. .env dosyanızı .env.example\'a göre doldurun.'
+  console.error(
+    '[HelpFix] Supabase ortam değişkenleri eksik (VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY). ' +
+      'GitHub Actions secrets\'a eklenip yeniden deploy edilmesi gerekiyor.'
   )
 }
 
+// Geçersiz/boş URL ile createClient çağrısı anında throw eder ve tüm
+// uygulamayı daha render olmadan çökertir. Bunun yerine, yapılandırma
+// eksikse geçerli bir placeholder URL kullanıp isSupabaseConfigured
+// bayrağıyla App.tsx'te kullanıcıya anlaşılır bir ekran gösteriyoruz.
 export const supabase = createClient<Database>(
-  supabaseUrl ?? '',
-  supabaseAnonKey ?? ''
+  supabaseUrl || 'https://placeholder.supabase.co',
+  supabaseAnonKey || 'placeholder-anon-key'
 )

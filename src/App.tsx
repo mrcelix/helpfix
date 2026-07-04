@@ -4,9 +4,11 @@ import { AppShell } from '@/components/layout/AppShell'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { LoginPage } from '@/pages/Login'
 import { ComingSoonPage } from '@/pages/ComingSoon'
+import { ConfigMissingPage } from '@/pages/ConfigMissing'
 import { NAV_MODULES } from '@/components/layout/nav-modules'
 import { ServiceDeskPage } from '@/pages/service-desk/ServiceDeskPage'
 import { ProblemsPage } from '@/pages/problems/ProblemsPage'
+import { isSupabaseConfigured } from '@/lib/supabase'
 
 const MODULE_PAGES: Record<string, ComponentType> = {
   'service-desk': ServiceDeskPage,
@@ -14,6 +16,10 @@ const MODULE_PAGES: Record<string, ComponentType> = {
 }
 
 function App() {
+  if (!isSupabaseConfigured) {
+    return <ConfigMissingPage />
+  }
+
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
