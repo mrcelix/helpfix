@@ -157,8 +157,8 @@ as $$
   select
     i.category,
     count(*) as incident_count,
-    array_agg(i.id order by i.created_at desc)[1:5] as sample_incident_ids,
-    array_agg(i.title order by i.created_at desc)[1:5] as sample_titles,
+    (array_agg(i.id order by i.created_at desc))[1:5] as sample_incident_ids,
+    (array_agg(i.title order by i.created_at desc))[1:5] as sample_titles,
     min(i.created_at) as earliest_created_at
   from incidents i
   where i.tenant_id = p_tenant_id
