@@ -9,12 +9,14 @@ import { NAV_MODULES } from '@/components/layout/nav-modules'
 import { ServiceDeskPage } from '@/pages/service-desk/ServiceDeskPage'
 import { ProblemsPage } from '@/pages/problems/ProblemsPage'
 import { ChangesPage } from '@/pages/changes/ChangesPage'
+import { CatalogPage } from '@/pages/catalog/CatalogPage'
 import { isSupabaseConfigured } from '@/lib/supabase'
 
 const MODULE_PAGES: Record<string, ComponentType> = {
   'service-desk': ServiceDeskPage,
   problems: ProblemsPage,
   changes: ChangesPage,
+  catalog: CatalogPage,
 }
 
 function App() {

@@ -38,6 +38,13 @@ export type ChangeStatus =
 export type ApprovalType = 'technical_review' | 'cab'
 export type ApprovalStatus = 'pending' | 'approved' | 'rejected'
 export type PirOutcome = 'successful' | 'partial' | 'failed' | 'rolled_back'
+export type RequestStatus =
+  | 'submitted'
+  | 'pending_approval'
+  | 'approved'
+  | 'in_procurement'
+  | 'fulfilled'
+  | 'rejected'
 
 export interface Database {
   public: {
@@ -273,6 +280,72 @@ export interface Database {
           created_at?: string
         }
         Update: Partial<Database['public']['Tables']['change_timeline']['Insert']>
+        Relationships: []
+      }
+      service_categories: {
+        Row: {
+          id: string
+          tenant_id: string
+          name: string
+          icon: string | null
+          sort_order: number
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['service_categories']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['service_categories']['Insert']>
+        Relationships: []
+      }
+      service_catalog_items: {
+        Row: {
+          id: string
+          tenant_id: string
+          category_id: string | null
+          name: string
+          description: string | null
+          icon: string | null
+          estimated_cost: number | null
+          estimated_days: number | null
+          requires_approval: boolean
+          approval_threshold: number | null
+          is_active: boolean
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['service_catalog_items']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['service_catalog_items']['Insert']>
+        Relationships: []
+      }
+      service_requests: {
+        Row: {
+          id: string
+          tenant_id: string
+          ref: string
+          catalog_item_id: string
+          requester_id: string
+          requested_for_id: string | null
+          status: RequestStatus
+          notes: string | null
+          approver_id: string | null
+          approval_comment: string | null
+          created_at: string
+          updated_at: string
+          fulfilled_at: string | null
+        }
+        Insert: Omit<
+          Database['public']['Tables']['service_requests']['Row'],
+          'id' | 'ref' | 'created_at' | 'updated_at'
+        > & {
+          id?: string
+          ref?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['service_requests']['Insert']>
         Relationships: []
       }
     }
