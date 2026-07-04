@@ -58,8 +58,9 @@ jobs:
           protocol: ftp
           port: 21
           local-dir: ./dist/
-          # Hostinger'da domaininizin kök klasörü genelde public_html/
-          # ya da alt alan adıysa public_html/alt-alan-adi/ olur —
-          # hPanel → Dosyalar → Dosya Yöneticisi'nden doğrulayın.
-          server-dir: ./public_html/
+          # ÖNEMLİ: u508599022.helpfix FTP hesabı zaten sitenin kök
+          # dizinine bağlanıyor (hesap adındaki ".helpfix" bunu gösteriyor)
+          # — ayrıca public_html/ eklemek yanlış/görünmez bir klasöre
+          # yükleme yapılmasına sebep oluyordu.
+          server-dir: ./
           log-level: verbose
