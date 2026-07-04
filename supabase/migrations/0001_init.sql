@@ -60,10 +60,20 @@ create index idx_user_profiles_auth_user on user_profiles(auth_user_id);
 -- (bkz. auth hook / Edge Function). Geliştirme sırasında bu fonksiyon
 -- user_profiles tablosundan da okuyabilir; production'da JWT claim
 -- daha performanslıdır.
+--
+-- KRİTİK: Bu fonksiyonlar `security definer` OLMALI. Aksi halde,
+-- user_profiles tablosundaki RLS politikası bu fonksiyonu çağırır,
+-- fonksiyon da içeride user_profiles'ı sorgular — bu sorgu da aynı RLS
+-- politikasına tabi olur ve current_tenant_id()'yi tekrar çağırır.
+-- Sonsuz döngü oluşur, Postgres hatayla keser, PostgREST 500 döner.
+-- security definer, fonksiyon içindeki sorgunun RLS'i atlamasını
+-- sağlayarak döngüyü kırar.
 create or replace function current_tenant_id()
 returns uuid
 language sql
 stable
+security definer
+set search_path = public
 as $$
   select tenant_id from user_profiles where auth_user_id = auth.uid()
 $$;
@@ -72,6 +82,8 @@ create or replace function current_user_role()
 returns user_role
 language sql
 stable
+security definer
+set search_path = public
 as $$
   select role from user_profiles where auth_user_id = auth.uid()
 $$;
@@ -80,6 +92,8 @@ create or replace function current_profile_id()
 returns uuid
 language sql
 stable
+security definer
+set search_path = public
 as $$
   select id from user_profiles where auth_user_id = auth.uid()
 $$;
