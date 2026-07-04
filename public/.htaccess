@@ -6,6 +6,19 @@
 # 404 döner. Bu kural, bulunamayan her isteği index.html'e yönlendirir,
 # React Router da doğru sayfayı render eder.
 
+# index.html HİÇBİR ZAMAN önbelleklenmemeli — SPA'larda en sık karşılaşılan
+# deploy sorunu budur: statik varlıklar (js/css) güncellenir ama tarayıcı
+# veya sunucu tarafı önbellek (Hostinger LiteSpeed Cache dahil) eski
+# index.html'i sunmaya devam eder, o da eski (artık var olmayan/değişmiş)
+# JS dosyasına işaret eder.
+<IfModule mod_headers.c>
+  <FilesMatch "index\.html$">
+    Header set Cache-Control "no-cache, no-store, must-revalidate"
+    Header set Pragma "no-cache"
+    Header set Expires "0"
+  </FilesMatch>
+</IfModule>
+
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
