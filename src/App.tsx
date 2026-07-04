@@ -34,7 +34,6 @@ function App() {
                 key={mod.code}
                 path={mod.path}
                 element={Page ? <Page /> : <ComingSoonPage moduleName={mod.name} />}
-                handle={{ crumb: mod.name }}
               />
             )
           })}

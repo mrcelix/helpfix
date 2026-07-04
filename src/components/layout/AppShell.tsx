@@ -1,15 +1,18 @@
-import { Outlet, useMatches } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
 import { useLang } from '@/contexts/LangContext'
+import { NAV_MODULES } from './nav-modules'
 
 export function AppShell() {
-  const matches = useMatches()
+  const location = useLocation()
   const { lang } = useLang()
 
-  // En derindeki route'un handle.crumb'ı varsa onu kullan; yoksa boş bırak.
-  const current = [...matches].reverse().find((m) => (m.handle as { crumb?: Record<string, string> })?.crumb)
-  const crumb = (current?.handle as { crumb?: Record<string, string> })?.crumb?.[lang] ?? ''
+  // useMatches() veri yönlendiricisi (createBrowserRouter) gerektirir;
+  // biz <BrowserRouter> kullandığımız için mevcut path'i doğrudan
+  // NAV_MODULES listesiyle eşleştiriyoruz — daha basit ve bağımlılıksız.
+  const activeModule = NAV_MODULES.find((m) => location.pathname.startsWith(m.path))
+  const crumb = activeModule?.name[lang] ?? ''
 
   return (
     <div className="grid grid-cols-[248px_1fr] min-h-screen">
