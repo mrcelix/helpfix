@@ -1,0 +1,242 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/contexts/AuthContext'
+import type { ChangeStatus, ChangeType, ApprovalType, PirOutcome } from '@/types/database'
+
+export interface ChangeListItem {
+  id: string
+  ref: string
+  title: string
+  change_type: ChangeType
+  status: ChangeStatus
+  risk_score: number
+  category: string | null
+  scheduled_start: string | null
+  created_at: string
+  requester: { full_name: string } | null
+}
+
+export interface ChangeDetail extends ChangeListItem {
+  description: string | null
+  rollback_plan: string | null
+  pir_outcome: PirOutcome | null
+  pir_notes: string | null
+  implementer: { full_name: string } | null
+}
+
+export interface ChangeApproval {
+  id: string
+  approval_type: ApprovalType
+  status: 'pending' | 'approved' | 'rejected'
+  comment: string | null
+  decided_at: string | null
+  approver: { full_name: string } | null
+}
+
+export type ChangeSavedView = 'all' | 'my_approvals' | 'scheduled' | 'high_risk'
+
+const SELECT_LIST = `
+  id, ref, title, change_type, status, risk_score, category, scheduled_start, created_at,
+  requester:requester_id ( full_name )
+`
+
+export function useChanges(view: ChangeSavedView) {
+  const { profile } = useAuth()
+
+  return useQuery({
+    queryKey: ['changes', view, profile?.id],
+    enabled: !!profile,
+    queryFn: async () => {
+      let query = supabase.from('changes').select(SELECT_LIST).order('created_at', { ascending: false })
+
+      if (view === 'scheduled') {
+        query = query.not('scheduled_start', 'is', null).in('status', ['approved', 'scheduled'])
+      } else if (view === 'high_risk') {
+        query = query.gte('risk_score', 60)
+      }
+      // 'my_approvals' istemci tarafında filtrelenir (aşağıdaki hook'a bakın)
+
+      const { data, error } = await query
+      if (error) throw error
+      return data as unknown as ChangeListItem[]
+    },
+  })
+}
+
+/** Onayımı bekleyen değişiklikler — kendi profil id'me atanmış pending onay satırı olanlar. */
+export function useMyPendingApprovals() {
+  const { profile } = useAuth()
+
+  return useQuery({
+    queryKey: ['my-pending-approvals', profile?.id],
+    enabled: !!profile,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('change_approvals')
+        .select(`id, approval_type, change:change_id ( ${SELECT_LIST} )`)
+        .eq('status', 'pending')
+      if (error) throw error
+      return data as unknown as { id: string; approval_type: ApprovalType; change: ChangeListItem }[]
+    },
+  })
+}
+
+export function useChangeDetail(id: string | null) {
+  return useQuery({
+    queryKey: ['change', id],
+    enabled: !!id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('changes')
+        .select(`${SELECT_LIST}, description, rollback_plan, pir_outcome, pir_notes, implementer:implementer_id ( full_name )`)
+        .eq('id', id!)
+        .single()
+      if (error) throw error
+      return data as unknown as ChangeDetail
+    },
+  })
+}
+
+export function useChangeApprovals(changeId: string | null) {
+  return useQuery({
+    queryKey: ['change-approvals', changeId],
+    enabled: !!changeId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('change_approvals')
+        .select('id, approval_type, status, comment, decided_at, approver:approver_id ( full_name )')
+        .eq('change_id', changeId!)
+      if (error) throw error
+      return data as unknown as ChangeApproval[]
+    },
+  })
+}
+
+export function useChangeTimeline(changeId: string | null) {
+  return useQuery({
+    queryKey: ['change-timeline', changeId],
+    enabled: !!changeId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('change_timeline')
+        .select('id, event_type, created_at, actor:actor_id ( full_name )')
+        .eq('change_id', changeId!)
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      return data as unknown as { id: string; event_type: string; created_at: string; actor: { full_name: string } | null }[]
+    },
+  })
+}
+
+export function useCreateChange() {
+  const qc = useQueryClient()
+  const { profile } = useAuth()
+
+  return useMutation({
+    mutationFn: async (input: {
+      title: string
+      description: string
+      change_type: ChangeType
+      risk_score: number
+      category: string | null
+    }) => {
+      if (!profile) throw new Error('Profil yüklenmedi')
+      const { data, error } = await supabase
+        .from('changes')
+        .insert({
+          tenant_id: profile.tenantId,
+          title: input.title,
+          description: input.description,
+          change_type: input.change_type,
+          risk_score: input.risk_score,
+          category: input.category,
+          status: 'draft',
+          requester_id: profile.id,
+          implementer_id: null,
+          scheduled_start: null,
+          scheduled_end: null,
+          actual_start: null,
+          actual_end: null,
+          rollback_plan: null,
+          pir_outcome: null,
+          pir_notes: null,
+          closed_at: null,
+        })
+        .select('id')
+        .single()
+      if (error) throw error
+      return data
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['changes'] }),
+  })
+}
+
+export function useUpdateChange(id: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (
+      patch: Partial<{
+        status: ChangeStatus
+        rollback_plan: string
+        pir_outcome: PirOutcome
+        pir_notes: string
+        scheduled_start: string
+        scheduled_end: string
+      }>
+    ) => {
+      const { error } = await supabase.from('changes').update(patch).eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['changes'] })
+      qc.invalidateQueries({ queryKey: ['change', id] })
+      qc.invalidateQueries({ queryKey: ['change-approvals', id] })
+      qc.invalidateQueries({ queryKey: ['my-pending-approvals'] })
+    },
+  })
+}
+
+/** Bir onay satırını onaylar/reddeder. Tüm onaylar tamamlanınca değişikliği
+ * otomatik olarak bir sonraki duruma taşır (basit, istemci taraflı orkestrasyon). */
+export function useDecideApproval(changeId: string) {
+  const qc = useQueryClient()
+  const { profile } = useAuth()
+
+  return useMutation({
+    mutationFn: async (input: { approvalId: string; decision: 'approved' | 'rejected'; comment?: string }) => {
+      const { error } = await supabase
+        .from('change_approvals')
+        .update({
+          status: input.decision,
+          approver_id: profile?.id,
+          comment: input.comment ?? null,
+          decided_at: new Date().toISOString(),
+        })
+        .eq('id', input.approvalId)
+      if (error) throw error
+
+      if (input.decision === 'rejected') {
+        await supabase.from('changes').update({ status: 'draft' }).eq('id', changeId)
+        return
+      }
+
+      // Tüm onaylar tamamlandı mı kontrol et
+      const { data: approvals, error: fetchError } = await supabase
+        .from('change_approvals')
+        .select('status')
+        .eq('change_id', changeId)
+      if (fetchError) throw fetchError
+
+      const allApproved = approvals?.every((a) => a.status === 'approved')
+      if (allApproved) {
+        await supabase.from('changes').update({ status: 'approved' }).eq('id', changeId)
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['changes'] })
+      qc.invalidateQueries({ queryKey: ['change', changeId] })
+      qc.invalidateQueries({ queryKey: ['change-approvals', changeId] })
+      qc.invalidateQueries({ queryKey: ['my-pending-approvals'] })
+    },
+  })
+}

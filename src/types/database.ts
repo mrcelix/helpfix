@@ -23,6 +23,21 @@ export type ProblemStatus =
   | 'monitoring'
   | 'resolved'
   | 'closed'
+export type ChangeType = 'standard' | 'normal' | 'emergency'
+export type ChangeStatus =
+  | 'draft'
+  | 'submitted'
+  | 'technical_review'
+  | 'cab_review'
+  | 'approved'
+  | 'scheduled'
+  | 'in_progress'
+  | 'completed'
+  | 'failed'
+  | 'closed'
+export type ApprovalType = 'technical_review' | 'cab'
+export type ApprovalStatus = 'pending' | 'approved' | 'rejected'
+export type PirOutcome = 'successful' | 'partial' | 'failed' | 'rolled_back'
 
 export interface Database {
   public: {
@@ -195,6 +210,69 @@ export interface Database {
           created_at?: string
         }
         Update: Partial<Database['public']['Tables']['problem_timeline']['Insert']>
+        Relationships: []
+      }
+      changes: {
+        Row: {
+          id: string
+          tenant_id: string
+          ref: string // e.g. CHG-000187
+          title: string
+          description: string | null
+          change_type: ChangeType
+          status: ChangeStatus
+          risk_score: number
+          category: string | null
+          requester_id: string
+          implementer_id: string | null
+          scheduled_start: string | null
+          scheduled_end: string | null
+          actual_start: string | null
+          actual_end: string | null
+          rollback_plan: string | null
+          pir_outcome: PirOutcome | null
+          pir_notes: string | null
+          created_at: string
+          updated_at: string
+          closed_at: string | null
+        }
+        Insert: Omit<Database['public']['Tables']['changes']['Row'], 'id' | 'ref' | 'created_at' | 'updated_at'> & {
+          id?: string
+          ref?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['changes']['Insert']>
+        Relationships: []
+      }
+      change_approvals: {
+        Row: {
+          id: string
+          change_id: string
+          approval_type: ApprovalType
+          approver_id: string | null
+          status: ApprovalStatus
+          comment: string | null
+          decided_at: string | null
+        }
+        Insert: Omit<Database['public']['Tables']['change_approvals']['Row'], 'id'> & { id?: string }
+        Update: Partial<Database['public']['Tables']['change_approvals']['Insert']>
+        Relationships: []
+      }
+      change_timeline: {
+        Row: {
+          id: string
+          change_id: string
+          actor_id: string | null
+          event_type: string
+          event_data: Record<string, unknown> | null
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['change_timeline']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['change_timeline']['Insert']>
         Relationships: []
       }
     }
