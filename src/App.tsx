@@ -10,6 +10,7 @@ import { ServiceDeskPage } from '@/pages/service-desk/ServiceDeskPage'
 import { ProblemsPage } from '@/pages/problems/ProblemsPage'
 import { ChangesPage } from '@/pages/changes/ChangesPage'
 import { CatalogPage } from '@/pages/catalog/CatalogPage'
+import { CmdbPage } from '@/pages/cmdb/CmdbPage'
 import { isSupabaseConfigured } from '@/lib/supabase'
 
 const MODULE_PAGES: Record<string, ComponentType> = {
@@ -17,6 +18,7 @@ const MODULE_PAGES: Record<string, ComponentType> = {
   problems: ProblemsPage,
   changes: ChangesPage,
   catalog: CatalogPage,
+  cmdb: CmdbPage,
 }
 
 function App() {

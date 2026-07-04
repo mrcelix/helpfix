@@ -164,6 +164,7 @@ export function useCreateIncident() {
           sla_policy_id: null,
           sla_due_at: null,
           csat_score: null,
+          ci_id: null,
           resolved_at: null,
           closed_at: null,
         })

@@ -1,0 +1,151 @@
+import { useState } from 'react'
+import { Plus } from 'lucide-react'
+import { useLang } from '@/contexts/LangContext'
+import { Button } from '@/components/ui/Button'
+import { useConfigurationItems, type CiSavedView } from './useCmdb'
+import { CiDrawer } from './CiDrawer'
+import { NewCiModal } from './NewCiModal'
+
+const SAVED_VIEWS: { key: CiSavedView; label: { tr: string; en: string } }[] = [
+  { key: 'all', label: { tr: 'Tümü', en: 'All' } },
+  { key: 'mine', label: { tr: 'Bana Zimmetli', en: 'Assigned to Me' } },
+  { key: 'warranty_expiring', label: { tr: 'Garantisi Bitenler', en: 'Warranty Expiring' } },
+  { key: 'unassigned', label: { tr: 'Zimmetsiz', en: 'Unassigned' } },
+]
+
+const TYPE_LABEL: Record<string, { tr: string; en: string }> = {
+  server: { tr: 'Sunucu', en: 'Server' },
+  laptop: { tr: 'Dizüstü', en: 'Laptop' },
+  desktop: { tr: 'Masaüstü', en: 'Desktop' },
+  network_device: { tr: 'Ağ Cihazı', en: 'Network Device' },
+  software_license: { tr: 'Yazılım Lisansı', en: 'Software License' },
+  mobile_device: { tr: 'Mobil Cihaz', en: 'Mobile Device' },
+  other: { tr: 'Diğer', en: 'Other' },
+}
+
+const STATUS_LABEL: Record<string, { tr: string; en: string }> = {
+  active: { tr: 'Aktif', en: 'Active' },
+  in_repair: { tr: 'Tamirde', en: 'In Repair' },
+  retired: { tr: 'Emekli', en: 'Retired' },
+  unmanaged: { tr: 'Yönetilmeyen', en: 'Unmanaged' },
+}
+
+function isWarrantySoon(dateStr: string | null) {
+  if (!dateStr) return false
+  const days = (new Date(dateStr).getTime() - Date.now()) / 86_400_000
+  return days <= 60
+}
+
+export function CmdbPage() {
+  const { lang, t } = useLang()
+  const [view, setView] = useState<CiSavedView>('all')
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [showNewModal, setShowNewModal] = useState(false)
+
+  const { data: items, isLoading, error } = useConfigurationItems(view)
+
+  return (
+    <div>
+      <div className="flex items-end justify-between mb-5 flex-wrap gap-3">
+        <div>
+          <h1 className="font-display text-[22px] font-bold tracking-tight">
+            {t({ tr: 'Varlık & CMDB', en: 'Assets & CMDB' })}
+          </h1>
+          <p className="text-[13px] text-[var(--text-faint)] mt-1">
+            {t({ tr: 'Konfigürasyon öğeleri, garanti ve zimmet takibi', en: 'Configuration items, warranty, and assignment tracking' })}
+          </p>
+        </div>
+        <Button onClick={() => setShowNewModal(true)}>
+          <Plus className="w-[15px] h-[15px]" />
+          {t({ tr: 'Yeni Varlık', en: 'New Asset' })}
+        </Button>
+      </div>
+
+      <div className="flex items-center gap-1.5 mb-3 flex-wrap">
+        {SAVED_VIEWS.map((v) => (
+          <button
+            key={v.key}
+            onClick={() => setView(v.key)}
+            className={
+              'text-[12.5px] font-bold px-3.5 py-2 rounded-lg border transition-colors ' +
+              (view === v.key
+                ? 'bg-brand border-brand text-white'
+                : 'bg-[var(--panel)] border-[var(--border)] text-[var(--text-sub)]')
+            }
+          >
+            {v.label[lang]}
+          </button>
+        ))}
+      </div>
+
+      <div className="border border-[var(--border)] rounded-[var(--radius-app)] overflow-hidden bg-[var(--panel)]">
+        <table className="w-full text-[12.5px]">
+          <thead>
+            <tr className="bg-[var(--panel-2)] border-b border-[var(--border)]">
+              <Th>{t({ tr: 'Etiket', en: 'Tag' })}</Th>
+              <Th>{t({ tr: 'Ad', en: 'Name' })}</Th>
+              <Th>{t({ tr: 'Tip', en: 'Type' })}</Th>
+              <Th>{t({ tr: 'Zimmetli', en: 'Assigned To' })}</Th>
+              <Th>{t({ tr: 'Durum', en: 'Status' })}</Th>
+              <Th>{t({ tr: 'Garanti', en: 'Warranty' })}</Th>
+            </tr>
+          </thead>
+          <tbody>
+            {isLoading && (
+              <tr>
+                <td colSpan={6} className="text-center py-10 text-[var(--text-faint)]">
+                  {t({ tr: 'Yükleniyor…', en: 'Loading…' })}
+                </td>
+              </tr>
+            )}
+            {error && (
+              <tr>
+                <td colSpan={6} className="text-center py-10 text-p1">
+                  {t({ tr: 'Bir hata oluştu.', en: 'Something went wrong.' })}
+                </td>
+              </tr>
+            )}
+            {!isLoading && !error && items?.length === 0 && (
+              <tr>
+                <td colSpan={6} className="text-center py-14 text-[var(--text-faint)]">
+                  {t({ tr: 'Bu görünümde kayıt yok.', en: 'Nothing in this view.' })}
+                </td>
+              </tr>
+            )}
+            {items?.map((ci) => (
+              <tr
+                key={ci.id}
+                onClick={() => setSelectedId(ci.id)}
+                className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--row-hover)] cursor-pointer"
+              >
+                <td className="px-3.5 py-3 font-mono text-[var(--text-faint)]">{ci.tag}</td>
+                <td className="px-3.5 py-3 font-semibold">{ci.name}</td>
+                <td className="px-3.5 py-3 text-[var(--text-sub)]">{TYPE_LABEL[ci.ci_type]?.[lang]}</td>
+                <td className="px-3.5 py-3 text-[var(--text-sub)]">
+                  {ci.assigned_user?.full_name ?? <span className="italic text-[var(--text-faint)]">—</span>}
+                </td>
+                <td className="px-3.5 py-3 text-[var(--text-sub)]">{STATUS_LABEL[ci.status]?.[lang]}</td>
+                <td className={`px-3.5 py-3 ${isWarrantySoon(ci.warranty_expiry) ? 'text-p2 font-bold' : 'text-[var(--text-faint)]'}`}>
+                  {ci.warranty_expiry
+                    ? new Date(ci.warranty_expiry).toLocaleDateString(lang === 'tr' ? 'tr-TR' : 'en-US')
+                    : '—'}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {selectedId && <CiDrawer id={selectedId} onClose={() => setSelectedId(null)} />}
+      {showNewModal && <NewCiModal onClose={() => setShowNewModal(false)} />}
+    </div>
+  )
+}
+
+function Th({ children }: { children: React.ReactNode }) {
+  return (
+    <th className="text-left text-[10.5px] uppercase tracking-wide text-[var(--text-faint)] font-semibold px-3.5 py-2.5">
+      {children}
+    </th>
+  )
+}

@@ -158,6 +158,7 @@ export function useCreateChange() {
           actual_start: null,
           actual_end: null,
           rollback_plan: null,
+          ci_id: null,
           pir_outcome: null,
           pir_notes: null,
           closed_at: null,

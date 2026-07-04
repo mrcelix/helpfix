@@ -168,6 +168,7 @@ export function useCreateProblem() {
           root_cause: null,
           known_error_workaround: null,
           owner_id: profile.id,
+          ci_id: null,
           resolved_at: null,
         })
         .select('id, ref')

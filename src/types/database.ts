@@ -45,6 +45,9 @@ export type RequestStatus =
   | 'in_procurement'
   | 'fulfilled'
   | 'rejected'
+export type CiType = 'server' | 'laptop' | 'desktop' | 'network_device' | 'software_license' | 'mobile_device' | 'other'
+export type CiStatus = 'active' | 'in_repair' | 'retired' | 'unmanaged'
+export type CiRelationshipType = 'depends_on' | 'hosted_on' | 'connected_to'
 
 export interface Database {
   public: {
@@ -109,6 +112,7 @@ export interface Database {
           requester_id: string
           assignee_id: string | null
           possible_duplicate_of: string | null
+          ci_id: string | null
           sla_policy_id: string | null
           sla_due_at: string | null
           csat_score: number | null
@@ -175,6 +179,7 @@ export interface Database {
           is_known_error: boolean
           known_error_workaround: string | null
           owner_id: string | null
+          ci_id: string | null
           created_at: string
           updated_at: string
           resolved_at: string | null
@@ -237,6 +242,7 @@ export interface Database {
           actual_start: string | null
           actual_end: string | null
           rollback_plan: string | null
+          ci_id: string | null
           pir_outcome: PirOutcome | null
           pir_notes: string | null
           created_at: string
@@ -346,6 +352,52 @@ export interface Database {
           updated_at?: string
         }
         Update: Partial<Database['public']['Tables']['service_requests']['Insert']>
+        Relationships: []
+      }
+      configuration_items: {
+        Row: {
+          id: string
+          tenant_id: string
+          tag: string
+          name: string
+          ci_type: CiType
+          status: CiStatus
+          serial_number: string | null
+          assigned_user_id: string | null
+          vendor: string | null
+          cost: number | null
+          purchase_date: string | null
+          warranty_expiry: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: Omit<
+          Database['public']['Tables']['configuration_items']['Row'],
+          'id' | 'tag' | 'created_at' | 'updated_at'
+        > & {
+          id?: string
+          tag?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['configuration_items']['Insert']>
+        Relationships: []
+      }
+      ci_relationships: {
+        Row: {
+          id: string
+          tenant_id: string
+          source_ci_id: string
+          target_ci_id: string
+          relationship_type: CiRelationshipType
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['ci_relationships']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['ci_relationships']['Insert']>
         Relationships: []
       }
     }
