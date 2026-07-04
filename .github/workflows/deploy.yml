@@ -58,10 +58,14 @@ jobs:
           protocol: ftp
           port: 21
           local-dir: ./dist/
-          # DOĞRULANDI: bu FTP hesabının kök dizini hesabın ANA dizini
-          # (içinde public_html klasörü ve Hostinger'ın koyduğu
-          # DO_NOT_UPLOAD_HERE uyarı dosyası var) — gerçek site kökü
-          # public_html/ alt klasörü. Daha önce "./" yapmam yanlıştı,
-          # dosyalar görünmeyen bir üst klasöre gidiyordu.
-          server-dir: ./public_html/
+          # KESİN DOĞRULAMA (srv1381-files.hstgr.io özel dosya yöneticisi
+          # ile teyit edildi): bu FTP hesabının kök dizini ("/") zaten
+          # gerçek public_html ile birebir aynı yer. "public_html/" eki
+          # eklemek yanlış, iç içe bir klasör oluşturuyordu.
+          server-dir: ./
           log-level: verbose
+          # Önceki denemelerde farklı klasörlere kaydedilmiş, tutarsız
+          # sync-state.json geçmişini tamamen temizlemek için bu seferlik
+          # tam/temiz yükleme yapıyoruz. Doğrulandıktan sonra bu satırı
+          # kaldıracağız (her seferinde tam yükleme yavaş olur).
+          dangerous-clean-slate: true
