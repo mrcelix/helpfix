@@ -60,12 +60,6 @@ jobs:
           local-dir: ./dist/
           # KESİN DOĞRULAMA (srv1381-files.hstgr.io özel dosya yöneticisi
           # ile teyit edildi): bu FTP hesabının kök dizini ("/") zaten
-          # gerçek public_html ile birebir aynı yer. "public_html/" eki
-          # eklemek yanlış, iç içe bir klasör oluşturuyordu.
+          # gerçek public_html ile birebir aynı yer.
           server-dir: ./
           log-level: verbose
-          # Önceki denemelerde farklı klasörlere kaydedilmiş, tutarsız
-          # sync-state.json geçmişini tamamen temizlemek için bu seferlik
-          # tam/temiz yükleme yapıyoruz. Doğrulandıktan sonra bu satırı
-          # kaldıracağız (her seferinde tam yükleme yavaş olur).
-          dangerous-clean-slate: true
