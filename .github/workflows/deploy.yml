@@ -39,8 +39,11 @@ jobs:
           server: ${{ secrets.HOSTINGER_FTP_SERVER }}
           username: ${{ secrets.HOSTINGER_FTP_USERNAME }}
           password: ${{ secrets.HOSTINGER_FTP_PASSWORD }}
+          protocol: ftp
+          port: 21
           local-dir: ./dist/
           # Hostinger'da domaininizin kök klasörü genelde public_html/
           # ya da alt alan adıysa public_html/alt-alan-adi/ olur —
           # hPanel → Dosyalar → Dosya Yöneticisi'nden doğrulayın.
           server-dir: ./public_html/
+          log-level: verbose
