@@ -23,6 +23,22 @@ jobs:
       - name: Bağımlılıkları kur
         run: npm ci
 
+      - name: Ortam değişkenlerini doğrula (teşhis)
+        run: |
+          if [ -z "${{ secrets.VITE_SUPABASE_URL }}" ]; then
+            echo "::error::VITE_SUPABASE_URL secret'ı BOŞ veya tanımsız!"
+            exit 1
+          else
+            echo "VITE_SUPABASE_URL tanımlı, uzunluk: ${#VITE_SUPABASE_URL_CHECK} (değer gizli)"
+          fi
+          if [ -z "${{ secrets.VITE_SUPABASE_ANON_KEY }}" ]; then
+            echo "::error::VITE_SUPABASE_ANON_KEY secret'ı BOŞ veya tanımsız!"
+            exit 1
+          fi
+          echo "Her iki secret da dolu görünüyor ✓"
+        env:
+          VITE_SUPABASE_URL_CHECK: ${{ secrets.VITE_SUPABASE_URL }}
+
       - name: Prod build al
         run: npm run build
         env:
