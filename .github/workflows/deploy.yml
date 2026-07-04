@@ -58,9 +58,10 @@ jobs:
           protocol: ftp
           port: 21
           local-dir: ./dist/
-          # ÖNEMLİ: u508599022.helpfix FTP hesabı zaten sitenin kök
-          # dizinine bağlanıyor (hesap adındaki ".helpfix" bunu gösteriyor)
-          # — ayrıca public_html/ eklemek yanlış/görünmez bir klasöre
-          # yükleme yapılmasına sebep oluyordu.
-          server-dir: ./
+          # DOĞRULANDI: bu FTP hesabının kök dizini hesabın ANA dizini
+          # (içinde public_html klasörü ve Hostinger'ın koyduğu
+          # DO_NOT_UPLOAD_HERE uyarı dosyası var) — gerçek site kökü
+          # public_html/ alt klasörü. Daha önce "./" yapmam yanlıştı,
+          # dosyalar görünmeyen bir üst klasöre gidiyordu.
+          server-dir: ./public_html/
           log-level: verbose
