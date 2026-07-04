@@ -1,0 +1,46 @@
+name: Build & Deploy to Hostinger
+
+# main branch'e her push'ta çalışır: bağımlılıkları kurar, prod build
+# alır, ve dist/ klasörünü FTP ile Hostinger'daki public_html'e kopyalar.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {} # Actions sekmesinden manuel de tetiklenebilir
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Kodu çek
+        uses: actions/checkout@v4
+
+      - name: Node.js kur
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Bağımlılıkları kur
+        run: npm ci
+
+      - name: Prod build al
+        run: npm run build
+        env:
+          # Bu iki değer GitHub repo → Settings → Secrets and variables →
+          # Actions kısmından eklenir. Supabase anon key public olduğu
+          # için güvenlik riski değildir, ama secrets'ta tutmak temiz
+          # bir pratiktir.
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+      - name: Hostinger'a FTP ile yükle
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.HOSTINGER_FTP_SERVER }}
+          username: ${{ secrets.HOSTINGER_FTP_USERNAME }}
+          password: ${{ secrets.HOSTINGER_FTP_PASSWORD }}
+          local-dir: ./dist/
+          # Hostinger'da domaininizin kök klasörü genelde public_html/
+          # ya da alt alan adıysa public_html/alt-alan-adi/ olur —
+          # hPanel → Dosyalar → Dosya Yöneticisi'nden doğrulayın.
+          server-dir: ./public_html/

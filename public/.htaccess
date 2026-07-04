@@ -1,0 +1,28 @@
+# HelpFix — SPA fallback for Hostinger (Apache / LiteSpeed uyumlu)
+#
+# Sorun: React Router tüm sayfa geçişlerini tarayıcıda yapar, ama bir
+# kullanıcı doğrudan https://siteniz.com/service-desk adresine girerse
+# (veya sayfayı yenilerse), sunucu böyle bir dosya/klasör olmadığı için
+# 404 döner. Bu kural, bulunamayan her isteği index.html'e yönlendirir,
+# React Router da doğru sayfayı render eder.
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+
+  # Gerçek dosya/klasörler (js, css, resim, favicon vb.) normal şekilde sunulsun
+  RewriteCond %{REQUEST_FILENAME} -f [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^ - [L]
+
+  # Diğer her şey index.html'e düşsün
+  RewriteRule ^ index.html [L]
+</IfModule>
+
+# Statik varlıklar için tarayıcı cache'i (isteğe bağlı ama önerilir)
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/css "access plus 1 year"
+  ExpiresByType application/javascript "access plus 1 year"
+  ExpiresByType image/svg+xml "access plus 1 year"
+</IfModule>
