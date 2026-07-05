@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import { NAV_MODULES } from '@/components/layout/nav-modules'
+import { AdminCatalogTab } from './AdminCatalogTab'
 import {
   useTenantUsers,
   useUpdateUserRole,
@@ -17,7 +18,7 @@ const ROLE_OPTIONS: UserRole[] = ['tenant_admin', 'manager', 'agent', 'requester
 
 export function AdminPage() {
   const { t } = useLang()
-  const [tab, setTab] = useState<'users' | 'departments' | 'modules'>('users')
+  const [tab, setTab] = useState<'users' | 'departments' | 'modules' | 'catalog'>('users')
 
   return (
     <div>
@@ -40,11 +41,15 @@ export function AdminPage() {
         <TabButton active={tab === 'modules'} onClick={() => setTab('modules')}>
           {t({ tr: 'Modüller', en: 'Modules' })}
         </TabButton>
+        <TabButton active={tab === 'catalog'} onClick={() => setTab('catalog')}>
+          {t({ tr: 'Kataloğ', en: 'Catalog' })}
+        </TabButton>
       </div>
 
       {tab === 'users' && <UsersTab />}
       {tab === 'departments' && <DepartmentsTab />}
       {tab === 'modules' && <ModulesTab />}
+      {tab === 'catalog' && <AdminCatalogTab />}
     </div>
   )
 

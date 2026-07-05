@@ -243,3 +243,98 @@ export function useRequestBundle() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['service-requests'] }),
   })
 }
+
+// ------------------------------------------------------------------
+// KATALOĞ YÖNETİMİ (Tenant Admin için) — kategori/öğe CRUD
+// ------------------------------------------------------------------
+export function useCreateCategory() {
+  const qc = useQueryClient()
+  const { profile } = useAuth()
+  return useMutation({
+    mutationFn: async (name: string) => {
+      if (!profile) throw new Error('Profil yüklenmedi')
+      const { error } = await supabase.from('service_categories').insert({
+        tenant_id: profile.tenantId,
+        name,
+        icon: null,
+        sort_order: Date.now(),
+      })
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['catalog-categories'] }),
+  })
+}
+
+export function useAllCatalogItemsAdmin() {
+  const { profile } = useAuth()
+  return useQuery({
+    queryKey: ['catalog-items-admin', profile?.tenantId],
+    enabled: !!profile,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('service_catalog_items')
+        .select('id, name, category_id, is_active, requires_approval, estimated_cost, estimated_days, category:category_id ( name )')
+        .order('name')
+      if (error) throw error
+      return data as unknown as {
+        id: string
+        name: string
+        category_id: string | null
+        is_active: boolean
+        requires_approval: boolean
+        estimated_cost: number | null
+        estimated_days: number | null
+        category: { name: string } | null
+      }[]
+    },
+  })
+}
+
+export function useCreateCatalogItem() {
+  const qc = useQueryClient()
+  const { profile } = useAuth()
+  return useMutation({
+    mutationFn: async (input: {
+      name: string
+      description: string
+      categoryId: string | null
+      estimatedCost: number | null
+      estimatedDays: number | null
+      requiresApproval: boolean
+    }) => {
+      if (!profile) throw new Error('Profil yüklenmedi')
+      const { error } = await supabase.from('service_catalog_items').insert({
+        tenant_id: profile.tenantId,
+        category_id: input.categoryId,
+        name: input.name,
+        description: input.description || null,
+        icon: null,
+        estimated_cost: input.estimatedCost,
+        estimated_days: input.estimatedDays,
+        requires_approval: input.requiresApproval,
+        approval_threshold: null,
+        is_active: true,
+        form_schema: null,
+      })
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['catalog-items-admin'] })
+      qc.invalidateQueries({ queryKey: ['catalog-items'] })
+    },
+  })
+}
+
+export function useToggleCatalogItemActive() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: { id: string; isActive: boolean }) => {
+      const { error } = await supabase.from('service_catalog_items').update({ is_active: input.isActive }).eq('id', input.id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['catalog-items-admin'] })
+      qc.invalidateQueries({ queryKey: ['catalog-items'] })
+    },
+  })
+}
