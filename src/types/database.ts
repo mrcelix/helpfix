@@ -540,6 +540,18 @@ export interface Database {
         Args: { p_article_id: string; p_helpful: boolean }
         Returns: void
       }
+      get_weekly_incident_trend: {
+        Args: { p_tenant_id: string }
+        Returns: { week_start: string; created_count: number; resolved_count: number }[]
+      }
+      get_sla_compliance: {
+        Args: { p_tenant_id: string }
+        Returns: { total_resolved: number; breached_count: number; compliance_percent: number }[]
+      }
+      get_change_success_rate: {
+        Args: { p_tenant_id: string }
+        Returns: { total_closed: number; successful_count: number; success_percent: number }[]
+      }
     }
     Enums: Record<string, never>
   }
