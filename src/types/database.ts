@@ -793,6 +793,22 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['notifications']['Insert']>
         Relationships: []
       }
+      monitoring_runbooks: {
+        Row: {
+          id: string
+          tenant_id: string
+          trigger_keyword: string
+          title: string
+          steps: string
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['monitoring_runbooks']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['monitoring_runbooks']['Insert']>
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: {
@@ -865,6 +881,10 @@ export interface Database {
       get_weekly_change_success_trend: {
         Args: { p_tenant_id: string }
         Returns: { week_start: string; successful_count: number; failed_count: number }[]
+      }
+      get_duplicate_ci_names: {
+        Args: { p_tenant_id: string }
+        Returns: { name: string; ci_count: number; ci_ids: string[] }[]
       }
     }
     Enums: Record<string, never>

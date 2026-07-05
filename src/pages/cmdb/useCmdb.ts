@@ -239,3 +239,25 @@ export function useDeleteRelationship() {
     },
   })
 }
+
+// ------------------------------------------------------------------
+// YİNELENEN VARLIK TESPİTİ
+// ------------------------------------------------------------------
+export interface DuplicateCiGroup {
+  name: string
+  ci_count: number
+  ci_ids: string[]
+}
+
+export function useDuplicateCis() {
+  const { profile } = useAuth()
+  return useQuery({
+    queryKey: ['duplicate-cis', profile?.tenantId],
+    enabled: !!profile,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_duplicate_ci_names', { p_tenant_id: profile!.tenantId })
+      if (error) throw error
+      return data as DuplicateCiGroup[]
+    },
+  })
+}

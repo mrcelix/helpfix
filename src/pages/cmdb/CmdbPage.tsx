@@ -3,7 +3,7 @@ import { useOpenParam } from '@/hooks/useOpenParam'
 import { Plus, List, Share2 } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import { Button } from '@/components/ui/Button'
-import { useConfigurationItems, type CiSavedView } from './useCmdb'
+import { useConfigurationItems, useDuplicateCis, type CiSavedView } from './useCmdb'
 import { CiDrawer } from './CiDrawer'
 import { NewCiModal } from './NewCiModal'
 import { ServiceMap } from './ServiceMap'
@@ -48,6 +48,7 @@ export function CmdbPage() {
   const [showNewModal, setShowNewModal] = useState(false)
 
   const { data: items, isLoading, error } = useConfigurationItems(view)
+  const { data: duplicates } = useDuplicateCis()
 
   return (
     <div>
@@ -81,6 +82,21 @@ export function CmdbPage() {
           </Button>
         </div>
       </div>
+
+      {!!duplicates?.length && (
+        <div className="bg-p2-tint border border-p2/40 rounded-xl p-3.5 mb-4">
+          <div className="text-[11px] font-bold text-p2 uppercase mb-1.5">
+            ⚠️ {t({ tr: 'Olası Yinelenen Varlıklar', en: 'Possible Duplicate Assets' })}
+          </div>
+          <p className="text-[12px] text-[var(--text-sub)]">
+            {t({
+              tr: `${duplicates.length} isim, birden fazla varlıkta tekrarlanıyor. Bunları gözden geçirip gereksiz kayıtları silmeyi düşünün: `,
+              en: `${duplicates.length} name(s) appear on multiple assets. Consider reviewing and removing redundant records: `,
+            })}
+            <b>{duplicates.map((d) => d.name).join(', ')}</b>
+          </p>
+        </div>
+      )}
 
       {viewMode === 'map' ? (
         <ServiceMap />

@@ -144,3 +144,63 @@ export function useMttaBySource() {
     },
   })
 }
+
+// ------------------------------------------------------------------
+// RUNBOOK'LAR — bir uyarı başlığı anahtar kelimeyle eşleşince
+// gösterilecek, önceden tanımlı adım listesi.
+// ------------------------------------------------------------------
+export interface Runbook {
+  id: string
+  trigger_keyword: string
+  title: string
+  steps: string
+}
+
+export function useRunbooks() {
+  const { profile } = useAuth()
+  return useQuery({
+    queryKey: ['runbooks', profile?.tenantId],
+    enabled: !!profile,
+    queryFn: async () => {
+      const { data, error } = await supabase.from('monitoring_runbooks').select('id, trigger_keyword, title, steps').order('trigger_keyword')
+      if (error) throw error
+      return data as Runbook[]
+    },
+  })
+}
+
+export function useCreateRunbook() {
+  const qc = useQueryClient()
+  const { profile } = useAuth()
+  return useMutation({
+    mutationFn: async (input: { triggerKeyword: string; title: string; steps: string }) => {
+      if (!profile) throw new Error('Profil yüklenmedi')
+      const { error } = await supabase.from('monitoring_runbooks').insert({
+        tenant_id: profile.tenantId,
+        trigger_keyword: input.triggerKeyword,
+        title: input.title,
+        steps: input.steps,
+      })
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['runbooks'] }),
+  })
+}
+
+export function useDeleteRunbook() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('monitoring_runbooks').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['runbooks'] }),
+  })
+}
+
+/** Verilen uyarı başlığıyla eşleşen (anahtar kelime içeren) ilk
+ * runbook'u bulur — istemci tarafında basit bir eşleşme. */
+export function findMatchingRunbook(alertTitle: string, runbooks: Runbook[] | undefined): Runbook | null {
+  if (!runbooks) return null
+  return runbooks.find((r) => alertTitle.toLowerCase().includes(r.trigger_keyword.toLowerCase())) ?? null
+}
