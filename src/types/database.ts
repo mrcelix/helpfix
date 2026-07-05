@@ -48,6 +48,7 @@ export type RequestStatus =
 export type CiType = 'server' | 'laptop' | 'desktop' | 'network_device' | 'software_license' | 'mobile_device' | 'other'
 export type CiStatus = 'active' | 'in_repair' | 'retired' | 'unmanaged'
 export type CiRelationshipType = 'depends_on' | 'hosted_on' | 'connected_to'
+export type ArticleStatus = 'draft' | 'published' | 'archived'
 
 export interface Database {
   public: {
@@ -400,6 +401,38 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['ci_relationships']['Insert']>
         Relationships: []
       }
+      knowledge_articles: {
+        Row: {
+          id: string
+          tenant_id: string
+          title: string
+          slug: string
+          content: string
+          category: string | null
+          status: ArticleStatus
+          author_id: string
+          view_count: number
+          helpful_count: number
+          unhelpful_count: number
+          created_at: string
+          updated_at: string
+          published_at: string | null
+        }
+        Insert: Omit<
+          Database['public']['Tables']['knowledge_articles']['Row'],
+          'id' | 'slug' | 'created_at' | 'updated_at' | 'view_count' | 'helpful_count' | 'unhelpful_count'
+        > & {
+          id?: string
+          slug?: string
+          created_at?: string
+          updated_at?: string
+          view_count?: number
+          helpful_count?: number
+          unhelpful_count?: number
+        }
+        Update: Partial<Database['public']['Tables']['knowledge_articles']['Insert']>
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: {
@@ -412,6 +445,14 @@ export interface Database {
           sample_titles: string[]
           earliest_created_at: string
         }[]
+      }
+      increment_article_view: {
+        Args: { p_article_id: string }
+        Returns: void
+      }
+      vote_article: {
+        Args: { p_article_id: string; p_helpful: boolean }
+        Returns: void
       }
     }
     Enums: Record<string, never>
