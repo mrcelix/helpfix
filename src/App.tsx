@@ -17,6 +17,7 @@ import { ProjectsPage } from '@/pages/projects/ProjectsPage'
 import { AnalyticsPage } from '@/pages/analytics/AnalyticsPage'
 import { MonitoringPage } from '@/pages/monitoring/MonitoringPage'
 import { OnCallPage } from '@/pages/oncall/OnCallPage'
+import { AutomationPage } from '@/pages/automation/AutomationPage'
 import { isSupabaseConfigured } from '@/lib/supabase'
 
 const MODULE_PAGES: Record<string, ComponentType> = {
@@ -31,6 +32,7 @@ const MODULE_PAGES: Record<string, ComponentType> = {
   analytics: AnalyticsPage,
   monitoring: MonitoringPage,
   'on-call': OnCallPage,
+  automation: AutomationPage,
 }
 
 function App() {

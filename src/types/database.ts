@@ -58,6 +58,8 @@ export type AlertSource = 'datadog' | 'zabbix' | 'prometheus' | 'cloudwatch' | '
 export type AlertSeverity = 'critical' | 'warning' | 'info'
 export type AlertStatus = 'firing' | 'acknowledged' | 'resolved'
 export type SwapStatus = 'pending' | 'approved' | 'rejected'
+export type AutomationTrigger = 'incident_created'
+export type AutomationAction = 'assign_to_user' | 'set_priority'
 
 export interface Database {
   public: {
@@ -593,6 +595,32 @@ export interface Database {
           created_at?: string
         }
         Update: Partial<Database['public']['Tables']['oncall_swap_requests']['Insert']>
+        Relationships: []
+      }
+      automation_rules: {
+        Row: {
+          id: string
+          tenant_id: string
+          name: string
+          trigger_type: AutomationTrigger
+          condition_category: string | null
+          condition_priority: Priority | null
+          action_type: AutomationAction
+          action_assignee_id: string | null
+          action_priority: Priority | null
+          is_active: boolean
+          execution_count: number
+          created_at: string
+        }
+        Insert: Omit<
+          Database['public']['Tables']['automation_rules']['Row'],
+          'id' | 'created_at' | 'execution_count'
+        > & {
+          id?: string
+          created_at?: string
+          execution_count?: number
+        }
+        Update: Partial<Database['public']['Tables']['automation_rules']['Insert']>
         Relationships: []
       }
     }
