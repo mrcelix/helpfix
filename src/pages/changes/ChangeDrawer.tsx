@@ -8,7 +8,11 @@ import {
   useChangeTimeline,
   useUpdateChange,
   useDecideApproval,
+  useFreezeConflict,
+  useBlastRadius,
+  useLinkChangeToCi,
 } from './useChanges'
+import { useConfigurationItems } from '@/pages/cmdb/useCmdb'
 import type { PirOutcome } from '@/types/database'
 
 const APPROVAL_LABEL: Record<string, { tr: string; en: string }> = {
@@ -33,6 +37,13 @@ export function ChangeDrawer({ id, onClose }: { id: string; onClose: () => void 
 
   const [pirOutcome, setPirOutcome] = useState<PirOutcome>('successful')
   const [pirNotes, setPirNotes] = useState('')
+  const [scheduleDate, setScheduleDate] = useState('')
+  const [showScheduleForm, setShowScheduleForm] = useState(false)
+
+  const freezeConflict = useFreezeConflict(scheduleDate || null)
+  const linkCi = useLinkChangeToCi(id)
+  const { data: allCis } = useConfigurationItems('all')
+  const { data: blastRadius } = useBlastRadius(change?.ci_id ?? null)
 
   const canManage = profile && ['tenant_admin', 'manager', 'agent'].includes(profile.role)
   const isDraft = change?.status === 'draft'
@@ -73,6 +84,55 @@ export function ChangeDrawer({ id, onClose }: { id: string; onClose: () => void 
             >
               {t({ tr: 'Onaya Gönder', en: 'Submit for Approval' })}
             </button>
+          )}
+
+          {canManage && (
+            <div>
+              <label className="block text-[10.5px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">
+                {t({ tr: 'İlgili Varlık (Blast Radius için)', en: 'Related Asset (for Blast Radius)' })}
+              </label>
+              <select
+                value={change.ci_id ?? ''}
+                onChange={(e) => linkCi.mutate(e.target.value || null)}
+                className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-2.5 py-2 text-[12.5px]"
+              >
+                <option value="">{t({ tr: 'Bağlı değil', en: 'Not linked' })}</option>
+                {allCis?.map((ci) => (
+                  <option key={ci.id} value={ci.id}>
+                    {ci.name} ({ci.tag})
+                  </option>
+                ))}
+              </select>
+
+              {change.ci_id && (
+                <div className="mt-2.5 bg-p2-tint border border-p2/40 rounded-lg p-3">
+                  <div className="text-[11px] font-bold text-p2 uppercase mb-2">
+                    ⚡ {t({ tr: 'Etki Alanı (Blast Radius)', en: 'Blast Radius' })}
+                  </div>
+                  {!blastRadius?.length ? (
+                    <p className="text-[11.5px] text-[var(--text-faint)]">
+                      {t({ tr: 'Bu varlığa bağlı başka bir sistem tespit edilmedi.', en: 'No other connected systems detected.' })}
+                    </p>
+                  ) : (
+                    <>
+                      <p className="text-[11.5px] text-[var(--text-sub)] mb-2">
+                        {t({
+                          tr: `Bu değişiklik başarısız olursa ${blastRadius.length} sistem daha etkilenebilir:`,
+                          en: `If this change fails, ${blastRadius.length} more system(s) may be affected:`,
+                        })}
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {blastRadius.map((ci) => (
+                          <span key={ci.id} className="text-[10.5px] font-mono bg-[var(--panel)] border border-[var(--border)] rounded-full px-2 py-0.5">
+                            {ci.name}
+                          </span>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
           )}
 
           {!!approvals?.length && (
@@ -124,12 +184,45 @@ export function ChangeDrawer({ id, onClose }: { id: string; onClose: () => void 
           )}
 
           {change.status === 'approved' && canManage && (
-            <button
-              onClick={() => updateChange.mutate({ status: 'scheduled' })}
-              className="w-full py-2.5 rounded-lg bg-brand text-white text-[13px] font-bold"
-            >
-              {t({ tr: 'Planla', en: 'Schedule' })}
-            </button>
+            <div>
+              {!showScheduleForm ? (
+                <button
+                  onClick={() => setShowScheduleForm(true)}
+                  className="w-full py-2.5 rounded-lg bg-brand text-white text-[13px] font-bold"
+                >
+                  {t({ tr: 'Planla', en: 'Schedule' })}
+                </button>
+              ) : (
+                <div className="bg-[var(--panel-2)] border border-[var(--border)] rounded-lg p-3 space-y-2">
+                  <input
+                    type="datetime-local"
+                    value={scheduleDate}
+                    onChange={(e) => setScheduleDate(e.target.value)}
+                    className="w-full bg-[var(--panel)] border border-[var(--border)] rounded-lg px-2.5 py-2 text-[12.5px]"
+                  />
+                  {freezeConflict && (
+                    <div className="bg-p1-tint border border-p1/40 rounded-lg p-2.5 text-[11.5px] text-p1">
+                      ⚠️ {t({ tr: 'Bu tarih bir dondurma penceresiyle çakışıyor:', en: 'This date conflicts with a freeze window:' })}{' '}
+                      <b>{freezeConflict.name}</b> ({new Date(freezeConflict.start_date).toLocaleDateString(lang === 'tr' ? 'tr-TR' : 'en-US')} –{' '}
+                      {new Date(freezeConflict.end_date).toLocaleDateString(lang === 'tr' ? 'tr-TR' : 'en-US')})
+                    </div>
+                  )}
+                  <button
+                    onClick={() => {
+                      if (!scheduleDate) return
+                      updateChange.mutate({ status: 'scheduled', scheduled_start: new Date(scheduleDate).toISOString() })
+                      setShowScheduleForm(false)
+                    }}
+                    disabled={!scheduleDate}
+                    className={`w-full py-2 rounded-lg text-[12.5px] font-bold ${freezeConflict ? 'bg-p2 text-black/80' : 'bg-brand text-white'} disabled:opacity-40`}
+                  >
+                    {freezeConflict
+                      ? t({ tr: 'Çakışmaya Rağmen Planla', en: 'Schedule Despite Conflict' })
+                      : t({ tr: 'Onayla ve Planla', en: 'Confirm & Schedule' })}
+                  </button>
+                </div>
+              )}
+            </div>
           )}
           {change.status === 'scheduled' && canManage && (
             <button

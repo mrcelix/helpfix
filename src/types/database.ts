@@ -654,6 +654,23 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['problem_fishbone_causes']['Insert']>
         Relationships: []
       }
+      change_freeze_windows: {
+        Row: {
+          id: string
+          tenant_id: string
+          name: string
+          start_date: string
+          end_date: string
+          reason: string | null
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['change_freeze_windows']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['change_freeze_windows']['Insert']>
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: {

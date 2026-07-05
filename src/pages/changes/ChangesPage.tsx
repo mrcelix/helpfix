@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, Snowflake } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import { Button } from '@/components/ui/Button'
 import { useChanges, type ChangeSavedView } from './useChanges'
 import { ChangeDrawer } from './ChangeDrawer'
 import { NewChangeModal } from './NewChangeModal'
+import { FreezeWindowsModal } from './FreezeWindowsModal'
 
 const SAVED_VIEWS: { key: ChangeSavedView; label: { tr: string; en: string } }[] = [
   { key: 'all', label: { tr: 'Tümü', en: 'All' } },
@@ -42,6 +43,7 @@ export function ChangesPage() {
   const [view, setView] = useState<ChangeSavedView>('all')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [showNewModal, setShowNewModal] = useState(false)
+  const [showFreezeModal, setShowFreezeModal] = useState(false)
 
   const { data: changes, isLoading, error } = useChanges(view)
 
@@ -56,10 +58,16 @@ export function ChangesPage() {
             {t({ tr: 'Risk skoru, çift katmanlı onay ve PIR takibi', en: 'Risk scoring, dual-tier approval, and PIR tracking' })}
           </p>
         </div>
-        <Button onClick={() => setShowNewModal(true)}>
-          <Plus className="w-[15px] h-[15px]" />
-          {t({ tr: 'Yeni Değişiklik', en: 'New Change' })}
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="ghost" onClick={() => setShowFreezeModal(true)}>
+            <Snowflake className="w-[15px] h-[15px]" />
+            {t({ tr: 'Dondurma Pencereleri', en: 'Freeze Windows' })}
+          </Button>
+          <Button onClick={() => setShowNewModal(true)}>
+            <Plus className="w-[15px] h-[15px]" />
+            {t({ tr: 'Yeni Değişiklik', en: 'New Change' })}
+          </Button>
+        </div>
       </div>
 
       <div className="flex items-center gap-1.5 mb-3 flex-wrap">
@@ -139,6 +147,7 @@ export function ChangesPage() {
 
       {selectedId && <ChangeDrawer id={selectedId} onClose={() => setSelectedId(null)} />}
       {showNewModal && <NewChangeModal onClose={() => setShowNewModal(false)} />}
+      {showFreezeModal && <FreezeWindowsModal onClose={() => setShowFreezeModal(false)} />}
     </div>
   )
 }

@@ -22,6 +22,8 @@ export interface ChangeDetail extends ChangeListItem {
   pir_outcome: PirOutcome | null
   pir_notes: string | null
   implementer: { full_name: string } | null
+  ci_id: string | null
+  ci: { name: string; tag: string } | null
 }
 
 export interface ChangeApproval {
@@ -88,7 +90,7 @@ export function useChangeDetail(id: string | null) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('changes')
-        .select(`${SELECT_LIST}, description, rollback_plan, pir_outcome, pir_notes, implementer:implementer_id ( full_name )`)
+        .select(`${SELECT_LIST}, description, rollback_plan, pir_outcome, pir_notes, implementer:implementer_id ( full_name ), ci_id, ci:ci_id ( name, tag )`)
         .eq('id', id!)
         .single()
       if (error) throw error
@@ -169,6 +171,116 @@ export function useCreateChange() {
       return data
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['changes'] }),
+  })
+}
+
+export interface FreezeWindow {
+  id: string
+  name: string
+  start_date: string
+  end_date: string
+  reason: string | null
+}
+
+export function useFreezeWindows() {
+  const { profile } = useAuth()
+  return useQuery({
+    queryKey: ['freeze-windows', profile?.tenantId],
+    enabled: !!profile,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('change_freeze_windows')
+        .select('id, name, start_date, end_date, reason')
+        .order('start_date')
+      if (error) throw error
+      return data as FreezeWindow[]
+    },
+  })
+}
+
+export function useCreateFreezeWindow() {
+  const qc = useQueryClient()
+  const { profile } = useAuth()
+  return useMutation({
+    mutationFn: async (input: { name: string; startDate: string; endDate: string; reason: string }) => {
+      if (!profile) throw new Error('Profil yüklenmedi')
+      const { error } = await supabase.from('change_freeze_windows').insert({
+        tenant_id: profile.tenantId,
+        name: input.name,
+        start_date: input.startDate,
+        end_date: input.endDate,
+        reason: input.reason || null,
+      })
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['freeze-windows'] }),
+  })
+}
+
+export function useDeleteFreezeWindow() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('change_freeze_windows').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['freeze-windows'] }),
+  })
+}
+
+/** Verilen tarih aralığı bir dondurma penceresiyle çakışıyor mu? */
+export function useFreezeConflict(scheduledStart: string | null) {
+  const { data: windows } = useFreezeWindows()
+  if (!scheduledStart || !windows) return null
+  const target = new Date(scheduledStart).getTime()
+  return windows.find((w) => target >= new Date(w.start_date).getTime() && target <= new Date(w.end_date).getTime()) ?? null
+}
+
+export interface ConnectedCi {
+  id: string
+  name: string
+  tag: string
+}
+
+/** Blast radius: bir değişikliğe bağlı CI + ona doğrudan bağlı diğer CI'lar. */
+export function useBlastRadius(ciId: string | null) {
+  return useQuery({
+    queryKey: ['blast-radius', ciId],
+    enabled: !!ciId,
+    queryFn: async () => {
+      const { data: rels, error } = await supabase
+        .from('ci_relationships')
+        .select('source_ci_id, target_ci_id, relationship_type')
+        .or(`source_ci_id.eq.${ciId},target_ci_id.eq.${ciId}`)
+      if (error) throw error
+
+      const connectedIds = new Set<string>()
+      rels?.forEach((r) => {
+        connectedIds.add(r.source_ci_id === ciId ? r.target_ci_id : r.source_ci_id)
+      })
+      if (connectedIds.size === 0) return []
+
+      const { data: cis, error: ciError } = await supabase
+        .from('configuration_items')
+        .select('id, name, tag')
+        .in('id', Array.from(connectedIds))
+      if (ciError) throw ciError
+      return cis as ConnectedCi[]
+    },
+  })
+}
+
+export function useLinkChangeToCi(changeId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (ciId: string | null) => {
+      const { error } = await supabase.from('changes').update({ ci_id: ciId }).eq('id', changeId)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['change', changeId] })
+      qc.invalidateQueries({ queryKey: ['changes'] })
+    },
   })
 }
 
