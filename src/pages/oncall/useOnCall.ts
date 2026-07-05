@@ -185,3 +185,26 @@ export function useAssignableUsers() {
     },
   })
 }
+
+export interface OnCallFairness {
+  user_id: string
+  full_name: string
+  shift_count: number
+  total_hours: number
+}
+
+export function useOnCallFairness(scheduleId: string | null) {
+  const { profile } = useAuth()
+  return useQuery({
+    queryKey: ['oncall-fairness', scheduleId],
+    enabled: !!scheduleId && !!profile,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_oncall_fairness', {
+        p_tenant_id: profile!.tenantId,
+        p_schedule_id: scheduleId!,
+      })
+      if (error) throw error
+      return data as OnCallFairness[]
+    },
+  })
+}

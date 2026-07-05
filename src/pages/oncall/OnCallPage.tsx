@@ -10,6 +10,7 @@ import {
   useMySwapRequests,
   useDecideSwap,
   useCreateSchedule,
+  useOnCallFairness,
   type Shift,
 } from './useOnCall'
 import { NewShiftModal } from './NewShiftModal'
@@ -26,6 +27,7 @@ export function OnCallPage() {
 
   const { data: schedules } = useSchedules()
   const activeScheduleId = scheduleId ?? schedules?.[0]?.id ?? null
+  const { data: fairness } = useOnCallFairness(activeScheduleId)
   const { data: current } = useCurrentOnCall(activeScheduleId)
   const { data: upcoming } = useUpcomingShifts(activeScheduleId)
   const { data: swapRequests } = useMySwapRequests()
@@ -146,6 +148,24 @@ export function OnCallPage() {
                         </button>
                       </div>
                     )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {!!fairness?.length && (
+            <div className="mb-6">
+              <div className="text-[10.5px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-2.5">
+                {t({ tr: 'Adalet Analitiği (Son 30 Gün)', en: 'Fairness Analytics (Last 30 Days)' })}
+              </div>
+              <div className="grid grid-cols-3 gap-2.5">
+                {fairness.map((f) => (
+                  <div key={f.user_id} className="bg-[var(--panel)] border border-[var(--border)] rounded-xl p-3">
+                    <div className="font-semibold text-[12.5px] truncate mb-1">{f.full_name}</div>
+                    <div className="text-[11px] text-[var(--text-faint)]">
+                      {f.shift_count} {t({ tr: 'vardiya', en: 'shifts' })} · {f.total_hours} {t({ tr: 'saat', en: 'hours' })}
+                    </div>
                   </div>
                 ))}
               </div>

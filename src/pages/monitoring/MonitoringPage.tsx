@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { useLang } from '@/contexts/LangContext'
-import { useAlerts, useDailyAlertVolume, useAcknowledgeAlert, useResolveAlert, type AlertSavedView } from './useMonitoring'
+import { useAlerts, useDailyAlertVolume, useAcknowledgeAlert, useResolveAlert, useMttaBySource, type AlertSavedView } from './useMonitoring'
 import { CreateIncidentModal } from './CreateIncidentModal'
 
 const SAVED_VIEWS: { key: AlertSavedView; label: { tr: string; en: string } }[] = [
@@ -32,6 +32,7 @@ export function MonitoringPage() {
 
   const { data: alerts, isLoading } = useAlerts(view)
   const { data: volume } = useDailyAlertVolume()
+  const { data: mtta } = useMttaBySource()
   const acknowledgeAlert = useAcknowledgeAlert()
   const resolveAlert = useResolveAlert()
 
@@ -65,6 +66,18 @@ export function MonitoringPage() {
           </BarChart>
         </ResponsiveContainer>
       </div>
+
+      {!!mtta?.length && (
+        <div className="grid grid-cols-4 gap-3 mb-5">
+          {mtta.map((m) => (
+            <div key={m.source} className="bg-[var(--panel)] border border-[var(--border)] rounded-xl p-3.5">
+              <div className={`inline-block text-[9.5px] font-bold uppercase px-2 py-0.5 rounded-md mb-1.5 ${SOURCE_COLOR[m.source]}`}>{m.source}</div>
+              <div className="font-display text-lg font-bold">{m.avg_minutes} {t({ tr: 'dk', en: 'min' })}</div>
+              <div className="text-[10px] text-[var(--text-faint)]">{t({ tr: `MTTA · ${m.alert_count} uyarı`, en: `MTTA · ${m.alert_count} alerts` })}</div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="flex items-center gap-1.5 mb-3 flex-wrap">
         {SAVED_VIEWS.map((v) => (

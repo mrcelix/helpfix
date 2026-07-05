@@ -125,3 +125,22 @@ export function useCreateIncidentFromAlert() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['monitoring-alerts'] }),
   })
 }
+
+export interface MttaBySource {
+  source: string
+  avg_minutes: number
+  alert_count: number
+}
+
+export function useMttaBySource() {
+  const { profile } = useAuth()
+  return useQuery({
+    queryKey: ['mtta-by-source', profile?.tenantId],
+    enabled: !!profile,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_mtta_by_source', { p_tenant_id: profile!.tenantId })
+      if (error) throw error
+      return data as MttaBySource[]
+    },
+  })
+}

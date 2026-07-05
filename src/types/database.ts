@@ -772,6 +772,14 @@ export interface Database {
         Args: { p_tenant_id: string }
         Returns: { day: string; alert_count: number; critical_count: number }[]
       }
+      get_mtta_by_source: {
+        Args: { p_tenant_id: string }
+        Returns: { source: string; avg_minutes: number; alert_count: number }[]
+      }
+      get_oncall_fairness: {
+        Args: { p_tenant_id: string; p_schedule_id: string }
+        Returns: { user_id: string; full_name: string; shift_count: number; total_hours: number }[]
+      }
     }
     Enums: Record<string, never>
   }
