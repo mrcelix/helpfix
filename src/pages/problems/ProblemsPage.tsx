@@ -7,6 +7,7 @@ import { PriorityBadge } from '@/components/ui/Badge'
 import { useProblems, useClusterCandidates, type ProblemSavedView, type ClusterCandidate } from './useProblems'
 import { ProblemDrawer } from './ProblemDrawer'
 import { NewProblemModal } from './NewProblemModal'
+import { ProblemAnalytics } from './ProblemAnalytics'
 
 const SAVED_VIEWS: { key: ProblemSavedView; label: { tr: string; en: string } }[] = [
   { key: 'all', label: { tr: 'Tümü', en: 'All' } },
@@ -27,6 +28,7 @@ const STATUS_LABEL: Record<string, { tr: string; en: string }> = {
 export function ProblemsPage() {
   const { lang, t } = useLang()
   const [view, setView] = useState<ProblemSavedView>('open')
+  const [pageTab, setPageTab] = useState<'problems' | 'analytics'>('problems')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const openId = useOpenParam()
   useEffect(() => { if (openId) setSelectedId(openId) }, [openId])
@@ -63,6 +65,25 @@ export function ProblemsPage() {
         </Button>
       </div>
 
+      <div className="flex gap-1 border-b border-[var(--border)] mb-4">
+        <button
+          onClick={() => setPageTab('problems')}
+          className={`px-1 py-2.5 text-[13.5px] font-semibold mr-5 border-b-2 ${pageTab === 'problems' ? 'border-brand text-brand-dim' : 'border-transparent text-[var(--text-faint)]'}`}
+        >
+          {t({ tr: 'Problemler', en: 'Problems' })}
+        </button>
+        <button
+          onClick={() => setPageTab('analytics')}
+          className={`px-1 py-2.5 text-[13.5px] font-semibold mr-5 border-b-2 ${pageTab === 'analytics' ? 'border-brand text-brand-dim' : 'border-transparent text-[var(--text-faint)]'}`}
+        >
+          {t({ tr: 'Analitik', en: 'Analytics' })}
+        </button>
+      </div>
+
+      {pageTab === 'analytics' ? (
+        <ProblemAnalytics />
+      ) : (
+      <>
       {/* AI Proaktif Tespit */}
       {!!clusters?.length && (
         <div className="mb-5 space-y-2.5">
@@ -175,6 +196,8 @@ export function ProblemsPage() {
           </tbody>
         </table>
       </div>
+      </>
+      )}
 
       {selectedId && <ProblemDrawer id={selectedId} onClose={() => setSelectedId(null)} />}
       {showNewModal && (

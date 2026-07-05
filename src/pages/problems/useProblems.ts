@@ -299,3 +299,65 @@ export function useUpdateProblem(id: string) {
     },
   })
 }
+
+// ------------------------------------------------------------------
+// PROBLEM ANALİTİK — kök neden kategori dağılımı, haftalık trend
+// ------------------------------------------------------------------
+export interface RootCauseBreakdown {
+  category: string
+  confirmed_count: number
+}
+
+export function useRootCauseBreakdown() {
+  const { profile } = useAuth()
+  return useQuery({
+    queryKey: ['root-cause-breakdown', profile?.tenantId],
+    enabled: !!profile,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_root_cause_category_breakdown', { p_tenant_id: profile!.tenantId })
+      if (error) throw error
+      return data as RootCauseBreakdown[]
+    },
+  })
+}
+
+export interface ProblemWeeklyTrend {
+  week_start: string
+  created_count: number
+  resolved_count: number
+}
+
+export function useProblemWeeklyTrend() {
+  const { profile } = useAuth()
+  return useQuery({
+    queryKey: ['problem-weekly-trend', profile?.tenantId],
+    enabled: !!profile,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_weekly_problem_trend', { p_tenant_id: profile!.tenantId })
+      if (error) throw error
+      return data as ProblemWeeklyTrend[]
+    },
+  })
+}
+
+/** Çözülen problemlerin ortalama çözüm süresi (gün) — istemci
+ * tarafında hesaplanır (küçük veri setlerinde performans sorunu
+ * yaratmaz). */
+export function useAvgProblemResolutionDays() {
+  const { profile } = useAuth()
+  return useQuery({
+    queryKey: ['avg-problem-resolution', profile?.tenantId],
+    enabled: !!profile,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('problems')
+        .select('created_at, resolved_at')
+        .not('resolved_at', 'is', null)
+        .limit(200)
+      if (error) throw error
+      if (!data?.length) return 0
+      const totalDays = data.reduce((sum, p) => sum + (new Date(p.resolved_at!).getTime() - new Date(p.created_at).getTime()) / 86_400_000, 0)
+      return Math.round((totalDays / data.length) * 10) / 10
+    },
+  })
+}

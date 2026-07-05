@@ -846,6 +846,14 @@ export interface Database {
         Args: { p_tenant_id: string }
         Returns: { technician_id: string; full_name: string; avg_csat: number; ticket_count: number }[]
       }
+      get_root_cause_category_breakdown: {
+        Args: { p_tenant_id: string }
+        Returns: { category: string; confirmed_count: number }[]
+      }
+      get_weekly_problem_trend: {
+        Args: { p_tenant_id: string }
+        Returns: { week_start: string; created_count: number; resolved_count: number }[]
+      }
     }
     Enums: Record<string, never>
   }
