@@ -53,6 +53,28 @@ const SELECT_LIST = `
 `
 
 // ------------------------------------------------------------------
+// ÇALIŞAN MERKEZİ: requester'ın KENDİ oluşturduğu talepler
+// (yukarıdaki 'mine' görünümü assignee_id'ye göre filtreler — bu
+// agent'lar için; requester'lar için requester_id gerekiyor).
+// ------------------------------------------------------------------
+export function useMyRequests() {
+  const { profile } = useAuth()
+  return useQuery({
+    queryKey: ['my-requests', profile?.id],
+    enabled: !!profile,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('incidents')
+        .select(SELECT_LIST)
+        .eq('requester_id', profile!.id)
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      return data as unknown as IncidentListItem[]
+    },
+  })
+}
+
+// ------------------------------------------------------------------
 // LIST
 // ------------------------------------------------------------------
 export function useIncidents(view: SavedView) {

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Plus, Search } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
+import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/Button'
 import { useArticles, type KbSavedView } from './useKnowledgeBase'
 import { ArticleDrawer } from './ArticleDrawer'
@@ -15,6 +16,8 @@ const SAVED_VIEWS: { key: KbSavedView; label: { tr: string; en: string } }[] = [
 
 export function KnowledgeBasePage() {
   const { lang, t } = useLang()
+  const { profile } = useAuth()
+  const canManage = profile && ['tenant_admin', 'manager', 'agent'].includes(profile.role)
   const [view, setView] = useState<KbSavedView>('published')
   const [search, setSearch] = useState('')
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -33,10 +36,12 @@ export function KnowledgeBasePage() {
             {t({ tr: 'Makaleler, arama ve faydalılık geri bildirimi', en: 'Articles, search, and helpfulness feedback' })}
           </p>
         </div>
-        <Button onClick={() => setShowNewModal(true)}>
-          <Plus className="w-[15px] h-[15px]" />
-          {t({ tr: 'Yeni Makale', en: 'New Article' })}
-        </Button>
+        {canManage && (
+          <Button onClick={() => setShowNewModal(true)}>
+            <Plus className="w-[15px] h-[15px]" />
+            {t({ tr: 'Yeni Makale', en: 'New Article' })}
+          </Button>
+        )}
       </div>
 
       <div className="flex items-center gap-2 bg-[var(--panel)] border border-[var(--border)] rounded-lg px-3 py-2 mb-4 max-w-md">

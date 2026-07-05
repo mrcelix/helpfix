@@ -1,6 +1,7 @@
 import type { ComponentType } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { AppShell } from '@/components/layout/AppShell'
+import { EmployeeShell } from '@/components/employee-layout/EmployeeShell'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { LoginPage } from '@/pages/Login'
 import { ComingSoonPage } from '@/pages/ComingSoon'
@@ -19,6 +20,9 @@ import { MonitoringPage } from '@/pages/monitoring/MonitoringPage'
 import { OnCallPage } from '@/pages/oncall/OnCallPage'
 import { AutomationPage } from '@/pages/automation/AutomationPage'
 import { AdminPage } from '@/pages/admin/AdminPage'
+import { EmployeeHomePage } from '@/pages/employee-center/EmployeeHomePage'
+import { MyTicketsPage } from '@/pages/employee-center/MyTicketsPage'
+import { MyAssetsPage } from '@/pages/employee-center/MyAssetsPage'
 import { useFeatureFlags } from '@/pages/admin/useAdmin'
 import { useAuth } from '@/contexts/AuthContext'
 import { isSupabaseConfigured } from '@/lib/supabase'
@@ -57,6 +61,53 @@ function AdminRoute() {
   return <AdminPage />
 }
 
+/** requester rolü tamamen ayrı, basit bir kabuk (Çalışan Merkezi) üzerinden
+ * gezinir — 12 modüllü agent arayüzünü hiç görmez. */
+function RoleBasedShell() {
+  const { profile, loading } = useAuth()
+  if (loading || !profile) return null
+
+  if (profile.role === 'requester') {
+    return (
+      <Routes>
+        <Route element={<EmployeeShell />}>
+          <Route index element={<Navigate to="/home" replace />} />
+          <Route path="/home" element={<EmployeeHomePage />} />
+          <Route path="/my-tickets" element={<MyTicketsPage />} />
+          <Route path="/catalog" element={<CatalogPage />} />
+          <Route path="/knowledge-base" element={<KnowledgeBasePage />} />
+          <Route path="/my-assets" element={<MyAssetsPage />} />
+          <Route path="*" element={<Navigate to="/home" replace />} />
+        </Route>
+      </Routes>
+    )
+  }
+
+  return (
+    <Routes>
+      <Route element={<AppShell />}>
+        <Route index element={<Navigate to="/service-desk" replace />} />
+        <Route path="/admin" element={<AdminRoute />} />
+        {NAV_MODULES.map((mod) => {
+          const Page = MODULE_PAGES[mod.code]
+          return (
+            <Route
+              key={mod.code}
+              path={mod.path}
+              element={
+                <ModuleRoute moduleCode={mod.code}>
+                  {Page ? <Page /> : <ComingSoonPage moduleName={mod.name} />}
+                </ModuleRoute>
+              }
+            />
+          )
+        })}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Route>
+    </Routes>
+  )
+}
+
 function App() {
   if (!isSupabaseConfigured) {
     return <ConfigMissingPage />
@@ -65,29 +116,9 @@ function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-
       <Route element={<ProtectedRoute />}>
-        <Route element={<AppShell />}>
-          <Route index element={<Navigate to="/service-desk" replace />} />
-          <Route path="/admin" element={<AdminRoute />} />
-          {NAV_MODULES.map((mod) => {
-            const Page = MODULE_PAGES[mod.code]
-            return (
-              <Route
-                key={mod.code}
-                path={mod.path}
-                element={
-                  <ModuleRoute moduleCode={mod.code}>
-                    {Page ? <Page /> : <ComingSoonPage moduleName={mod.name} />}
-                  </ModuleRoute>
-                }
-              />
-            )
-          })}
-        </Route>
+        <Route path="/*" element={<RoleBasedShell />} />
       </Route>
-
-      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
 }
