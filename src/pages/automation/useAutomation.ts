@@ -1,11 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
-import type { Priority, AutomationAction } from '@/types/database'
+import type { Priority, AutomationAction, AutomationTrigger } from '@/types/database'
 
 export interface AutomationRule {
   id: string
   name: string
+  trigger_type: AutomationTrigger
   condition_category: string | null
   condition_priority: Priority | null
   action_type: AutomationAction
@@ -24,7 +25,7 @@ export function useAutomationRules() {
       const { data, error } = await supabase
         .from('automation_rules')
         .select(
-          'id, name, condition_category, condition_priority, action_type, action_priority, is_active, execution_count, assignee:action_assignee_id ( full_name )'
+          'id, name, trigger_type, condition_category, condition_priority, action_type, action_priority, is_active, execution_count, assignee:action_assignee_id ( full_name )'
         )
         .order('created_at', { ascending: false })
       if (error) throw error
@@ -39,6 +40,7 @@ export function useCreateRule() {
   return useMutation({
     mutationFn: async (input: {
       name: string
+      triggerType: AutomationTrigger
       conditionCategory: string | null
       conditionPriority: Priority | null
       actionType: AutomationAction
@@ -49,7 +51,7 @@ export function useCreateRule() {
       const { error } = await supabase.from('automation_rules').insert({
         tenant_id: profile.tenantId,
         name: input.name,
-        trigger_type: 'incident_created',
+        trigger_type: input.triggerType,
         condition_category: input.conditionCategory,
         condition_priority: input.conditionPriority,
         action_type: input.actionType,

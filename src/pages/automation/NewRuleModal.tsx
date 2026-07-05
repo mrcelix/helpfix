@@ -4,9 +4,14 @@ import { Button } from '@/components/ui/Button'
 import { useLang } from '@/contexts/LangContext'
 import { useCreateRule } from './useAutomation'
 import { useAssignableUsers } from '@/pages/oncall/useOnCall'
-import type { Priority, AutomationAction } from '@/types/database'
+import type { Priority, AutomationAction, AutomationTrigger } from '@/types/database'
 
 const PRIORITIES: Priority[] = ['P1', 'P2', 'P3', 'P4']
+const TRIGGERS: { key: AutomationTrigger; label: { tr: string; en: string } }[] = [
+  { key: 'incident_created', label: { tr: 'Yeni Olay', en: 'New Incident' } },
+  { key: 'problem_created', label: { tr: 'Yeni Problem', en: 'New Problem' } },
+  { key: 'change_created', label: { tr: 'Yeni Değişiklik', en: 'New Change' } },
+]
 
 export function NewRuleModal({ onClose }: { onClose: () => void }) {
   const { t } = useLang()
@@ -14,6 +19,7 @@ export function NewRuleModal({ onClose }: { onClose: () => void }) {
   const { data: users } = useAssignableUsers()
 
   const [name, setName] = useState('')
+  const [triggerType, setTriggerType] = useState<AutomationTrigger>('incident_created')
   const [conditionCategory, setConditionCategory] = useState('')
   const [conditionPriority, setConditionPriority] = useState<Priority | ''>('')
   const [actionType, setActionType] = useState<AutomationAction>('assign_to_user')
@@ -24,6 +30,7 @@ export function NewRuleModal({ onClose }: { onClose: () => void }) {
     if (!name.trim()) return
     await createRule.mutateAsync({
       name: name.trim(),
+      triggerType,
       conditionCategory: conditionCategory.trim() || null,
       conditionPriority: conditionPriority || null,
       actionType,
@@ -63,9 +70,27 @@ export function NewRuleModal({ onClose }: { onClose: () => void }) {
           />
         </div>
 
+        <div>
+          <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">
+            {t({ tr: 'Tetikleyici', en: 'Trigger' })}
+          </label>
+          <div className="flex gap-1.5">
+            {TRIGGERS.map((tr) => (
+              <button
+                type="button"
+                key={tr.key}
+                onClick={() => setTriggerType(tr.key)}
+                className={`flex-1 text-[11px] font-bold py-2 rounded-lg border ${triggerType === tr.key ? 'bg-brand border-brand text-white' : 'bg-[var(--panel-2)] border-[var(--border)] text-[var(--text-sub)]'}`}
+              >
+                {tr.label.tr}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="bg-[var(--panel-2)] border border-[var(--border)] rounded-lg p-3">
           <div className="text-[10.5px] font-bold text-[var(--text-faint)] uppercase mb-2">
-            {t({ tr: 'KOŞUL (yeni olay oluşturulunca)', en: 'CONDITION (when a new incident is created)' })}
+            {t({ tr: 'KOŞUL', en: 'CONDITION' })}
           </div>
           <div className="grid grid-cols-2 gap-2">
             <input

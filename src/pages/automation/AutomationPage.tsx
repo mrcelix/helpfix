@@ -3,10 +3,16 @@ import { Plus, Sparkles, Trash2 } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import { Button } from '@/components/ui/Button'
 import { useAutomationRules, useToggleRule, useDeleteRule } from './useAutomation'
+
+const TRIGGER_LABEL: Record<string, { tr: string; en: string }> = {
+  incident_created: { tr: 'Yeni Olay', en: 'New Incident' },
+  problem_created: { tr: 'Yeni Problem', en: 'New Problem' },
+  change_created: { tr: 'Yeni Değişiklik', en: 'New Change' },
+}
 import { NewRuleModal } from './NewRuleModal'
 
 export function AutomationPage() {
-  const { t } = useLang()
+  const { lang, t } = useLang()
   const [showNewModal, setShowNewModal] = useState(false)
   const { data: rules, isLoading } = useAutomationRules()
   const toggleRule = useToggleRule()
@@ -59,6 +65,8 @@ export function AutomationPage() {
             <div className="flex-1">
               <div className="font-bold text-[13.5px] mb-1">{r.name}</div>
               <div className="text-[11.5px] text-[var(--text-faint)]">
+                <span className="font-bold text-[var(--text-sub)]">{TRIGGER_LABEL[r.trigger_type]?.[lang]}</span>
+                {' · '}
                 {t({ tr: 'Eğer', en: 'If' })}{' '}
                 {r.condition_category ? `kategori = "${r.condition_category}"` : t({ tr: 'herhangi bir kategori', en: 'any category' })}
                 {r.condition_priority && ` + öncelik = ${r.condition_priority}`}
