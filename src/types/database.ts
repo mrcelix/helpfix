@@ -54,6 +54,9 @@ export type ProjectHealth = 'green' | 'amber' | 'red'
 export type TaskStatus = 'todo' | 'in_progress' | 'done'
 export type RiskLevel = 'low' | 'medium' | 'high'
 export type RiskStatus = 'open' | 'mitigated' | 'closed'
+export type AlertSource = 'datadog' | 'zabbix' | 'prometheus' | 'cloudwatch' | 'manual'
+export type AlertSeverity = 'critical' | 'warning' | 'info'
+export type AlertStatus = 'firing' | 'acknowledged' | 'resolved'
 
 export interface Database {
   public: {
@@ -519,6 +522,29 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['project_risks']['Insert']>
         Relationships: []
       }
+      monitoring_alerts: {
+        Row: {
+          id: string
+          tenant_id: string
+          source: AlertSource
+          title: string
+          description: string | null
+          severity: AlertSeverity
+          status: AlertStatus
+          ci_id: string | null
+          incident_id: string | null
+          acknowledged_by: string | null
+          fired_at: string
+          acknowledged_at: string | null
+          resolved_at: string | null
+        }
+        Insert: Omit<Database['public']['Tables']['monitoring_alerts']['Row'], 'id' | 'fired_at'> & {
+          id?: string
+          fired_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['monitoring_alerts']['Insert']>
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: {
@@ -551,6 +577,10 @@ export interface Database {
       get_change_success_rate: {
         Args: { p_tenant_id: string }
         Returns: { total_closed: number; successful_count: number; success_percent: number }[]
+      }
+      get_daily_alert_volume: {
+        Args: { p_tenant_id: string }
+        Returns: { day: string; alert_count: number; critical_count: number }[]
       }
     }
     Enums: Record<string, never>
