@@ -63,6 +63,7 @@ export type AutomationAction = 'assign_to_user' | 'set_priority'
 export type FishboneCategory = 'people' | 'process' | 'technology' | 'environment'
 export type EscalationNotifyRole = 'agent' | 'manager' | 'tenant_admin'
 export type OncallNotifyMethod = 'push' | 'call' | 'team_lead'
+export type NotificationType = 'ticket_assigned' | 'approval_needed' | 'swap_request' | 'new_comment'
 
 export interface Database {
   public: {
@@ -771,6 +772,25 @@ export interface Database {
           created_at?: string
         }
         Update: Partial<Database['public']['Tables']['change_templates']['Insert']>
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          id: string
+          tenant_id: string
+          user_id: string
+          type: NotificationType
+          title: string
+          body: string | null
+          link: string | null
+          is_read: boolean
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['notifications']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['notifications']['Insert']>
         Relationships: []
       }
     }
