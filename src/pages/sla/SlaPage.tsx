@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, ArrowUpCircle } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import { Button } from '@/components/ui/Button'
 import { PriorityBadge } from '@/components/ui/Badge'
-import { usePolicies, useMonitoredIncidents, useTogglePolicy, type MonitoredIncident } from './useSla'
+import { usePolicies, useMonitoredIncidents, useTogglePolicy, useAllEscalationLevels, computeTriggeredLevel, type MonitoredIncident } from './useSla'
 import { NewPolicyModal } from './NewPolicyModal'
+import { EscalationMatrixModal } from './EscalationMatrixModal'
 
 function slaState(incident: MonitoredIncident): 'ok' | 'warning' | 'breached' {
   if (!incident.sla_due_at) return 'ok'
@@ -41,9 +42,11 @@ export function SlaPage() {
   const { lang, t } = useLang()
   const [tab, setTab] = useState<'monitor' | 'policies'>('monitor')
   const [showNewModal, setShowNewModal] = useState(false)
+  const [escalationPolicy, setEscalationPolicy] = useState<{ id: string; name: string } | null>(null)
 
   const { data: incidents, isLoading: incidentsLoading } = useMonitoredIncidents()
   const { data: policies, isLoading: policiesLoading } = usePolicies()
+  const { data: escalationLevels } = useAllEscalationLevels()
   const togglePolicy = useTogglePolicy()
 
   const breachedCount = incidents?.filter((i) => slaState(i) === 'breached').length ?? 0
@@ -98,17 +101,19 @@ export function SlaPage() {
                 <Th>{t({ tr: 'Başlık', en: 'Title' })}</Th>
                 <Th>{t({ tr: 'Öncelik', en: 'Priority' })}</Th>
                 <Th>{t({ tr: 'SLA Durumu', en: 'SLA Status' })}</Th>
+                <Th>{t({ tr: 'Eskalasyon', en: 'Escalation' })}</Th>
               </tr>
             </thead>
             <tbody>
               {incidentsLoading && (
-                <tr><td colSpan={4} className="text-center py-10 text-[var(--text-faint)]">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</td></tr>
+                <tr><td colSpan={5} className="text-center py-10 text-[var(--text-faint)]">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</td></tr>
               )}
               {!incidentsLoading && incidents?.length === 0 && (
-                <tr><td colSpan={4} className="text-center py-14 text-[var(--text-faint)]">{t({ tr: 'İzlenecek açık kayıt yok.', en: 'No open records to monitor.' })}</td></tr>
+                <tr><td colSpan={5} className="text-center py-14 text-[var(--text-faint)]">{t({ tr: 'İzlenecek açık kayıt yok.', en: 'No open records to monitor.' })}</td></tr>
               )}
               {incidents?.map((i) => {
                 const state = slaState(i)
+                const triggeredLevel = escalationLevels ? computeTriggeredLevel(i, escalationLevels) : null
                 return (
                   <tr key={i.id} className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--row-hover)]">
                     <td className="px-3.5 py-3 font-mono text-[var(--text-faint)]">{i.ref}</td>
@@ -118,6 +123,16 @@ export function SlaPage() {
                       <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold ${STATE_STYLE[state]}`}>
                         {i.sla_due_at ? formatCountdown(i.sla_due_at, lang) : '—'}
                       </span>
+                    </td>
+                    <td className="px-3.5 py-3">
+                      {triggeredLevel ? (
+                        <span className="inline-flex items-center gap-1 text-[10.5px] font-bold text-purple bg-purple-tint rounded-full px-2 py-0.5">
+                          <ArrowUpCircle className="w-3 h-3" />
+                          {t({ tr: `Seviye ${triggeredLevel.level}`, en: `Level ${triggeredLevel.level}` })}
+                        </span>
+                      ) : (
+                        <span className="text-[var(--text-faint)]">—</span>
+                      )}
                     </td>
                   </tr>
                 )
@@ -137,14 +152,15 @@ export function SlaPage() {
                 <Th>{t({ tr: 'Yanıt Süresi', en: 'Response Time' })}</Th>
                 <Th>{t({ tr: 'Çözüm Süresi', en: 'Resolution Time' })}</Th>
                 <Th>{t({ tr: 'Aktif', en: 'Active' })}</Th>
+                <Th></Th>
               </tr>
             </thead>
             <tbody>
               {policiesLoading && (
-                <tr><td colSpan={5} className="text-center py-10 text-[var(--text-faint)]">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</td></tr>
+                <tr><td colSpan={6} className="text-center py-10 text-[var(--text-faint)]">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</td></tr>
               )}
               {!policiesLoading && policies?.length === 0 && (
-                <tr><td colSpan={5} className="text-center py-14 text-[var(--text-faint)]">{t({ tr: 'Henüz politika yok.', en: 'No policies yet.' })}</td></tr>
+                <tr><td colSpan={6} className="text-center py-14 text-[var(--text-faint)]">{t({ tr: 'Henüz politika yok.', en: 'No policies yet.' })}</td></tr>
               )}
               {policies?.map((p) => (
                 <tr key={p.id} className="border-b border-[var(--border)] last:border-0">
@@ -162,6 +178,14 @@ export function SlaPage() {
                       />
                     </button>
                   </td>
+                  <td className="px-3.5 py-3">
+                    <button
+                      onClick={() => setEscalationPolicy({ id: p.id, name: p.name })}
+                      className="text-[10.5px] font-bold text-purple whitespace-nowrap"
+                    >
+                      {t({ tr: 'Eskalasyon Matrisi', en: 'Escalation Matrix' })}
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -170,6 +194,13 @@ export function SlaPage() {
       )}
 
       {showNewModal && <NewPolicyModal onClose={() => setShowNewModal(false)} />}
+      {escalationPolicy && (
+        <EscalationMatrixModal
+          policyId={escalationPolicy.id}
+          policyName={escalationPolicy.name}
+          onClose={() => setEscalationPolicy(null)}
+        />
+      )}
     </div>
   )
 }
@@ -183,7 +214,7 @@ function KpiCard({ label, value, color }: { label: string; value: number; color:
   )
 }
 
-function Th({ children }: { children: React.ReactNode }) {
+function Th({ children }: { children?: React.ReactNode }) {
   return (
     <th className="text-left text-[10.5px] uppercase tracking-wide text-[var(--text-faint)] font-semibold px-3.5 py-2.5">
       {children}

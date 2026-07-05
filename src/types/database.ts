@@ -61,6 +61,7 @@ export type SwapStatus = 'pending' | 'approved' | 'rejected'
 export type AutomationTrigger = 'incident_created'
 export type AutomationAction = 'assign_to_user' | 'set_priority'
 export type FishboneCategory = 'people' | 'process' | 'technology' | 'environment'
+export type EscalationNotifyRole = 'agent' | 'manager' | 'tenant_admin'
 
 export interface Database {
   public: {
@@ -698,6 +699,23 @@ export interface Database {
         }
         Insert: Database['public']['Tables']['service_bundle_items']['Row']
         Update: Partial<Database['public']['Tables']['service_bundle_items']['Insert']>
+        Relationships: []
+      }
+      sla_escalation_levels: {
+        Row: {
+          id: string
+          tenant_id: string
+          sla_policy_id: string
+          level: number
+          trigger_percent: number
+          notify_role: EscalationNotifyRole
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['sla_escalation_levels']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['sla_escalation_levels']['Insert']>
         Relationships: []
       }
     }
