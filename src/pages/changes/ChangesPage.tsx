@@ -8,6 +8,7 @@ import { ChangeDrawer } from './ChangeDrawer'
 import { NewChangeModal } from './NewChangeModal'
 import { FreezeWindowsModal } from './FreezeWindowsModal'
 import { ChangeTemplatesModal } from './ChangeTemplatesModal'
+import { ChangeAnalytics } from './ChangeAnalytics'
 
 const SAVED_VIEWS: { key: ChangeSavedView; label: { tr: string; en: string } }[] = [
   { key: 'all', label: { tr: 'Tümü', en: 'All' } },
@@ -43,6 +44,7 @@ function riskColor(score: number) {
 export function ChangesPage() {
   const { lang, t } = useLang()
   const [view, setView] = useState<ChangeSavedView>('all')
+  const [pageTab, setPageTab] = useState<'changes' | 'analytics'>('changes')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const openId = useOpenParam()
   useEffect(() => { if (openId) setSelectedId(openId) }, [openId])
@@ -78,6 +80,25 @@ export function ChangesPage() {
         </div>
       </div>
 
+      <div className="flex gap-1 border-b border-[var(--border)] mb-4">
+        <button
+          onClick={() => setPageTab('changes')}
+          className={`px-1 py-2.5 text-[13.5px] font-semibold mr-5 border-b-2 ${pageTab === 'changes' ? 'border-brand text-brand-dim' : 'border-transparent text-[var(--text-faint)]'}`}
+        >
+          {t({ tr: 'Değişiklikler', en: 'Changes' })}
+        </button>
+        <button
+          onClick={() => setPageTab('analytics')}
+          className={`px-1 py-2.5 text-[13.5px] font-semibold mr-5 border-b-2 ${pageTab === 'analytics' ? 'border-brand text-brand-dim' : 'border-transparent text-[var(--text-faint)]'}`}
+        >
+          {t({ tr: 'Analitik', en: 'Analytics' })}
+        </button>
+      </div>
+
+      {pageTab === 'analytics' ? (
+        <ChangeAnalytics />
+      ) : (
+      <>
       <div className="flex items-center gap-1.5 mb-3 flex-wrap">
         {SAVED_VIEWS.map((v) => (
           <button
@@ -152,6 +173,8 @@ export function ChangesPage() {
           </tbody>
         </table>
       </div>
+      </>
+      )}
 
       {selectedId && <ChangeDrawer id={selectedId} onClose={() => setSelectedId(null)} />}
       {showNewModal && <NewChangeModal onClose={() => setShowNewModal(false)} />}

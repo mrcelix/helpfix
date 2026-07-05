@@ -404,3 +404,62 @@ export function useCreateChangeTemplate() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['change-templates'] }),
   })
 }
+
+// ------------------------------------------------------------------
+// DEĞİŞİKLİK ANALİTİK — risk dağılımı, onay darboğazı, başarı trendi
+// ------------------------------------------------------------------
+export interface RiskDistribution {
+  bucket: string
+  change_count: number
+}
+
+export function useChangeRiskDistribution() {
+  const { profile } = useAuth()
+  return useQuery({
+    queryKey: ['change-risk-distribution', profile?.tenantId],
+    enabled: !!profile,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_change_risk_distribution', { p_tenant_id: profile!.tenantId })
+      if (error) throw error
+      return data as RiskDistribution[]
+    },
+  })
+}
+
+export interface ApprovalBottleneck {
+  approval_type: string
+  avg_wait_hours: number
+  decided_count: number
+}
+
+export function useApprovalBottleneck() {
+  const { profile } = useAuth()
+  return useQuery({
+    queryKey: ['approval-bottleneck', profile?.tenantId],
+    enabled: !!profile,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_approval_bottleneck', { p_tenant_id: profile!.tenantId })
+      if (error) throw error
+      return data as ApprovalBottleneck[]
+    },
+  })
+}
+
+export interface ChangeSuccessTrend {
+  week_start: string
+  successful_count: number
+  failed_count: number
+}
+
+export function useChangeSuccessTrend() {
+  const { profile } = useAuth()
+  return useQuery({
+    queryKey: ['change-success-trend', profile?.tenantId],
+    enabled: !!profile,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_weekly_change_success_trend', { p_tenant_id: profile!.tenantId })
+      if (error) throw error
+      return data as ChangeSuccessTrend[]
+    },
+  })
+}

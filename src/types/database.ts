@@ -854,6 +854,18 @@ export interface Database {
         Args: { p_tenant_id: string }
         Returns: { week_start: string; created_count: number; resolved_count: number }[]
       }
+      get_change_risk_distribution: {
+        Args: { p_tenant_id: string }
+        Returns: { bucket: string; change_count: number }[]
+      }
+      get_approval_bottleneck: {
+        Args: { p_tenant_id: string }
+        Returns: { approval_type: string; avg_wait_hours: number; decided_count: number }[]
+      }
+      get_weekly_change_success_trend: {
+        Args: { p_tenant_id: string }
+        Returns: { week_start: string; successful_count: number; failed_count: number }[]
+      }
     }
     Enums: Record<string, never>
   }
