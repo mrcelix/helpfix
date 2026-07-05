@@ -809,6 +809,24 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['monitoring_runbooks']['Insert']>
         Relationships: []
       }
+      audit_log: {
+        Row: {
+          id: string
+          tenant_id: string
+          actor_id: string | null
+          action: string
+          target_type: string
+          target_label: string | null
+          details: Record<string, unknown> | null
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['audit_log']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['audit_log']['Insert']>
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: {

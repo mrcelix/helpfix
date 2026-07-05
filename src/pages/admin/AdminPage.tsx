@@ -11,6 +11,7 @@ import {
   useCreateDepartment,
   useFeatureFlags,
   useToggleModule,
+  useAuditLog,
 } from './useAdmin'
 import type { UserRole } from '@/types/database'
 
@@ -18,7 +19,7 @@ const ROLE_OPTIONS: UserRole[] = ['tenant_admin', 'manager', 'agent', 'requester
 
 export function AdminPage() {
   const { t } = useLang()
-  const [tab, setTab] = useState<'users' | 'departments' | 'modules' | 'catalog'>('users')
+  const [tab, setTab] = useState<'users' | 'departments' | 'modules' | 'catalog' | 'audit'>('users')
 
   return (
     <div>
@@ -44,12 +45,16 @@ export function AdminPage() {
         <TabButton active={tab === 'catalog'} onClick={() => setTab('catalog')}>
           {t({ tr: 'Kataloğ', en: 'Catalog' })}
         </TabButton>
+        <TabButton active={tab === 'audit'} onClick={() => setTab('audit')}>
+          {t({ tr: 'Denetim Günlüğü', en: 'Audit Log' })}
+        </TabButton>
       </div>
 
       {tab === 'users' && <UsersTab />}
       {tab === 'departments' && <DepartmentsTab />}
       {tab === 'modules' && <ModulesTab />}
       {tab === 'catalog' && <AdminCatalogTab />}
+      {tab === 'audit' && <AuditLogTab />}
     </div>
   )
 
@@ -230,5 +235,55 @@ function Th({ children }: { children: React.ReactNode }) {
     <th className="text-left text-[10.5px] uppercase tracking-wide text-[var(--text-faint)] font-semibold px-3.5 py-2.5">
       {children}
     </th>
+  )
+}
+
+const ACTION_LABEL: Record<string, { tr: string; en: string }> = {
+  role_changed: { tr: 'Rol Değiştirildi', en: 'Role Changed' },
+  user_active_toggled: { tr: 'Kullanıcı Durumu Değişti', en: 'User Status Toggled' },
+  module_toggled: { tr: 'Modül Aç/Kapa', en: 'Module Toggled' },
+}
+
+function AuditLogTab() {
+  const { lang, t } = useLang()
+  const { data: entries, isLoading } = useAuditLog()
+
+  return (
+    <div>
+      <p className="text-[12px] text-[var(--text-faint)] mb-4">
+        {t({
+          tr: 'Güvenlik açısından hassas işlemler (rol değişiklikleri, modül aç/kapa) otomatik olarak buraya kaydedilir.',
+          en: 'Security-sensitive actions (role changes, module toggles) are automatically logged here.',
+        })}
+      </p>
+      <div className="border border-[var(--border)] rounded-[var(--radius-app)] overflow-hidden bg-[var(--panel)]">
+        <table className="w-full text-[12.5px]">
+          <thead>
+            <tr className="bg-[var(--panel-2)] border-b border-[var(--border)]">
+              <Th>{t({ tr: 'İşlem', en: 'Action' })}</Th>
+              <Th>{t({ tr: 'Hedef', en: 'Target' })}</Th>
+              <Th>{t({ tr: 'Kim', en: 'Actor' })}</Th>
+              <Th>{t({ tr: 'Zaman', en: 'Time' })}</Th>
+            </tr>
+          </thead>
+          <tbody>
+            {isLoading && (
+              <tr><td colSpan={4} className="text-center py-10 text-[var(--text-faint)]">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</td></tr>
+            )}
+            {!isLoading && entries?.length === 0 && (
+              <tr><td colSpan={4} className="text-center py-10 text-[var(--text-faint)]">{t({ tr: 'Henüz kayıt yok.', en: 'No entries yet.' })}</td></tr>
+            )}
+            {entries?.map((e) => (
+              <tr key={e.id} className="border-b border-[var(--border)] last:border-0">
+                <td className="px-3.5 py-3 font-semibold">{ACTION_LABEL[e.action]?.[lang] ?? e.action}</td>
+                <td className="px-3.5 py-3 text-[var(--text-sub)]">{e.target_label ?? '—'}</td>
+                <td className="px-3.5 py-3 text-[var(--text-sub)]">{e.actor?.full_name ?? '—'}</td>
+                <td className="px-3.5 py-3 text-[var(--text-faint)]">{new Date(e.created_at).toLocaleString(lang === 'tr' ? 'tr-TR' : 'en-US')}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
   )
 }

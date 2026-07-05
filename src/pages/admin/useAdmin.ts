@@ -115,3 +115,33 @@ export function useToggleModule() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['feature-flags'] }),
   })
 }
+
+// ------------------------------------------------------------------
+// DENETİM GÜNLÜĞÜ
+// ------------------------------------------------------------------
+export interface AuditLogEntry {
+  id: string
+  action: string
+  target_type: string
+  target_label: string | null
+  details: Record<string, unknown> | null
+  created_at: string
+  actor: { full_name: string } | null
+}
+
+export function useAuditLog() {
+  const { profile } = useAuth()
+  return useQuery({
+    queryKey: ['audit-log', profile?.tenantId],
+    enabled: !!profile,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('audit_log')
+        .select('id, action, target_type, target_label, details, created_at, actor:actor_id ( full_name )')
+        .order('created_at', { ascending: false })
+        .limit(100)
+      if (error) throw error
+      return data as unknown as AuditLogEntry[]
+    },
+  })
+}
