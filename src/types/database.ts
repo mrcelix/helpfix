@@ -57,6 +57,7 @@ export type RiskStatus = 'open' | 'mitigated' | 'closed'
 export type AlertSource = 'datadog' | 'zabbix' | 'prometheus' | 'cloudwatch' | 'manual'
 export type AlertSeverity = 'critical' | 'warning' | 'info'
 export type AlertStatus = 'firing' | 'acknowledged' | 'resolved'
+export type SwapStatus = 'pending' | 'approved' | 'rejected'
 
 export interface Database {
   public: {
@@ -543,6 +544,55 @@ export interface Database {
           fired_at?: string
         }
         Update: Partial<Database['public']['Tables']['monitoring_alerts']['Insert']>
+        Relationships: []
+      }
+      oncall_schedules: {
+        Row: {
+          id: string
+          tenant_id: string
+          name: string
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['oncall_schedules']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['oncall_schedules']['Insert']>
+        Relationships: []
+      }
+      oncall_shifts: {
+        Row: {
+          id: string
+          tenant_id: string
+          schedule_id: string
+          user_id: string
+          start_time: string
+          end_time: string
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['oncall_shifts']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['oncall_shifts']['Insert']>
+        Relationships: []
+      }
+      oncall_swap_requests: {
+        Row: {
+          id: string
+          tenant_id: string
+          shift_id: string
+          requested_by: string
+          requested_to: string
+          status: SwapStatus
+          created_at: string
+          decided_at: string | null
+        }
+        Insert: Omit<Database['public']['Tables']['oncall_swap_requests']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['oncall_swap_requests']['Insert']>
         Relationships: []
       }
     }
