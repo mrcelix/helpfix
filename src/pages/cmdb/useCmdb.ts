@@ -144,3 +144,98 @@ export function useUpdateCi(id: string) {
     },
   })
 }
+
+// ------------------------------------------------------------------
+// SERVİS HARİTASI: tüm CI'lar + ilişkiler (görsel graf için)
+// ------------------------------------------------------------------
+export interface ServiceMapNode {
+  id: string
+  name: string
+  tag: string
+  ci_type: CiType
+  status: CiStatus
+}
+
+export interface ServiceMapEdge {
+  id: string
+  source_ci_id: string
+  target_ci_id: string
+  relationship_type: 'depends_on' | 'hosted_on' | 'connected_to'
+}
+
+export function useServiceMap() {
+  const { profile } = useAuth()
+  return useQuery({
+    queryKey: ['service-map', profile?.tenantId],
+    enabled: !!profile,
+    queryFn: async () => {
+      const [nodesRes, edgesRes] = await Promise.all([
+        supabase.from('configuration_items').select('id, name, tag, ci_type, status').limit(200),
+        supabase.from('ci_relationships').select('id, source_ci_id, target_ci_id, relationship_type'),
+      ])
+      if (nodesRes.error) throw nodesRes.error
+      if (edgesRes.error) throw edgesRes.error
+      return {
+        nodes: nodesRes.data as ServiceMapNode[],
+        edges: edgesRes.data as ServiceMapEdge[],
+      }
+    },
+  })
+}
+
+export function useCreateRelationship() {
+  const qc = useQueryClient()
+  const { profile } = useAuth()
+  return useMutation({
+    mutationFn: async (input: { sourceCiId: string; targetCiId: string; relationshipType: 'depends_on' | 'hosted_on' | 'connected_to' }) => {
+      if (!profile) throw new Error('Profil yüklenmedi')
+      const { error } = await supabase.from('ci_relationships').insert({
+        tenant_id: profile.tenantId,
+        source_ci_id: input.sourceCiId,
+        target_ci_id: input.targetCiId,
+        relationship_type: input.relationshipType,
+      })
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['service-map'] })
+      qc.invalidateQueries({ queryKey: ['ci-relationships'] })
+    },
+  })
+}
+
+export function useCiRelationships(ciId: string | null) {
+  return useQuery({
+    queryKey: ['ci-relationships', ciId],
+    enabled: !!ciId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('ci_relationships')
+        .select('id, source_ci_id, target_ci_id, relationship_type, source:source_ci_id ( name ), target:target_ci_id ( name )')
+        .or(`source_ci_id.eq.${ciId},target_ci_id.eq.${ciId}`)
+      if (error) throw error
+      return data as unknown as {
+        id: string
+        source_ci_id: string
+        target_ci_id: string
+        relationship_type: string
+        source: { name: string } | null
+        target: { name: string } | null
+      }[]
+    },
+  })
+}
+
+export function useDeleteRelationship() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('ci_relationships').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['service-map'] })
+      qc.invalidateQueries({ queryKey: ['ci-relationships'] })
+    },
+  })
+}

@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, List, Share2 } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import { Button } from '@/components/ui/Button'
 import { useConfigurationItems, type CiSavedView } from './useCmdb'
 import { CiDrawer } from './CiDrawer'
 import { NewCiModal } from './NewCiModal'
+import { ServiceMap } from './ServiceMap'
 
 const SAVED_VIEWS: { key: CiSavedView; label: { tr: string; en: string } }[] = [
   { key: 'all', label: { tr: 'Tümü', en: 'All' } },
@@ -39,6 +40,7 @@ function isWarrantySoon(dateStr: string | null) {
 export function CmdbPage() {
   const { lang, t } = useLang()
   const [view, setView] = useState<CiSavedView>('all')
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [showNewModal, setShowNewModal] = useState(false)
 
@@ -55,12 +57,32 @@ export function CmdbPage() {
             {t({ tr: 'Konfigürasyon öğeleri, garanti ve zimmet takibi', en: 'Configuration items, warranty, and assignment tracking' })}
           </p>
         </div>
-        <Button onClick={() => setShowNewModal(true)}>
-          <Plus className="w-[15px] h-[15px]" />
-          {t({ tr: 'Yeni Varlık', en: 'New Asset' })}
-        </Button>
+        <div className="flex gap-2">
+          <div className="flex border border-[var(--border)] rounded-lg overflow-hidden">
+            <button
+              onClick={() => setViewMode('list')}
+              className={`px-2.5 py-2 ${viewMode === 'list' ? 'bg-brand text-white' : 'bg-[var(--panel)] text-[var(--text-faint)]'}`}
+            >
+              <List className="w-[14px] h-[14px]" />
+            </button>
+            <button
+              onClick={() => setViewMode('map')}
+              className={`px-2.5 py-2 ${viewMode === 'map' ? 'bg-brand text-white' : 'bg-[var(--panel)] text-[var(--text-faint)]'}`}
+            >
+              <Share2 className="w-[14px] h-[14px]" />
+            </button>
+          </div>
+          <Button onClick={() => setShowNewModal(true)}>
+            <Plus className="w-[15px] h-[15px]" />
+            {t({ tr: 'Yeni Varlık', en: 'New Asset' })}
+          </Button>
+        </div>
       </div>
 
+      {viewMode === 'map' ? (
+        <ServiceMap />
+      ) : (
+      <>
       <div className="flex items-center gap-1.5 mb-3 flex-wrap">
         {SAVED_VIEWS.map((v) => (
           <button
@@ -135,6 +157,8 @@ export function CmdbPage() {
           </tbody>
         </table>
       </div>
+      </>
+      )}
 
       {selectedId && <CiDrawer id={selectedId} onClose={() => setSelectedId(null)} />}
       {showNewModal && <NewCiModal onClose={() => setShowNewModal(false)} />}

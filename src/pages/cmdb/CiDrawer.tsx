@@ -1,6 +1,8 @@
+import { useState } from 'react'
+import { Trash2 } from 'lucide-react'
 import { Drawer } from '@/components/ui/Drawer'
 import { useLang } from '@/contexts/LangContext'
-import { useCiDetail, useLinkedRecords, useUpdateCi } from './useCmdb'
+import { useCiDetail, useLinkedRecords, useUpdateCi, useConfigurationItems, useCiRelationships, useCreateRelationship, useDeleteRelationship } from './useCmdb'
 import type { CiStatus } from '@/types/database'
 
 const STATUS_OPTIONS: CiStatus[] = ['active', 'in_repair', 'retired', 'unmanaged']
@@ -10,6 +12,12 @@ export function CiDrawer({ id, onClose }: { id: string; onClose: () => void }) {
   const { data: ci, isLoading } = useCiDetail(id)
   const { data: linked } = useLinkedRecords(id)
   const updateCi = useUpdateCi(id)
+  const { data: allCis } = useConfigurationItems('all')
+  const { data: relationships } = useCiRelationships(id)
+  const createRelationship = useCreateRelationship()
+  const deleteRelationship = useDeleteRelationship()
+  const [targetCiId, setTargetCiId] = useState('')
+  const [relType, setRelType] = useState<'depends_on' | 'hosted_on' | 'connected_to'>('depends_on')
 
   const totalLinked = (linked?.incidents.length ?? 0) + (linked?.problems.length ?? 0) + (linked?.changes.length ?? 0)
 
@@ -58,6 +66,66 @@ export function CiDrawer({ id, onClose }: { id: string; onClose: () => void }) {
               <p className="text-[12.5px] text-[var(--text-sub)]">{ci.notes}</p>
             </div>
           )}
+
+          <div>
+            <div className="text-[10.5px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-2.5">
+              {t({ tr: 'Servis Haritası İlişkileri', en: 'Service Map Relationships' })}
+            </div>
+            <div className="space-y-1.5 mb-2.5">
+              {relationships?.map((r) => (
+                <div key={r.id} className="flex items-center gap-2 bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2 text-[11.5px]">
+                  <span className="flex-1 truncate">
+                    {r.source_ci_id === id ? (
+                      <>
+                        <b>{ci.name}</b> → {r.target?.name}
+                      </>
+                    ) : (
+                      <>
+                        {r.source?.name} → <b>{ci.name}</b>
+                      </>
+                    )}
+                    <span className="text-[var(--text-faint)]"> ({r.relationship_type})</span>
+                  </span>
+                  <button onClick={() => deleteRelationship.mutate(r.id)} className="text-[var(--text-faint)] hover:text-p1 shrink-0">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))}
+              {!relationships?.length && (
+                <p className="text-[11.5px] text-[var(--text-faint)] italic">{t({ tr: 'Henüz ilişki yok', en: 'No relationships yet' })}</p>
+              )}
+            </div>
+            <div className="flex gap-1.5">
+              <select
+                value={targetCiId}
+                onChange={(e) => setTargetCiId(e.target.value)}
+                className="flex-1 bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-2 py-1.5 text-[11.5px]"
+              >
+                <option value="">{t({ tr: 'Varlık seçin…', en: 'Select asset…' })}</option>
+                {allCis?.filter((c) => c.id !== id).map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={relType}
+                onChange={(e) => setRelType(e.target.value as typeof relType)}
+                className="bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-2 py-1.5 text-[11.5px]"
+              >
+                <option value="depends_on">depends_on</option>
+                <option value="hosted_on">hosted_on</option>
+                <option value="connected_to">connected_to</option>
+              </select>
+              <button
+                onClick={() => targetCiId && createRelationship.mutate({ sourceCiId: id, targetCiId, relationshipType: relType })}
+                disabled={!targetCiId}
+                className="text-[11px] font-bold px-2.5 rounded-lg bg-brand text-white disabled:opacity-40 shrink-0"
+              >
+                +
+              </button>
+            </div>
+          </div>
 
           <div>
             <div className="text-[10.5px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-2.5">
