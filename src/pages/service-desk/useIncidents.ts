@@ -279,3 +279,52 @@ export function useTechnicianCsatLeaderboard() {
     },
   })
 }
+
+// ------------------------------------------------------------------
+// TEKRARLAYAN TALEP TESPİTİ & BİRLEŞTİRME
+// ------------------------------------------------------------------
+export interface DuplicateCandidate {
+  id: string
+  ref: string
+  title: string
+  status: TicketStatus
+  created_at: string
+}
+
+/** Aynı kategoride, açık, kendisi hariç başka olayları önerir —
+ * gerçek bir benzerlik motoru değil ama gerçek, kullanışlı bir sinyal. */
+export function useDuplicateCandidates(incidentId: string, category: string | null) {
+  return useQuery({
+    queryKey: ['duplicate-candidates', incidentId, category],
+    enabled: !!category,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('incidents')
+        .select('id, ref, title, status, created_at')
+        .eq('category', category!)
+        .neq('id', incidentId)
+        .not('status', 'in', '(resolved,closed,merged)')
+        .order('created_at', { ascending: false })
+        .limit(5)
+      if (error) throw error
+      return data as DuplicateCandidate[]
+    },
+  })
+}
+
+export function useMergeIncident() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: { incidentId: string; mergeIntoId: string }) => {
+      const { error } = await supabase
+        .from('incidents')
+        .update({ status: 'merged', possible_duplicate_of: input.mergeIntoId })
+        .eq('id', input.incidentId)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['incidents'] })
+      qc.invalidateQueries({ queryKey: ['incident'] })
+    },
+  })
+}

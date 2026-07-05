@@ -10,6 +10,8 @@ import {
   useIncidentTimeline,
   useUpdateIncident,
   useAddComment,
+  useDuplicateCandidates,
+  useMergeIncident,
 } from './useIncidents'
 import type { TicketStatus } from '@/types/database'
 
@@ -23,6 +25,8 @@ export function TicketDrawer({ id, onClose }: { id: string; onClose: () => void 
   const { data: timeline } = useIncidentTimeline(id)
   const updateIncident = useUpdateIncident(id)
   const addComment = useAddComment(id)
+  const { data: duplicates } = useDuplicateCandidates(id, incident?.category ?? null)
+  const mergeIncident = useMergeIncident()
 
   const [draft, setDraft] = useState('')
   const [isInternal, setIsInternal] = useState(false)
@@ -103,6 +107,28 @@ export function TicketDrawer({ id, onClose }: { id: string; onClose: () => void 
                 >
                   {incident.assignee?.full_name ?? t({ tr: 'Talebi Üstlen', en: 'Take Ticket' })}
                 </button>
+              </div>
+            </div>
+          )}
+
+          {canManage && !!duplicates?.length && incident.status !== 'merged' && (
+            <div className="bg-p2-tint border border-p2/40 rounded-lg p-3">
+              <div className="text-[11px] font-bold text-p2 uppercase mb-2">
+                ⚠️ {t({ tr: 'Olası Tekrarlar', en: 'Possible Duplicates' })}
+              </div>
+              <div className="space-y-1.5">
+                {duplicates.map((d) => (
+                  <div key={d.id} className="flex items-center gap-2 bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-2.5 py-2 text-[11.5px]">
+                    <span className="font-mono text-[var(--text-faint)] shrink-0">{d.ref}</span>
+                    <span className="flex-1 truncate">{d.title}</span>
+                    <button
+                      onClick={() => mergeIncident.mutate({ incidentId: id, mergeIntoId: d.id })}
+                      className="text-[10.5px] font-bold text-brand-dim shrink-0"
+                    >
+                      {t({ tr: 'Bununla Birleştir', en: 'Merge Into This' })}
+                    </button>
+                  </div>
+                ))}
               </div>
             </div>
           )}
