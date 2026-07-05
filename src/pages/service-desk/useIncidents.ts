@@ -17,6 +17,7 @@ export interface IncidentListItem {
   category: string | null
   created_at: string
   sla_due_at: string | null
+  requester_id: string
   requester: { full_name: string; avatar_initials: string | null } | null
   assignee: { full_name: string; avatar_initials: string | null } | null
 }
@@ -47,7 +48,7 @@ export interface IncidentTimelineEvent {
 export type SavedView = 'all' | 'mine' | 'unassigned' | 'open'
 
 const SELECT_LIST = `
-  id, ref, title, priority, status, channel, category, created_at, sla_due_at,
+  id, ref, title, priority, status, channel, category, created_at, sla_due_at, requester_id,
   requester:requester_id ( full_name, avatar_initials ),
   assignee:assignee_id ( full_name, avatar_initials )
 `
@@ -205,7 +206,7 @@ export function useUpdateIncident(id: string) {
   const qc = useQueryClient()
 
   return useMutation({
-    mutationFn: async (patch: Partial<{ status: TicketStatus; assignee_id: string | null; priority: Priority }>) => {
+    mutationFn: async (patch: Partial<{ status: TicketStatus; assignee_id: string | null; priority: Priority; csat_score: number }>) => {
       const { error } = await supabase.from('incidents').update(patch).eq('id', id)
       if (error) throw error
     },

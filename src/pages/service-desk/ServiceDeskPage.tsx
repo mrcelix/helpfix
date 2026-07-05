@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { Plus, Download } from 'lucide-react'
+import { Plus, Download, List, Kanban } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import { Button } from '@/components/ui/Button'
 import { PriorityBadge, StatusBadge } from '@/components/ui/Badge'
-import { useIncidents, type SavedView } from './useIncidents'
+import { useIncidents, useUpdateIncident, type SavedView } from './useIncidents'
 import { TicketDrawer } from './TicketDrawer'
 import { NewTicketModal } from './NewTicketModal'
+import type { TicketStatus } from '@/types/database'
 
 const SAVED_VIEWS: { key: SavedView; label: { tr: string; en: string } }[] = [
   { key: 'all', label: { tr: 'Tümü', en: 'All' } },
@@ -14,9 +15,24 @@ const SAVED_VIEWS: { key: SavedView; label: { tr: string; en: string } }[] = [
   { key: 'unassigned', label: { tr: 'Atanmamış', en: 'Unassigned' } },
 ]
 
+const KANBAN_COLUMNS: { key: TicketStatus; label: { tr: string; en: string } }[] = [
+  { key: 'new', label: { tr: 'Yeni', en: 'New' } },
+  { key: 'open', label: { tr: 'Açık', en: 'Open' } },
+  { key: 'in_progress', label: { tr: 'İşlemde', en: 'In Progress' } },
+  { key: 'on_hold', label: { tr: 'Beklemede', en: 'On Hold' } },
+  { key: 'resolved', label: { tr: 'Çözüldü', en: 'Resolved' } },
+]
+
+function nextStatus(current: TicketStatus): TicketStatus {
+  const order: TicketStatus[] = ['new', 'open', 'in_progress', 'on_hold', 'resolved']
+  const idx = order.indexOf(current)
+  return order[(idx + 1) % order.length]
+}
+
 export function ServiceDeskPage() {
   const { lang, t } = useLang()
   const [view, setView] = useState<SavedView>('open')
+  const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [showNewModal, setShowNewModal] = useState(false)
 
@@ -92,15 +108,51 @@ export function ServiceDeskPage() {
             {v.label[lang]}
           </button>
         ))}
-        <button
-          onClick={exportCsv}
-          className="ml-auto flex items-center gap-1.5 text-[12px] font-semibold px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--panel)] text-[var(--text-sub)] hover:border-brand hover:text-brand-dim"
-        >
-          <Download className="w-[13px] h-[13px]" />
-          {t({ tr: 'Dışa Aktar', en: 'Export' })}
-        </button>
+        <div className="ml-auto flex items-center gap-2">
+          <div className="flex border border-[var(--border)] rounded-lg overflow-hidden">
+            <button
+              onClick={() => setViewMode('list')}
+              className={`px-2.5 py-2 ${viewMode === 'list' ? 'bg-brand text-white' : 'bg-[var(--panel)] text-[var(--text-faint)]'}`}
+            >
+              <List className="w-[14px] h-[14px]" />
+            </button>
+            <button
+              onClick={() => setViewMode('kanban')}
+              className={`px-2.5 py-2 ${viewMode === 'kanban' ? 'bg-brand text-white' : 'bg-[var(--panel)] text-[var(--text-faint)]'}`}
+            >
+              <Kanban className="w-[14px] h-[14px]" />
+            </button>
+          </div>
+          <button
+            onClick={exportCsv}
+            className="flex items-center gap-1.5 text-[12px] font-semibold px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--panel)] text-[var(--text-sub)] hover:border-brand hover:text-brand-dim"
+          >
+            <Download className="w-[13px] h-[13px]" />
+            {t({ tr: 'Dışa Aktar', en: 'Export' })}
+          </button>
+        </div>
       </div>
 
+      {viewMode === 'kanban' ? (
+        <div className="grid grid-cols-5 gap-2.5">
+          {KANBAN_COLUMNS.map((col) => (
+            <div key={col.key}>
+              <div className="text-[10.5px] font-bold text-[var(--text-faint)] uppercase mb-2 flex items-center justify-between">
+                <span>{col.label[lang]}</span>
+                <span>{incidents?.filter((i) => i.status === col.key).length ?? 0}</span>
+              </div>
+              <div className="space-y-2 min-h-[60px]">
+                {incidents
+                  ?.filter((i) => i.status === col.key)
+                  .map((i) => (
+                    <KanbanCard key={i.id} incident={i} onOpen={() => setSelectedId(i.id)} />
+                  ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+      <>
       {/* Table */}
       <div className="border border-[var(--border)] rounded-[var(--radius-app)] overflow-hidden bg-[var(--panel)]">
         <table className="w-full text-[12.5px]">
@@ -167,9 +219,44 @@ export function ServiceDeskPage() {
           </tbody>
         </table>
       </div>
+      </>
+      )}
 
       {selectedId && <TicketDrawer id={selectedId} onClose={() => setSelectedId(null)} />}
       {showNewModal && <NewTicketModal onClose={() => setShowNewModal(false)} />}
+    </div>
+  )
+}
+
+function KanbanCard({
+  incident,
+  onOpen,
+}: {
+  incident: { id: string; ref: string; title: string; priority: import('@/types/database').Priority; status: TicketStatus; assignee: { full_name: string } | null }
+  onOpen: () => void
+}) {
+  const updateIncident = useUpdateIncident(incident.id)
+  return (
+    <div className="bg-[var(--panel)] border border-[var(--border)] rounded-xl p-3 hover:border-brand transition-colors">
+      <div onClick={onOpen} className="cursor-pointer">
+        <div className="flex items-center justify-between mb-1.5">
+          <PriorityBadge priority={incident.priority} />
+          <span className="font-mono text-[10px] text-[var(--text-faint)]">{incident.ref}</span>
+        </div>
+        <div className="text-[12px] font-semibold mb-1.5 line-clamp-2">{incident.title}</div>
+        <div className="text-[10.5px] text-[var(--text-faint)]">{incident.assignee?.full_name ?? '—'}</div>
+      </div>
+      {incident.status !== 'resolved' && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            updateIncident.mutate({ status: nextStatus(incident.status) })
+          }}
+          className="w-full mt-2 text-[10.5px] font-bold py-1.5 rounded-md bg-[var(--panel-2)] border border-[var(--border)] text-[var(--text-sub)] hover:border-brand"
+        >
+          →
+        </button>
+      )}
     </div>
   )
 }

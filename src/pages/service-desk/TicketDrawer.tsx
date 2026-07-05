@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Send } from 'lucide-react'
+import { Send, Star } from 'lucide-react'
 import { Drawer } from '@/components/ui/Drawer'
 import { PriorityBadge, StatusBadge } from '@/components/ui/Badge'
 import { useLang } from '@/contexts/LangContext'
@@ -69,6 +69,10 @@ export function TicketDrawer({ id, onClose }: { id: string; onClose: () => void 
             <p className="text-[13px] text-[var(--text-sub)] leading-relaxed whitespace-pre-wrap">
               {incident.description}
             </p>
+          )}
+
+          {['resolved', 'closed'].includes(incident.status) && incident.requester_id === profile?.id && (
+            <CsatSurvey existingScore={incident.csat_score} onSubmit={(score) => updateIncident.mutate({ csat_score: score })} />
           )}
 
           {canManage && (
@@ -182,5 +186,41 @@ export function TicketDrawer({ id, onClose }: { id: string; onClose: () => void 
         </div>
       )}
     </Drawer>
+  )
+}
+
+function CsatSurvey({ existingScore, onSubmit }: { existingScore: number | null; onSubmit: (score: number) => void }) {
+  const { t } = useLang()
+  const [hovered, setHovered] = useState<number | null>(null)
+
+  if (existingScore) {
+    return (
+      <div className="bg-[var(--panel-2)] border border-[var(--border)] rounded-xl p-3.5 text-center">
+        <div className="text-[11.5px] text-[var(--text-faint)] mb-1.5">{t({ tr: 'Değerlendirmeniz', en: 'Your rating' })}</div>
+        <div className="flex justify-center gap-1">
+          {[1, 2, 3, 4, 5].map((n) => (
+            <Star key={n} className={`w-5 h-5 ${n <= existingScore ? 'fill-p2 text-p2' : 'text-[var(--border)]'}`} />
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="bg-purple-tint/40 border border-purple/40 rounded-xl p-4 text-center">
+      <div className="text-[13px] font-bold mb-2.5">{t({ tr: 'Bu çözümden ne kadar memnun kaldınız?', en: 'How satisfied are you with this resolution?' })}</div>
+      <div className="flex justify-center gap-1.5">
+        {[1, 2, 3, 4, 5].map((n) => (
+          <button
+            key={n}
+            onMouseEnter={() => setHovered(n)}
+            onMouseLeave={() => setHovered(null)}
+            onClick={() => onSubmit(n)}
+          >
+            <Star className={`w-7 h-7 transition-colors ${(hovered ?? 0) >= n ? 'fill-p2 text-p2' : 'text-[var(--border)]'}`} />
+          </button>
+        ))}
+      </div>
+    </div>
   )
 }
