@@ -330,6 +330,7 @@ export interface Database {
           requires_approval: boolean
           approval_threshold: number | null
           is_active: boolean
+          form_schema: Record<string, unknown> | null
           created_at: string
         }
         Insert: Omit<Database['public']['Tables']['service_catalog_items']['Row'], 'id' | 'created_at'> & {
@@ -351,6 +352,8 @@ export interface Database {
           notes: string | null
           approver_id: string | null
           approval_comment: string | null
+          form_data: Record<string, unknown> | null
+          bundle_request_batch_id: string | null
           created_at: string
           updated_at: string
           fulfilled_at: string | null
@@ -669,6 +672,31 @@ export interface Database {
           created_at?: string
         }
         Update: Partial<Database['public']['Tables']['change_freeze_windows']['Insert']>
+        Relationships: []
+      }
+      service_bundles: {
+        Row: {
+          id: string
+          tenant_id: string
+          name: string
+          description: string | null
+          is_active: boolean
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['service_bundles']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['service_bundles']['Insert']>
+        Relationships: []
+      }
+      service_bundle_items: {
+        Row: {
+          bundle_id: string
+          catalog_item_id: string
+        }
+        Insert: Database['public']['Tables']['service_bundle_items']['Row']
+        Update: Partial<Database['public']['Tables']['service_bundle_items']['Insert']>
         Relationships: []
       }
     }

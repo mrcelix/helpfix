@@ -1,12 +1,16 @@
 import { useState } from 'react'
+import { Package } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import {
   useCategories,
   useCatalogItems,
   useServiceRequests,
   useUpdateServiceRequest,
+  useBundles,
+  useRequestBundle,
   type CatalogSavedView,
   type ServiceRequestItem,
+  type CatalogItem,
 } from './useCatalog'
 import { RequestServiceModal } from './RequestServiceModal'
 
@@ -30,11 +34,14 @@ export function CatalogPage() {
   const { lang, t } = useLang()
   const [tab, setTab] = useState<'browse' | 'requests'>('browse')
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
-  const [selectedItem, setSelectedItem] = useState<{ id: string; name: string; requiresApproval: boolean } | null>(null)
+  const [selectedItem, setSelectedItem] = useState<{ id: string; name: string; requiresApproval: boolean; formSchema: CatalogItem['form_schema'] } | null>(null)
   const [view, setView] = useState<CatalogSavedView>('all')
 
   const { data: categories } = useCategories()
   const { data: items, isLoading: itemsLoading } = useCatalogItems(activeCategory)
+  const { data: bundles } = useBundles()
+  const requestBundle = useRequestBundle()
+  const [bundleSuccess, setBundleSuccess] = useState<number | null>(null)
   const { data: requests, isLoading: requestsLoading } = useServiceRequests(view)
 
   return (
@@ -65,6 +72,40 @@ export function CatalogPage() {
 
       {tab === 'browse' && (
         <div>
+          {!!bundles?.length && (
+            <div className="mb-5">
+              <div className="text-[10.5px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-2.5">
+                {t({ tr: 'Hizmet Paketleri', en: 'Service Bundles' })}
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                {bundles.map((b) => (
+                  <div key={b.id} className="bg-purple-tint/40 border border-purple/40 rounded-2xl p-4">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <Package className="w-4 h-4 text-purple" />
+                      <span className="font-bold text-[13px]">{b.name}</span>
+                    </div>
+                    {b.description && <p className="text-[11px] text-[var(--text-faint)] mb-3">{b.description}</p>}
+                    <button
+                      onClick={async () => {
+                        const result = await requestBundle.mutateAsync(b.id)
+                        setBundleSuccess(result.count)
+                      }}
+                      disabled={requestBundle.isPending}
+                      className="w-full text-[11.5px] font-bold py-2 rounded-lg bg-purple text-white disabled:opacity-50"
+                    >
+                      {t({ tr: 'Paketi Talep Et', en: 'Request Bundle' })}
+                    </button>
+                  </div>
+                ))}
+              </div>
+              {bundleSuccess !== null && (
+                <p className="text-[11.5px] text-ok mt-2">
+                  ✓ {t({ tr: `${bundleSuccess} hizmet için ayrı talep oluşturuldu.`, en: `${bundleSuccess} separate requests created.` })}
+                </p>
+              )}
+            </div>
+          )}
+
           <div className="flex gap-2 mb-4 flex-wrap">
             <button
               onClick={() => setActiveCategory(null)}
@@ -96,7 +137,7 @@ export function CatalogPage() {
             {items?.map((item) => (
               <div
                 key={item.id}
-                onClick={() => setSelectedItem({ id: item.id, name: item.name, requiresApproval: item.requires_approval })}
+                onClick={() => setSelectedItem({ id: item.id, name: item.name, requiresApproval: item.requires_approval, formSchema: item.form_schema })}
                 className="bg-[var(--panel)] border border-[var(--border)] rounded-2xl p-4 cursor-pointer hover:border-brand transition-colors"
               >
                 <div className="font-bold text-[13px] mb-1">{item.name}</div>

@@ -10,6 +10,14 @@ export interface CatalogCategory {
   sort_order: number
 }
 
+export interface FormFieldSchema {
+  key: string
+  label: string
+  type: 'select' | 'text'
+  options?: string[]
+  showIf?: { field: string; equals: string }
+}
+
 export interface CatalogItem {
   id: string
   category_id: string | null
@@ -19,6 +27,7 @@ export interface CatalogItem {
   estimated_cost: number | null
   estimated_days: number | null
   requires_approval: boolean
+  form_schema: { fields: FormFieldSchema[] } | null
 }
 
 export interface ServiceRequestItem {
@@ -58,7 +67,7 @@ export function useCatalogItems(categoryId: string | null) {
     queryFn: async () => {
       let query = supabase
         .from('service_catalog_items')
-        .select('id, category_id, name, description, icon, estimated_cost, estimated_days, requires_approval')
+        .select('id, category_id, name, description, icon, estimated_cost, estimated_days, requires_approval, form_schema')
         .eq('is_active', true)
         .order('name')
       if (categoryId) query = query.eq('category_id', categoryId)
@@ -103,7 +112,12 @@ export function useCreateServiceRequest() {
   const { profile } = useAuth()
 
   return useMutation({
-    mutationFn: async (input: { catalogItemId: string; notes: string; requiresApproval: boolean }) => {
+    mutationFn: async (input: {
+      catalogItemId: string
+      notes: string
+      requiresApproval: boolean
+      formData?: Record<string, string>
+    }) => {
       if (!profile) throw new Error('Profil yüklenmedi')
       const { data, error } = await supabase
         .from('service_requests')
@@ -116,6 +130,8 @@ export function useCreateServiceRequest() {
           notes: input.notes || null,
           approver_id: null,
           approval_comment: null,
+          form_data: input.formData ?? null,
+          bundle_request_batch_id: null,
           fulfilled_at: null,
         })
         .select('id, ref')
@@ -143,6 +159,86 @@ export function useUpdateServiceRequest(id: string) {
         })
         .eq('id', id)
       if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['service-requests'] }),
+  })
+}
+
+// ------------------------------------------------------------------
+// HİZMET PAKETLERİ (Bundles) — örn. "Yeni İşe Alım Paketi"
+// ------------------------------------------------------------------
+export interface ServiceBundle {
+  id: string
+  name: string
+  description: string | null
+}
+
+export function useBundles() {
+  const { profile } = useAuth()
+  return useQuery({
+    queryKey: ['catalog-bundles', profile?.tenantId],
+    enabled: !!profile,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('service_bundles')
+        .select('id, name, description')
+        .eq('is_active', true)
+        .order('name')
+      if (error) throw error
+      return data as ServiceBundle[]
+    },
+  })
+}
+
+export function useBundleItems(bundleId: string | null) {
+  return useQuery({
+    queryKey: ['bundle-items', bundleId],
+    enabled: !!bundleId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('service_bundle_items')
+        .select('catalog_item_id, catalog_item:catalog_item_id ( id, name, requires_approval )')
+        .eq('bundle_id', bundleId!)
+      if (error) throw error
+      return data as unknown as { catalog_item_id: string; catalog_item: { id: string; name: string; requires_approval: boolean } }[]
+    },
+  })
+}
+
+/** Bir paketi talep etmek, pakete dahil her hizmet için ayrı bir
+ * service_request satırı oluşturur — hepsi aynı batch id ile bağlanır. */
+export function useRequestBundle() {
+  const qc = useQueryClient()
+  const { profile } = useAuth()
+  return useMutation({
+    mutationFn: async (bundleId: string) => {
+      if (!profile) throw new Error('Profil yüklenmedi')
+      const { data: items, error: itemsError } = await supabase
+        .from('service_bundle_items')
+        .select('catalog_item_id, catalog_item:catalog_item_id ( requires_approval )')
+        .eq('bundle_id', bundleId)
+      if (itemsError) throw itemsError
+      if (!items?.length) throw new Error('Bu pakette hizmet yok')
+
+      const batchId = crypto.randomUUID()
+      const rows = (items as unknown as { catalog_item_id: string; catalog_item: { requires_approval: boolean } }[]).map(
+        (i) => ({
+          tenant_id: profile.tenantId,
+          catalog_item_id: i.catalog_item_id,
+          requester_id: profile.id,
+          requested_for_id: null,
+          status: i.catalog_item.requires_approval ? ('pending_approval' as const) : ('approved' as const),
+          notes: null,
+          approver_id: null,
+          approval_comment: null,
+          form_data: null,
+          bundle_request_batch_id: batchId,
+          fulfilled_at: null,
+        })
+      )
+      const { error } = await supabase.from('service_requests').insert(rows)
+      if (error) throw error
+      return { count: rows.length }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['service-requests'] }),
   })
