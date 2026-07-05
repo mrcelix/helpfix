@@ -3,6 +3,7 @@ import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
 import { useLang } from '@/contexts/LangContext'
 import { NAV_MODULES } from './nav-modules'
+import { CommandPalette } from '@/components/command-palette/CommandPalette'
 
 export function AppShell() {
   const location = useLocation()
@@ -23,6 +24,7 @@ export function AppShell() {
           <Outlet />
         </main>
       </div>
+      <CommandPalette />
     </div>
   )
 }

@@ -3,6 +3,7 @@ import { Home, Ticket, LayoutGrid, BookOpen, Monitor } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { Topbar } from '@/components/layout/Topbar'
+import { CommandPalette } from '@/components/command-palette/CommandPalette'
 import { cn } from '@/lib/utils'
 
 const EMPLOYEE_NAV = [
@@ -76,6 +77,7 @@ export function EmployeeShell() {
           <Outlet />
         </main>
       </div>
+      <CommandPalette />
     </div>
   )
 }

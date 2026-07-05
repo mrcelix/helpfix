@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useOpenParam } from '@/hooks/useOpenParam'
 import { Plus, Sparkles } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import { Button } from '@/components/ui/Button'
@@ -27,6 +28,8 @@ export function ProblemsPage() {
   const { lang, t } = useLang()
   const [view, setView] = useState<ProblemSavedView>('open')
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const openId = useOpenParam()
+  useEffect(() => { if (openId) setSelectedId(openId) }, [openId])
   const [showNewModal, setShowNewModal] = useState(false)
   const [prefillCluster, setPrefillCluster] = useState<ClusterCandidate | null>(null)
 

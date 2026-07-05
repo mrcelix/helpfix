@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useOpenParam } from '@/hooks/useOpenParam'
 import { Plus, List, Share2 } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import { Button } from '@/components/ui/Button'
@@ -42,6 +43,8 @@ export function CmdbPage() {
   const [view, setView] = useState<CiSavedView>('all')
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list')
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const openId = useOpenParam()
+  useEffect(() => { if (openId) setSelectedId(openId) }, [openId])
   const [showNewModal, setShowNewModal] = useState(false)
 
   const { data: items, isLoading, error } = useConfigurationItems(view)

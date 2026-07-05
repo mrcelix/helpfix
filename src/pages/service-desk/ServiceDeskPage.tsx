@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useOpenParam } from '@/hooks/useOpenParam'
 import { Plus, Download, List, Kanban } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import { Button } from '@/components/ui/Button'
@@ -34,6 +35,8 @@ export function ServiceDeskPage() {
   const [view, setView] = useState<SavedView>('open')
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list')
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const openId = useOpenParam()
+  useEffect(() => { if (openId) setSelectedId(openId) }, [openId])
   const [showNewModal, setShowNewModal] = useState(false)
 
   const { data: incidents, isLoading, error } = useIncidents(view)

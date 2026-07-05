@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useOpenParam } from '@/hooks/useOpenParam'
 import { Plus, Snowflake } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import { Button } from '@/components/ui/Button'
@@ -43,6 +44,8 @@ export function ChangesPage() {
   const { lang, t } = useLang()
   const [view, setView] = useState<ChangeSavedView>('all')
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const openId = useOpenParam()
+  useEffect(() => { if (openId) setSelectedId(openId) }, [openId])
   const [showNewModal, setShowNewModal] = useState(false)
   const [showFreezeModal, setShowFreezeModal] = useState(false)
   const [showTemplatesModal, setShowTemplatesModal] = useState(false)
