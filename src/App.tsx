@@ -18,6 +18,9 @@ import { AnalyticsPage } from '@/pages/analytics/AnalyticsPage'
 import { MonitoringPage } from '@/pages/monitoring/MonitoringPage'
 import { OnCallPage } from '@/pages/oncall/OnCallPage'
 import { AutomationPage } from '@/pages/automation/AutomationPage'
+import { AdminPage } from '@/pages/admin/AdminPage'
+import { useFeatureFlags } from '@/pages/admin/useAdmin'
+import { useAuth } from '@/contexts/AuthContext'
 import { isSupabaseConfigured } from '@/lib/supabase'
 
 const MODULE_PAGES: Record<string, ComponentType> = {
@@ -35,6 +38,25 @@ const MODULE_PAGES: Record<string, ComponentType> = {
   automation: AutomationPage,
 }
 
+/** Bir modül tenant için kapatılmışsa doğrudan URL erişimini de engeller
+ * (sadece sidebar'dan gizlemekle kalmaz). */
+function ModuleRoute({ moduleCode, children }: { moduleCode: string; children: React.ReactNode }) {
+  const { data: flags, isLoading } = useFeatureFlags()
+  if (isLoading) return null
+  const enabled = flags?.[moduleCode] ?? true
+  if (!enabled) return <Navigate to="/service-desk" replace />
+  return <>{children}</>
+}
+
+/** /admin route'unu sadece tenant_admin rolüne açar. */
+function AdminRoute() {
+  const { profile } = useAuth()
+  if (profile && profile.role !== 'tenant_admin') {
+    return <Navigate to="/service-desk" replace />
+  }
+  return <AdminPage />
+}
+
 function App() {
   if (!isSupabaseConfigured) {
     return <ConfigMissingPage />
@@ -47,13 +69,18 @@ function App() {
       <Route element={<ProtectedRoute />}>
         <Route element={<AppShell />}>
           <Route index element={<Navigate to="/service-desk" replace />} />
+          <Route path="/admin" element={<AdminRoute />} />
           {NAV_MODULES.map((mod) => {
             const Page = MODULE_PAGES[mod.code]
             return (
               <Route
                 key={mod.code}
                 path={mod.path}
-                element={Page ? <Page /> : <ComingSoonPage moduleName={mod.name} />}
+                element={
+                  <ModuleRoute moduleCode={mod.code}>
+                    {Page ? <Page /> : <ComingSoonPage moduleName={mod.name} />}
+                  </ModuleRoute>
+                }
               />
             )
           })}

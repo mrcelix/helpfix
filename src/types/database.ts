@@ -623,6 +623,19 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['automation_rules']['Insert']>
         Relationships: []
       }
+      tenant_feature_flags: {
+        Row: {
+          tenant_id: string
+          module_code: string
+          is_enabled: boolean
+          updated_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['tenant_feature_flags']['Row'], 'updated_at'> & {
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['tenant_feature_flags']['Insert']>
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: {

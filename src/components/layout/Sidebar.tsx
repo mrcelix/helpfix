@@ -1,12 +1,17 @@
 import { NavLink } from 'react-router-dom'
+import { Settings } from 'lucide-react'
 import { NAV_MODULES } from './nav-modules'
 import { useLang } from '@/contexts/LangContext'
 import { useAuth } from '@/contexts/AuthContext'
+import { useFeatureFlags } from '@/pages/admin/useAdmin'
 import { cn } from '@/lib/utils'
 
 export function Sidebar() {
   const { lang, t } = useLang()
   const { profile } = useAuth()
+  const { data: flags } = useFeatureFlags()
+
+  const visibleModules = NAV_MODULES.filter((m) => flags?.[m.code] ?? true)
 
   return (
     <aside className="w-[248px] shrink-0 h-screen sticky top-0 flex flex-col bg-[var(--panel)] border-r border-[var(--border)]">
@@ -25,7 +30,7 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 py-1">
-        {NAV_MODULES.map((mod) => {
+        {visibleModules.map((mod) => {
           const Icon = mod.icon
           return (
             <NavLink
@@ -50,6 +55,26 @@ export function Sidebar() {
             </NavLink>
           )
         })}
+
+        {profile?.role === 'tenant_admin' && (
+          <>
+            <div className="h-px bg-[var(--border)] my-2 mx-1" />
+            <NavLink
+              to="/admin"
+              className={({ isActive }) =>
+                cn(
+                  'flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13.5px] font-medium mb-0.5 transition-colors',
+                  isActive
+                    ? 'bg-brand text-white font-semibold'
+                    : 'text-[var(--text-sub)] hover:bg-[var(--row-hover)] hover:text-[var(--text)]'
+                )
+              }
+            >
+              <Settings className="w-[17px] h-[17px] shrink-0" />
+              <span>{t({ tr: 'Yönetim Paneli', en: 'Admin Panel' })}</span>
+            </NavLink>
+          </>
+        )}
       </nav>
 
       <div className="border-t border-[var(--border)] p-3 flex items-center gap-2.5">
