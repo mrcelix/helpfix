@@ -3,6 +3,7 @@ import { Drawer } from '@/components/ui/Drawer'
 import { PriorityBadge } from '@/components/ui/Badge'
 import { useLang } from '@/contexts/LangContext'
 import { useProblemDetail, useLinkedIncidents, useProblemTimeline, useUpdateProblem } from './useProblems'
+import { FishboneDiagram } from './FishboneDiagram'
 import type { ProblemStatus } from '@/types/database'
 
 const STATUS_OPTIONS: ProblemStatus[] = [
@@ -21,7 +22,6 @@ export function ProblemDrawer({ id, onClose }: { id: string; onClose: () => void
   const { data: timeline } = useProblemTimeline(id)
   const updateProblem = useUpdateProblem(id)
 
-  const [rootCause, setRootCause] = useState('')
   const [workaround, setWorkaround] = useState('')
 
   return (
@@ -30,7 +30,7 @@ export function ProblemDrawer({ id, onClose }: { id: string; onClose: () => void
       onClose={onClose}
       title={problem?.title ?? '…'}
       subtitle={problem && <span className="font-mono">{problem.ref}</span>}
-      widthClass="w-[480px]"
+      widthClass="w-[640px]"
     >
       {isLoading || !problem ? (
         <div className="text-[var(--text-faint)] text-sm py-10 text-center">
@@ -71,29 +71,15 @@ export function ProblemDrawer({ id, onClose }: { id: string; onClose: () => void
           </div>
 
           <div>
-            <label className="block text-[10.5px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">
-              {t({ tr: 'Kök Neden', en: 'Root Cause' })}
+            <label className="block text-[10.5px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-2">
+              {t({ tr: 'Kök Neden Analizi (Fishbone)', en: 'Root Cause Analysis (Fishbone)' })}
             </label>
-            {problem.root_cause ? (
-              <p className="text-[12.5px] text-[var(--text-sub)] bg-[var(--panel-2)] border border-[var(--border)] rounded-lg p-3">
-                {problem.root_cause}
+            {problem.root_cause && (
+              <p className="text-[12.5px] text-[var(--text-sub)] bg-brand-tint border border-brand/40 rounded-lg p-3 mb-3">
+                ✓ <b>{t({ tr: 'Onaylanan Kök Neden:', en: 'Confirmed Root Cause:' })}</b> {problem.root_cause}
               </p>
-            ) : (
-              <div className="flex gap-2">
-                <input
-                  value={rootCause}
-                  onChange={(e) => setRootCause(e.target.value)}
-                  placeholder={t({ tr: 'Kök nedeni yazın…', en: 'Describe the root cause…' })}
-                  className="flex-1 bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2 text-[12.5px]"
-                />
-                <button
-                  onClick={() => rootCause.trim() && updateProblem.mutate({ root_cause: rootCause.trim(), status: 'root_cause_identified' })}
-                  className="text-[12px] font-bold px-3 rounded-lg bg-brand text-white shrink-0"
-                >
-                  {t({ tr: 'Kaydet', en: 'Save' })}
-                </button>
-              </div>
             )}
+            <FishboneDiagram problemId={problem.id} problemTitle={problem.title} />
           </div>
 
           <div className="flex items-center justify-between rounded-lg bg-[var(--panel-2)] border border-[var(--border)] px-3 py-2.5">

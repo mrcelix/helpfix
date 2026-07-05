@@ -60,6 +60,7 @@ export type AlertStatus = 'firing' | 'acknowledged' | 'resolved'
 export type SwapStatus = 'pending' | 'approved' | 'rejected'
 export type AutomationTrigger = 'incident_created'
 export type AutomationAction = 'assign_to_user' | 'set_priority'
+export type FishboneCategory = 'people' | 'process' | 'technology' | 'environment'
 
 export interface Database {
   public: {
@@ -634,6 +635,23 @@ export interface Database {
           updated_at?: string
         }
         Update: Partial<Database['public']['Tables']['tenant_feature_flags']['Insert']>
+        Relationships: []
+      }
+      problem_fishbone_causes: {
+        Row: {
+          id: string
+          tenant_id: string
+          problem_id: string
+          category: FishboneCategory
+          description: string
+          is_confirmed_root_cause: boolean
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['problem_fishbone_causes']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['problem_fishbone_causes']['Insert']>
         Relationships: []
       }
     }

@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
-import type { Priority, ProblemStatus } from '@/types/database'
+import type { Priority, ProblemStatus, FishboneCategory } from '@/types/database'
 
 // ------------------------------------------------------------------
 // Tipler
@@ -186,6 +186,91 @@ export function useCreateProblem() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['problems'] })
       qc.invalidateQueries({ queryKey: ['incident-clusters'] })
+    },
+  })
+}
+
+export interface FishboneCause {
+  id: string
+  category: FishboneCategory
+  description: string
+  is_confirmed_root_cause: boolean
+}
+
+export function useFishboneCauses(problemId: string | null) {
+  return useQuery({
+    queryKey: ['fishbone', problemId],
+    enabled: !!problemId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('problem_fishbone_causes')
+        .select('id, category, description, is_confirmed_root_cause')
+        .eq('problem_id', problemId!)
+        .order('created_at')
+      if (error) throw error
+      return data as FishboneCause[]
+    },
+  })
+}
+
+export function useAddFishboneCause(problemId: string) {
+  const qc = useQueryClient()
+  const { profile } = useAuth()
+  return useMutation({
+    mutationFn: async (input: { category: FishboneCategory; description: string }) => {
+      if (!profile) throw new Error('Profil yüklenmedi')
+      const { error } = await supabase.from('problem_fishbone_causes').insert({
+        tenant_id: profile.tenantId,
+        problem_id: problemId,
+        category: input.category,
+        description: input.description,
+        is_confirmed_root_cause: false,
+      })
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['fishbone', problemId] }),
+  })
+}
+
+export function useDeleteFishboneCause(problemId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('problem_fishbone_causes').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['fishbone', problemId] }),
+  })
+}
+
+/** Bir adayı "onaylanmış kök neden" olarak işaretler ve problemin
+ * root_cause alanına otomatik yazar. */
+export function useConfirmRootCause(problemId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (cause: FishboneCause) => {
+      const { error: e1 } = await supabase
+        .from('problem_fishbone_causes')
+        .update({ is_confirmed_root_cause: false })
+        .eq('problem_id', problemId)
+      if (e1) throw e1
+
+      const { error: e2 } = await supabase
+        .from('problem_fishbone_causes')
+        .update({ is_confirmed_root_cause: true })
+        .eq('id', cause.id)
+      if (e2) throw e2
+
+      const { error: e3 } = await supabase
+        .from('problems')
+        .update({ root_cause: cause.description, status: 'root_cause_identified' })
+        .eq('id', problemId)
+      if (e3) throw e3
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['fishbone', problemId] })
+      qc.invalidateQueries({ queryKey: ['problem', problemId] })
+      qc.invalidateQueries({ queryKey: ['problems'] })
     },
   })
 }
