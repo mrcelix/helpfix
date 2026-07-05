@@ -23,6 +23,7 @@ export interface ProjectTask {
   title: string
   status: TaskStatus
   due_date: string | null
+  start_date: string | null
   assignee: { full_name: string } | null
 }
 
@@ -74,7 +75,7 @@ export function useProjectTasks(projectId: string | null) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('project_tasks')
-        .select('id, title, status, due_date, assignee:assignee_id ( full_name )')
+        .select('id, title, status, due_date, start_date, assignee:assignee_id ( full_name )')
         .eq('project_id', projectId!)
         .order('sort_order')
       if (error) throw error
@@ -139,15 +140,16 @@ export function useCreateTask(projectId: string) {
   const qc = useQueryClient()
   const { profile } = useAuth()
   return useMutation({
-    mutationFn: async (title: string) => {
+    mutationFn: async (input: { title: string; startDate: string | null; dueDate: string | null }) => {
       if (!profile) throw new Error('Profil yüklenmedi')
       const { error } = await supabase.from('project_tasks').insert({
         tenant_id: profile.tenantId,
         project_id: projectId,
-        title,
+        title: input.title,
         status: 'todo',
         assignee_id: null,
-        due_date: null,
+        due_date: input.dueDate,
+        start_date: input.startDate,
         sort_order: Date.now(),
       })
       if (error) throw error

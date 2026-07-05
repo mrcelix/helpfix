@@ -501,6 +501,7 @@ export interface Database {
           status: TaskStatus
           assignee_id: string | null
           due_date: string | null
+          start_date: string | null
           sort_order: number
           created_at: string
         }

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import { Drawer } from '@/components/ui/Drawer'
 import { useLang } from '@/contexts/LangContext'
+import { GanttChart } from './GanttChart'
 import {
   useProjectDetail,
   useProjectTasks,
@@ -24,8 +25,10 @@ const RISK_COLOR: Record<string, string> = { low: 'text-ok', medium: 'text-p2', 
 
 export function ProjectDrawer({ id, onClose }: { id: string; onClose: () => void }) {
   const { t } = useLang()
-  const [tab, setTab] = useState<'tasks' | 'risks'>('tasks')
+  const [tab, setTab] = useState<'tasks' | 'gantt' | 'risks'>('tasks')
   const [newTaskTitle, setNewTaskTitle] = useState('')
+  const [newTaskStart, setNewTaskStart] = useState('')
+  const [newTaskDue, setNewTaskDue] = useState('')
   const [showRiskForm, setShowRiskForm] = useState(false)
   const [riskTitle, setRiskTitle] = useState('')
   const [riskImpact, setRiskImpact] = useState<RiskLevel>('medium')
@@ -41,8 +44,10 @@ export function ProjectDrawer({ id, onClose }: { id: string; onClose: () => void
 
   function addTask() {
     if (!newTaskTitle.trim()) return
-    createTask.mutate(newTaskTitle.trim())
+    createTask.mutate({ title: newTaskTitle.trim(), startDate: newTaskStart || null, dueDate: newTaskDue || null })
     setNewTaskTitle('')
+    setNewTaskStart('')
+    setNewTaskDue('')
   }
 
   function addRisk() {
@@ -59,7 +64,7 @@ export function ProjectDrawer({ id, onClose }: { id: string; onClose: () => void
   }
 
   return (
-    <Drawer open onClose={onClose} title={project?.name ?? '…'} widthClass="w-[560px]">
+    <Drawer open onClose={onClose} title={project?.name ?? '…'} widthClass="w-[640px]">
       {isLoading || !project ? (
         <div className="text-[var(--text-faint)] text-sm py-10 text-center">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</div>
       ) : (
@@ -112,11 +117,17 @@ export function ProjectDrawer({ id, onClose }: { id: string; onClose: () => void
             >
               {t({ tr: 'Risk Kaydı', en: 'Risk Register' })}
             </button>
+            <button
+              onClick={() => setTab('gantt')}
+              className={`px-1 py-2 text-[12.5px] font-semibold mr-4 border-b-2 ${tab === 'gantt' ? 'border-brand text-brand-dim' : 'border-transparent text-[var(--text-faint)]'}`}
+            >
+              Gantt
+            </button>
           </div>
 
           {tab === 'tasks' && (
             <div>
-              <div className="flex gap-2 mb-4">
+              <div className="flex gap-2 mb-2">
                 <input
                   value={newTaskTitle}
                   onChange={(e) => setNewTaskTitle(e.target.value)}
@@ -127,6 +138,22 @@ export function ProjectDrawer({ id, onClose }: { id: string; onClose: () => void
                 <button onClick={addTask} className="w-9 h-9 rounded-lg bg-brand text-white flex items-center justify-center shrink-0">
                   <Plus className="w-4 h-4" />
                 </button>
+              </div>
+              <div className="flex gap-2 mb-4">
+                <input
+                  type="date"
+                  value={newTaskStart}
+                  onChange={(e) => setNewTaskStart(e.target.value)}
+                  title={t({ tr: 'Başlangıç (Gantt için)', en: 'Start date (for Gantt)' })}
+                  className="flex-1 bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-2.5 py-1.5 text-[11px]"
+                />
+                <input
+                  type="date"
+                  value={newTaskDue}
+                  onChange={(e) => setNewTaskDue(e.target.value)}
+                  title={t({ tr: 'Bitiş (Gantt için)', en: 'Due date (for Gantt)' })}
+                  className="flex-1 bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-2.5 py-1.5 text-[11px]"
+                />
               </div>
               <div className="grid grid-cols-3 gap-2.5">
                 {TASK_COLUMNS.map((col) => (
@@ -203,6 +230,8 @@ export function ProjectDrawer({ id, onClose }: { id: string; onClose: () => void
               </div>
             </div>
           )}
+
+          {tab === 'gantt' && tasks && <GanttChart tasks={tasks} />}
         </div>
       )}
     </Drawer>
