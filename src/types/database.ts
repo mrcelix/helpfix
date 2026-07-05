@@ -429,6 +429,7 @@ export interface Database {
           view_count: number
           helpful_count: number
           unhelpful_count: number
+          decision_tree: Record<string, unknown> | null
           created_at: string
           updated_at: string
           published_at: string | null

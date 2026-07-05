@@ -3,7 +3,9 @@ import { ThumbsUp, ThumbsDown } from 'lucide-react'
 import { Drawer } from '@/components/ui/Drawer'
 import { useLang } from '@/contexts/LangContext'
 import { useAuth } from '@/contexts/AuthContext'
-import { useArticleDetail, useIncrementView, useVoteArticle, useUpdateArticle } from './useKnowledgeBase'
+import { useArticleDetail, useIncrementView, useVoteArticle, useUpdateArticle, type DecisionTree } from './useKnowledgeBase'
+import { DecisionTreeViewer } from './DecisionTreeViewer'
+import { DecisionTreeEditor } from './DecisionTreeEditor'
 
 export function ArticleDrawer({ id, onClose }: { id: string; onClose: () => void }) {
   const { t } = useLang()
@@ -13,6 +15,7 @@ export function ArticleDrawer({ id, onClose }: { id: string; onClose: () => void
   const voteArticle = useVoteArticle(id)
   const updateArticle = useUpdateArticle(id)
   const [voted, setVoted] = useState(false)
+  const [editingTree, setEditingTree] = useState(false)
 
   const canManage = profile && ['tenant_admin', 'manager', 'agent'].includes(profile.role)
 
@@ -23,7 +26,7 @@ export function ArticleDrawer({ id, onClose }: { id: string; onClose: () => void
   }, [id])
 
   return (
-    <Drawer open onClose={onClose} title={article?.title ?? '…'} widthClass="w-[520px]">
+    <Drawer open onClose={onClose} title={article?.title ?? '…'} widthClass="w-[560px]">
       {isLoading || !article ? (
         <div className="text-[var(--text-faint)] text-sm py-10 text-center">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</div>
       ) : (
@@ -51,6 +54,35 @@ export function ArticleDrawer({ id, onClose }: { id: string; onClose: () => void
           </div>
 
           <div className="text-[13px] text-[var(--text-sub)] leading-relaxed whitespace-pre-wrap">{article.content}</div>
+
+          {editingTree ? (
+            <DecisionTreeEditor
+              initialTree={article.decision_tree}
+              onCancel={() => setEditingTree(false)}
+              onSave={(tree: DecisionTree) => {
+                updateArticle.mutate({ decision_tree: tree })
+                setEditingTree(false)
+              }}
+            />
+          ) : article.decision_tree ? (
+            <div>
+              <DecisionTreeViewer tree={article.decision_tree} />
+              {canManage && (
+                <button onClick={() => setEditingTree(true)} className="text-[11px] font-semibold text-brand-dim mt-2">
+                  {t({ tr: 'Karar Ağacını Düzenle', en: 'Edit Decision Tree' })}
+                </button>
+              )}
+            </div>
+          ) : (
+            canManage && (
+              <button
+                onClick={() => setEditingTree(true)}
+                className="w-full py-2.5 rounded-lg border border-dashed border-[var(--border)] text-[12px] font-semibold text-[var(--text-faint)]"
+              >
+                🧭 {t({ tr: 'Rehberli Karar Ağacı Ekle', en: 'Add Guided Decision Tree' })}
+              </button>
+            )
+          )}
 
           <div className="border-t border-[var(--border)] pt-4">
             {voted ? (

@@ -16,9 +16,23 @@ export interface ArticleListItem {
   author: { full_name: string } | null
 }
 
+export interface DecisionTreeOption {
+  label: string
+  next: string | null
+}
+export interface DecisionTreeNode {
+  text: string
+  options: DecisionTreeOption[]
+}
+export interface DecisionTree {
+  startNode: string
+  nodes: Record<string, DecisionTreeNode>
+}
+
 export interface ArticleDetail extends ArticleListItem {
   content: string
   published_at: string | null
+  decision_tree: DecisionTree | null
 }
 
 export type KbSavedView = 'published' | 'drafts' | 'most_viewed' | 'needs_review'
@@ -66,7 +80,7 @@ export function useArticleDetail(id: string | null) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('knowledge_articles')
-        .select(`${SELECT_LIST}, content, published_at`)
+        .select(`${SELECT_LIST}, content, published_at, decision_tree`)
         .eq('id', id!)
         .single()
       if (error) throw error
@@ -115,6 +129,7 @@ export function useCreateArticle() {
           status: input.status,
           author_id: profile.id,
           published_at: null,
+          decision_tree: null,
         })
         .select('id')
         .single()
@@ -128,8 +143,9 @@ export function useCreateArticle() {
 export function useUpdateArticle(id: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (patch: Partial<{ title: string; content: string; category: string | null; status: ArticleStatus }>) => {
-      const { error } = await supabase.from('knowledge_articles').update(patch).eq('id', id)
+    mutationFn: async (patch: Partial<{ title: string; content: string; category: string | null; status: ArticleStatus; decision_tree: DecisionTree | null }>) => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await supabase.from('knowledge_articles').update(patch as any).eq('id', id)
       if (error) throw error
     },
     onSuccess: () => {
