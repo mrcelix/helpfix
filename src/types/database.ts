@@ -719,6 +719,22 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['sla_escalation_levels']['Insert']>
         Relationships: []
       }
+      dashboard_widgets: {
+        Row: {
+          id: string
+          tenant_id: string
+          user_id: string
+          widget_type: string
+          sort_order: number
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['dashboard_widgets']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['dashboard_widgets']['Insert']>
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: {
