@@ -21,6 +21,7 @@ export function NewPolicyModal({ onClose }: { onClose: () => void }) {
   const [priority, setPriority] = useState<Priority>('P2')
   const [responseTime, setResponseTime] = useState(DEFAULTS.P2.response)
   const [resolutionTime, setResolutionTime] = useState(DEFAULTS.P2.resolution)
+  const [businessHoursOnly, setBusinessHoursOnly] = useState(false)
 
   function selectPriority(p: Priority) {
     setPriority(p)
@@ -35,6 +36,7 @@ export function NewPolicyModal({ onClose }: { onClose: () => void }) {
       priority,
       response_time_minutes: responseTime,
       resolution_time_minutes: resolutionTime,
+      businessHoursOnly,
     })
     onClose()
   }
@@ -114,6 +116,10 @@ export function NewPolicyModal({ onClose }: { onClose: () => void }) {
             />
           </div>
         </div>
+        <label className="flex items-center gap-2 bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-[12px] text-[var(--text-sub)]">
+          <input type="checkbox" checked={businessHoursOnly} onChange={(e) => setBusinessHoursOnly(e.target.checked)} />
+          {t({ tr: 'Sadece iş günlerinde say (hafta sonları hariç)', en: 'Count business days only (skip weekends)' })}
+        </label>
       </div>
     </Modal>
   )

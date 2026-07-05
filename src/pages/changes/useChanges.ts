@@ -141,6 +141,7 @@ export function useCreateChange() {
       change_type: ChangeType
       risk_score: number
       category: string | null
+      rollbackPlan?: string | null
     }) => {
       if (!profile) throw new Error('Profil yüklenmedi')
       const { data, error } = await supabase
@@ -159,7 +160,7 @@ export function useCreateChange() {
           scheduled_end: null,
           actual_start: null,
           actual_end: null,
-          rollback_plan: null,
+          rollback_plan: input.rollbackPlan ?? null,
           ci_id: null,
           pir_outcome: null,
           pir_notes: null,
@@ -351,5 +352,55 @@ export function useDecideApproval(changeId: string) {
       qc.invalidateQueries({ queryKey: ['change-approvals', changeId] })
       qc.invalidateQueries({ queryKey: ['my-pending-approvals'] })
     },
+  })
+}
+
+// ------------------------------------------------------------------
+// STANDART DEĞİŞİKLİK ŞABLONLARI
+// ------------------------------------------------------------------
+export interface ChangeTemplate {
+  id: string
+  name: string
+  description: string | null
+  category: string | null
+  default_risk_score: number
+  default_rollback_plan: string | null
+}
+
+export function useChangeTemplates() {
+  const { profile } = useAuth()
+  return useQuery({
+    queryKey: ['change-templates', profile?.tenantId],
+    enabled: !!profile,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('change_templates')
+        .select('id, name, description, category, default_risk_score, default_rollback_plan')
+        .eq('is_active', true)
+        .order('name')
+      if (error) throw error
+      return data as ChangeTemplate[]
+    },
+  })
+}
+
+export function useCreateChangeTemplate() {
+  const qc = useQueryClient()
+  const { profile } = useAuth()
+  return useMutation({
+    mutationFn: async (input: { name: string; description: string; category: string; defaultRiskScore: number; defaultRollbackPlan: string }) => {
+      if (!profile) throw new Error('Profil yüklenmedi')
+      const { error } = await supabase.from('change_templates').insert({
+        tenant_id: profile.tenantId,
+        name: input.name,
+        description: input.description || null,
+        category: input.category || null,
+        default_risk_score: input.defaultRiskScore,
+        default_rollback_plan: input.defaultRollbackPlan || null,
+        is_active: true,
+      })
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['change-templates'] }),
   })
 }

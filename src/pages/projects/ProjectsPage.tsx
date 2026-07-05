@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button'
 import { useProjects } from './useProjects'
 import { ProjectDrawer } from './ProjectDrawer'
 import { NewProjectModal } from './NewProjectModal'
+import { ResourceHeatmap } from './ResourceHeatmap'
 
 const HEALTH_COLOR: Record<string, string> = {
   green: 'bg-ok',
@@ -22,6 +23,7 @@ const STATUS_LABEL: Record<string, { tr: string; en: string }> = {
 
 export function ProjectsPage() {
   const { lang, t } = useLang()
+  const [tab, setTab] = useState<'projects' | 'capacity'>('projects')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [showNewModal, setShowNewModal] = useState(false)
   const { data: projects, isLoading, error } = useProjects()
@@ -43,6 +45,25 @@ export function ProjectsPage() {
         </Button>
       </div>
 
+      <div className="flex gap-1 border-b border-[var(--border)] mb-5">
+        <button
+          onClick={() => setTab('projects')}
+          className={`px-1 py-2.5 text-[13.5px] font-semibold mr-5 border-b-2 ${tab === 'projects' ? 'border-brand text-brand-dim' : 'border-transparent text-[var(--text-faint)]'}`}
+        >
+          {t({ tr: 'Projeler', en: 'Projects' })}
+        </button>
+        <button
+          onClick={() => setTab('capacity')}
+          className={`px-1 py-2.5 text-[13.5px] font-semibold mr-5 border-b-2 ${tab === 'capacity' ? 'border-brand text-brand-dim' : 'border-transparent text-[var(--text-faint)]'}`}
+        >
+          {t({ tr: 'Kaynak Kapasitesi', en: 'Resource Capacity' })}
+        </button>
+      </div>
+
+      {tab === 'capacity' ? (
+        <ResourceHeatmap />
+      ) : (
+      <>
       {isLoading && <p className="text-[var(--text-faint)] text-sm py-8 text-center">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</p>}
       {error && <p className="text-p1 text-sm py-8 text-center">{t({ tr: 'Bir hata oluştu.', en: 'Something went wrong.' })}</p>}
       {!isLoading && !error && projects?.length === 0 && (
@@ -68,6 +89,8 @@ export function ProjectsPage() {
           </div>
         ))}
       </div>
+      </>
+      )}
 
       {selectedId && <ProjectDrawer id={selectedId} onClose={() => setSelectedId(null)} />}
       {showNewModal && <NewProjectModal onClose={() => setShowNewModal(false)} />}

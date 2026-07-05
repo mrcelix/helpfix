@@ -460,6 +460,7 @@ export interface Database {
           response_time_minutes: number
           resolution_time_minutes: number
           escalation_warning_percent: number
+          business_hours_only: boolean
           is_active: boolean
           created_at: string
         }
@@ -751,6 +752,25 @@ export interface Database {
           created_at?: string
         }
         Update: Partial<Database['public']['Tables']['oncall_escalation_steps']['Insert']>
+        Relationships: []
+      }
+      change_templates: {
+        Row: {
+          id: string
+          tenant_id: string
+          name: string
+          description: string | null
+          category: string | null
+          default_risk_score: number
+          default_rollback_plan: string | null
+          is_active: boolean
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['change_templates']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['change_templates']['Insert']>
         Relationships: []
       }
     }

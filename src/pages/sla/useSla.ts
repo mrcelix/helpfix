@@ -10,6 +10,7 @@ export interface SlaPolicy {
   response_time_minutes: number
   resolution_time_minutes: number
   escalation_warning_percent: number
+  business_hours_only: boolean
   is_active: boolean
 }
 
@@ -32,7 +33,7 @@ export function usePolicies() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('sla_policies')
-        .select('id, name, priority, response_time_minutes, resolution_time_minutes, escalation_warning_percent, is_active')
+        .select('id, name, priority, response_time_minutes, resolution_time_minutes, escalation_warning_percent, business_hours_only, is_active')
         .order('priority')
       if (error) throw error
       return data as SlaPolicy[]
@@ -49,6 +50,7 @@ export function useCreatePolicy() {
       priority: Priority
       response_time_minutes: number
       resolution_time_minutes: number
+      businessHoursOnly: boolean
     }) => {
       if (!profile) throw new Error('Profil yüklenmedi')
       const { error } = await supabase.from('sla_policies').insert({
@@ -58,6 +60,7 @@ export function useCreatePolicy() {
         response_time_minutes: input.response_time_minutes,
         resolution_time_minutes: input.resolution_time_minutes,
         escalation_warning_percent: 80,
+        business_hours_only: input.businessHoursOnly,
         is_active: true,
       })
       if (error) throw error

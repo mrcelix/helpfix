@@ -6,6 +6,7 @@ import { useChanges, type ChangeSavedView } from './useChanges'
 import { ChangeDrawer } from './ChangeDrawer'
 import { NewChangeModal } from './NewChangeModal'
 import { FreezeWindowsModal } from './FreezeWindowsModal'
+import { ChangeTemplatesModal } from './ChangeTemplatesModal'
 
 const SAVED_VIEWS: { key: ChangeSavedView; label: { tr: string; en: string } }[] = [
   { key: 'all', label: { tr: 'Tümü', en: 'All' } },
@@ -44,6 +45,7 @@ export function ChangesPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [showNewModal, setShowNewModal] = useState(false)
   const [showFreezeModal, setShowFreezeModal] = useState(false)
+  const [showTemplatesModal, setShowTemplatesModal] = useState(false)
 
   const { data: changes, isLoading, error } = useChanges(view)
 
@@ -62,6 +64,9 @@ export function ChangesPage() {
           <Button variant="ghost" onClick={() => setShowFreezeModal(true)}>
             <Snowflake className="w-[15px] h-[15px]" />
             {t({ tr: 'Dondurma Pencereleri', en: 'Freeze Windows' })}
+          </Button>
+          <Button variant="ghost" onClick={() => setShowTemplatesModal(true)}>
+            🚀 {t({ tr: 'Şablonlar', en: 'Templates' })}
           </Button>
           <Button onClick={() => setShowNewModal(true)}>
             <Plus className="w-[15px] h-[15px]" />
@@ -148,6 +153,7 @@ export function ChangesPage() {
       {selectedId && <ChangeDrawer id={selectedId} onClose={() => setSelectedId(null)} />}
       {showNewModal && <NewChangeModal onClose={() => setShowNewModal(false)} />}
       {showFreezeModal && <FreezeWindowsModal onClose={() => setShowFreezeModal(false)} />}
+      {showTemplatesModal && <ChangeTemplatesModal onClose={() => setShowTemplatesModal(false)} />}
     </div>
   )
 }

@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { useLang } from '@/contexts/LangContext'
-import { useCreateChange } from './useChanges'
+import { useCreateChange, useChangeTemplates } from './useChanges'
 import type { ChangeType } from '@/types/database'
 
 const TYPES: { key: ChangeType; label: { tr: string; en: string }; defaultRisk: number }[] = [
@@ -20,12 +20,25 @@ function riskColor(score: number) {
 export function NewChangeModal({ onClose }: { onClose: () => void }) {
   const { t } = useLang()
   const createChange = useCreateChange()
+  const { data: templates } = useChangeTemplates()
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [changeType, setChangeType] = useState<ChangeType>('normal')
   const [riskScore, setRiskScore] = useState(35)
   const [category, setCategory] = useState('')
+  const [rollbackPlan, setRollbackPlan] = useState('')
+
+  function applyTemplate(templateId: string) {
+    const tpl = templates?.find((t) => t.id === templateId)
+    if (!tpl) return
+    setTitle(tpl.name)
+    setDescription(tpl.description ?? '')
+    setCategory(tpl.category ?? '')
+    setRiskScore(tpl.default_risk_score)
+    setRollbackPlan(tpl.default_rollback_plan ?? '')
+    setChangeType('standard')
+  }
 
   function selectType(type: ChangeType, defaultRisk: number) {
     setChangeType(type)
@@ -41,6 +54,7 @@ export function NewChangeModal({ onClose }: { onClose: () => void }) {
       change_type: changeType,
       risk_score: riskScore,
       category: category.trim() || null,
+      rollbackPlan: rollbackPlan.trim() || null,
     })
     onClose()
   }
@@ -62,6 +76,25 @@ export function NewChangeModal({ onClose }: { onClose: () => void }) {
       }
     >
       <form onSubmit={handleSubmit} className="space-y-4">
+        {!!templates?.length && (
+          <div className="bg-purple-tint/40 border border-purple/40 rounded-lg p-3">
+            <label className="block text-[10.5px] font-bold text-purple uppercase tracking-wide mb-1.5">
+              🚀 {t({ tr: 'Standart Şablondan Başlat', en: 'Start from Standard Template' })}
+            </label>
+            <select
+              onChange={(e) => e.target.value && applyTemplate(e.target.value)}
+              defaultValue=""
+              className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-2.5 py-2 text-[12.5px]"
+            >
+              <option value="">{t({ tr: 'Şablon seçin (opsiyonel)…', en: 'Select a template (optional)…' })}</option>
+              {templates.map((tpl) => (
+                <option key={tpl.id} value={tpl.id}>
+                  {tpl.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
         <div>
           <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">
             {t({ tr: 'Başlık', en: 'Title' })}
@@ -133,6 +166,18 @@ export function NewChangeModal({ onClose }: { onClose: () => void }) {
             value={category}
             onChange={(e) => setCategory(e.target.value)}
             className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2 text-[13px] outline-none focus:border-brand"
+          />
+        </div>
+        <div>
+          <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">
+            {t({ tr: 'Geri Alma Planı', en: 'Rollback Plan' })}
+          </label>
+          <textarea
+            value={rollbackPlan}
+            onChange={(e) => setRollbackPlan(e.target.value)}
+            rows={2}
+            placeholder={t({ tr: 'Bir şeyler ters giderse nasıl geri alınır…', en: 'How to roll back if something goes wrong…' })}
+            className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2 text-[13px] outline-none focus:border-brand resize-none"
           />
         </div>
       </form>

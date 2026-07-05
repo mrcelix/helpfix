@@ -190,3 +190,49 @@ export function useCreateRisk(projectId: string) {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['project-risks', projectId] }),
   })
 }
+
+// ------------------------------------------------------------------
+// KAYNAK KAPASİTE ISI HARİTASI — tüm projelerdeki görevlerden
+// kullanıcı bazlı haftalık yük hesaplama.
+// ------------------------------------------------------------------
+export interface CapacityRow {
+  userId: string
+  fullName: string
+  weeks: Record<string, number> // "2026-W27" -> görev sayısı
+}
+
+export function useResourceCapacity() {
+  const { profile } = useAuth()
+  return useQuery({
+    queryKey: ['resource-capacity', profile?.tenantId],
+    enabled: !!profile,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('project_tasks')
+        .select('due_date, assignee:assignee_id ( id, full_name )')
+        .not('assignee_id', 'is', null)
+        .not('due_date', 'is', null)
+        .neq('status', 'done')
+      if (error) throw error
+
+      const rows = data as unknown as { due_date: string; assignee: { id: string; full_name: string } }[]
+      const byUser = new Map<string, CapacityRow>()
+
+      rows.forEach((r) => {
+        if (!r.assignee) return
+        const date = new Date(r.due_date)
+        const weekStart = new Date(date)
+        weekStart.setDate(date.getDate() - date.getDay())
+        const weekKey = weekStart.toISOString().slice(0, 10)
+
+        if (!byUser.has(r.assignee.id)) {
+          byUser.set(r.assignee.id, { userId: r.assignee.id, fullName: r.assignee.full_name, weeks: {} })
+        }
+        const entry = byUser.get(r.assignee.id)!
+        entry.weeks[weekKey] = (entry.weeks[weekKey] ?? 0) + 1
+      })
+
+      return Array.from(byUser.values())
+    },
+  })
+}
