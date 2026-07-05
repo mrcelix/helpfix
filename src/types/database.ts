@@ -433,6 +433,25 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['knowledge_articles']['Insert']>
         Relationships: []
       }
+      sla_policies: {
+        Row: {
+          id: string
+          tenant_id: string
+          name: string
+          priority: Priority
+          response_time_minutes: number
+          resolution_time_minutes: number
+          escalation_warning_percent: number
+          is_active: boolean
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['sla_policies']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['sla_policies']['Insert']>
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: {

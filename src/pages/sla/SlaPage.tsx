@@ -1,0 +1,192 @@
+import { useState } from 'react'
+import { Plus } from 'lucide-react'
+import { useLang } from '@/contexts/LangContext'
+import { Button } from '@/components/ui/Button'
+import { PriorityBadge } from '@/components/ui/Badge'
+import { usePolicies, useMonitoredIncidents, useTogglePolicy, type MonitoredIncident } from './useSla'
+import { NewPolicyModal } from './NewPolicyModal'
+
+function slaState(incident: MonitoredIncident): 'ok' | 'warning' | 'breached' {
+  if (!incident.sla_due_at) return 'ok'
+  const remainingMs = new Date(incident.sla_due_at).getTime() - Date.now()
+  if (remainingMs < 0) return 'breached'
+  const totalMs = new Date(incident.sla_due_at).getTime() - new Date(incident.created_at).getTime()
+  if (totalMs > 0 && remainingMs / totalMs < 0.2) return 'warning'
+  return 'ok'
+}
+
+function formatCountdown(dueAt: string, lang: 'tr' | 'en'): string {
+  const diffMs = new Date(dueAt).getTime() - Date.now()
+  const abs = Math.abs(diffMs)
+  const hours = Math.floor(abs / 3_600_000)
+  const mins = Math.floor((abs % 3_600_000) / 60_000)
+  const text = `${hours}s ${mins}dk`
+  const textEn = `${hours}h ${mins}m`
+  return diffMs < 0
+    ? lang === 'tr'
+      ? `${text} gecikti`
+      : `${textEn} overdue`
+    : lang === 'tr'
+      ? `${text} kaldı`
+      : `${textEn} left`
+}
+
+const STATE_STYLE: Record<string, string> = {
+  ok: 'text-ok bg-[#0F2E1F]',
+  warning: 'text-p2 bg-p2-tint',
+  breached: 'text-p1 bg-p1-tint',
+}
+
+export function SlaPage() {
+  const { lang, t } = useLang()
+  const [tab, setTab] = useState<'monitor' | 'policies'>('monitor')
+  const [showNewModal, setShowNewModal] = useState(false)
+
+  const { data: incidents, isLoading: incidentsLoading } = useMonitoredIncidents()
+  const { data: policies, isLoading: policiesLoading } = usePolicies()
+  const togglePolicy = useTogglePolicy()
+
+  const breachedCount = incidents?.filter((i) => slaState(i) === 'breached').length ?? 0
+  const warningCount = incidents?.filter((i) => slaState(i) === 'warning').length ?? 0
+
+  return (
+    <div>
+      <div className="flex items-end justify-between mb-5 flex-wrap gap-3">
+        <div>
+          <h1 className="font-display text-[22px] font-bold tracking-tight">
+            {t({ tr: 'SLA Yönetimi', en: 'SLA Management' })}
+          </h1>
+          <p className="text-[13px] text-[var(--text-faint)] mt-1">
+            {t({ tr: 'Öncelik bazlı politikalar ve canlı ihlal takibi', en: 'Priority-based policies and live breach tracking' })}
+          </p>
+        </div>
+        {tab === 'policies' && (
+          <Button onClick={() => setShowNewModal(true)}>
+            <Plus className="w-[15px] h-[15px]" />
+            {t({ tr: 'Yeni Politika', en: 'New Policy' })}
+          </Button>
+        )}
+      </div>
+
+      <div className="grid grid-cols-3 gap-3.5 mb-5">
+        <KpiCard label={t({ tr: 'İhlal Edilen', en: 'Breached' })} value={breachedCount} color="text-p1" />
+        <KpiCard label={t({ tr: 'Riskte (< %20 kaldı)', en: 'At Risk (< 20% left)' })} value={warningCount} color="text-p2" />
+        <KpiCard label={t({ tr: 'Aktif Politika', en: 'Active Policies' })} value={policies?.filter((p) => p.is_active).length ?? 0} color="text-brand" />
+      </div>
+
+      <div className="flex gap-1 border-b border-[var(--border)] mb-5">
+        <button
+          onClick={() => setTab('monitor')}
+          className={`px-1 py-2.5 text-[13.5px] font-semibold mr-5 border-b-2 ${tab === 'monitor' ? 'border-brand text-brand-dim' : 'border-transparent text-[var(--text-faint)]'}`}
+        >
+          {t({ tr: 'Canlı İzleme', en: 'Live Monitoring' })}
+        </button>
+        <button
+          onClick={() => setTab('policies')}
+          className={`px-1 py-2.5 text-[13.5px] font-semibold mr-5 border-b-2 ${tab === 'policies' ? 'border-brand text-brand-dim' : 'border-transparent text-[var(--text-faint)]'}`}
+        >
+          {t({ tr: 'Politikalar', en: 'Policies' })}
+        </button>
+      </div>
+
+      {tab === 'monitor' && (
+        <div className="border border-[var(--border)] rounded-[var(--radius-app)] overflow-hidden bg-[var(--panel)]">
+          <table className="w-full text-[12.5px]">
+            <thead>
+              <tr className="bg-[var(--panel-2)] border-b border-[var(--border)]">
+                <Th>Ref</Th>
+                <Th>{t({ tr: 'Başlık', en: 'Title' })}</Th>
+                <Th>{t({ tr: 'Öncelik', en: 'Priority' })}</Th>
+                <Th>{t({ tr: 'SLA Durumu', en: 'SLA Status' })}</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {incidentsLoading && (
+                <tr><td colSpan={4} className="text-center py-10 text-[var(--text-faint)]">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</td></tr>
+              )}
+              {!incidentsLoading && incidents?.length === 0 && (
+                <tr><td colSpan={4} className="text-center py-14 text-[var(--text-faint)]">{t({ tr: 'İzlenecek açık kayıt yok.', en: 'No open records to monitor.' })}</td></tr>
+              )}
+              {incidents?.map((i) => {
+                const state = slaState(i)
+                return (
+                  <tr key={i.id} className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--row-hover)]">
+                    <td className="px-3.5 py-3 font-mono text-[var(--text-faint)]">{i.ref}</td>
+                    <td className="px-3.5 py-3 font-semibold">{i.title}</td>
+                    <td className="px-3.5 py-3"><PriorityBadge priority={i.priority} /></td>
+                    <td className="px-3.5 py-3">
+                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold ${STATE_STYLE[state]}`}>
+                        {i.sla_due_at ? formatCountdown(i.sla_due_at, lang) : '—'}
+                      </span>
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {tab === 'policies' && (
+        <div className="border border-[var(--border)] rounded-[var(--radius-app)] overflow-hidden bg-[var(--panel)]">
+          <table className="w-full text-[12.5px]">
+            <thead>
+              <tr className="bg-[var(--panel-2)] border-b border-[var(--border)]">
+                <Th>{t({ tr: 'Ad', en: 'Name' })}</Th>
+                <Th>{t({ tr: 'Öncelik', en: 'Priority' })}</Th>
+                <Th>{t({ tr: 'Yanıt Süresi', en: 'Response Time' })}</Th>
+                <Th>{t({ tr: 'Çözüm Süresi', en: 'Resolution Time' })}</Th>
+                <Th>{t({ tr: 'Aktif', en: 'Active' })}</Th>
+              </tr>
+            </thead>
+            <tbody>
+              {policiesLoading && (
+                <tr><td colSpan={5} className="text-center py-10 text-[var(--text-faint)]">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</td></tr>
+              )}
+              {!policiesLoading && policies?.length === 0 && (
+                <tr><td colSpan={5} className="text-center py-14 text-[var(--text-faint)]">{t({ tr: 'Henüz politika yok.', en: 'No policies yet.' })}</td></tr>
+              )}
+              {policies?.map((p) => (
+                <tr key={p.id} className="border-b border-[var(--border)] last:border-0">
+                  <td className="px-3.5 py-3 font-semibold">{p.name}</td>
+                  <td className="px-3.5 py-3"><PriorityBadge priority={p.priority} /></td>
+                  <td className="px-3.5 py-3 text-[var(--text-sub)]">{p.response_time_minutes} {t({ tr: 'dk', en: 'min' })}</td>
+                  <td className="px-3.5 py-3 text-[var(--text-sub)]">{p.resolution_time_minutes} {t({ tr: 'dk', en: 'min' })}</td>
+                  <td className="px-3.5 py-3">
+                    <button
+                      onClick={() => togglePolicy.mutate({ id: p.id, is_active: !p.is_active })}
+                      className={`w-9 h-5 rounded-full relative transition-colors ${p.is_active ? 'bg-ok' : 'bg-[var(--border)]'}`}
+                    >
+                      <span
+                        className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${p.is_active ? 'left-[18px]' : 'left-0.5'}`}
+                      />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {showNewModal && <NewPolicyModal onClose={() => setShowNewModal(false)} />}
+    </div>
+  )
+}
+
+function KpiCard({ label, value, color }: { label: string; value: number; color: string }) {
+  return (
+    <div className="bg-[var(--panel)] border border-[var(--border)] rounded-xl p-4">
+      <div className={`font-display text-2xl font-bold ${color}`}>{value}</div>
+      <div className="text-[11px] text-[var(--text-faint)] mt-1">{label}</div>
+    </div>
+  )
+}
+
+function Th({ children }: { children: React.ReactNode }) {
+  return (
+    <th className="text-left text-[10.5px] uppercase tracking-wide text-[var(--text-faint)] font-semibold px-3.5 py-2.5">
+      {children}
+    </th>
+  )
+}

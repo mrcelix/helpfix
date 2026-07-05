@@ -12,6 +12,7 @@ import { ChangesPage } from '@/pages/changes/ChangesPage'
 import { CatalogPage } from '@/pages/catalog/CatalogPage'
 import { CmdbPage } from '@/pages/cmdb/CmdbPage'
 import { KnowledgeBasePage } from '@/pages/knowledge-base/KnowledgeBasePage'
+import { SlaPage } from '@/pages/sla/SlaPage'
 import { isSupabaseConfigured } from '@/lib/supabase'
 
 const MODULE_PAGES: Record<string, ComponentType> = {
@@ -21,6 +22,7 @@ const MODULE_PAGES: Record<string, ComponentType> = {
   catalog: CatalogPage,
   cmdb: CmdbPage,
   'knowledge-base': KnowledgeBasePage,
+  sla: SlaPage,
 }
 
 function App() {
