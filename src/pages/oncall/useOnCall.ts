@@ -208,3 +208,66 @@ export function useOnCallFairness(scheduleId: string | null) {
     },
   })
 }
+
+// ------------------------------------------------------------------
+// ESKALASYON ZİNCİRİ (Push → Arama → Ekip Lideri)
+// ------------------------------------------------------------------
+export interface EscalationStep {
+  id: string
+  step_order: number
+  delay_minutes: number
+  notify_method: 'push' | 'call' | 'team_lead'
+}
+
+export function useEscalationSteps(scheduleId: string | null) {
+  return useQuery({
+    queryKey: ['escalation-steps', scheduleId],
+    enabled: !!scheduleId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('oncall_escalation_steps')
+        .select('id, step_order, delay_minutes, notify_method')
+        .eq('schedule_id', scheduleId!)
+        .order('step_order')
+      if (error) throw error
+      return data as EscalationStep[]
+    },
+  })
+}
+
+export function useAddEscalationStep(scheduleId: string) {
+  const qc = useQueryClient()
+  const { profile } = useAuth()
+  return useMutation({
+    mutationFn: async (input: { delayMinutes: number; notifyMethod: 'push' | 'call' | 'team_lead' }) => {
+      if (!profile) throw new Error('Profil yüklenmedi')
+      const { data: existing } = await supabase
+        .from('oncall_escalation_steps')
+        .select('step_order')
+        .eq('schedule_id', scheduleId)
+        .order('step_order', { ascending: false })
+        .limit(1)
+      const nextOrder = (existing?.[0]?.step_order ?? 0) + 1
+      const { error } = await supabase.from('oncall_escalation_steps').insert({
+        tenant_id: profile.tenantId,
+        schedule_id: scheduleId,
+        step_order: nextOrder,
+        delay_minutes: input.delayMinutes,
+        notify_method: input.notifyMethod,
+      })
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['escalation-steps', scheduleId] }),
+  })
+}
+
+export function useDeleteEscalationStep(scheduleId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('oncall_escalation_steps').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['escalation-steps', scheduleId] }),
+  })
+}

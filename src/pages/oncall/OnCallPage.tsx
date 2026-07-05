@@ -15,6 +15,7 @@ import {
 } from './useOnCall'
 import { NewShiftModal } from './NewShiftModal'
 import { SwapRequestModal } from './SwapRequestModal'
+import { EscalationChain } from './EscalationChain'
 
 export function OnCallPage() {
   const { lang, t } = useLang()
@@ -153,6 +154,8 @@ export function OnCallPage() {
               </div>
             </div>
           )}
+
+          <EscalationChain scheduleId={activeScheduleId} />
 
           {!!fairness?.length && (
             <div className="mb-6">

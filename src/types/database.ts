@@ -62,6 +62,7 @@ export type AutomationTrigger = 'incident_created' | 'problem_created' | 'change
 export type AutomationAction = 'assign_to_user' | 'set_priority'
 export type FishboneCategory = 'people' | 'process' | 'technology' | 'environment'
 export type EscalationNotifyRole = 'agent' | 'manager' | 'tenant_admin'
+export type OncallNotifyMethod = 'push' | 'call' | 'team_lead'
 
 export interface Database {
   public: {
@@ -733,6 +734,23 @@ export interface Database {
           created_at?: string
         }
         Update: Partial<Database['public']['Tables']['dashboard_widgets']['Insert']>
+        Relationships: []
+      }
+      oncall_escalation_steps: {
+        Row: {
+          id: string
+          tenant_id: string
+          schedule_id: string
+          step_order: number
+          delay_minutes: number
+          notify_method: OncallNotifyMethod
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['oncall_escalation_steps']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['oncall_escalation_steps']['Insert']>
         Relationships: []
       }
     }
