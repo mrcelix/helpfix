@@ -49,6 +49,11 @@ export type CiType = 'server' | 'laptop' | 'desktop' | 'network_device' | 'softw
 export type CiStatus = 'active' | 'in_repair' | 'retired' | 'unmanaged'
 export type CiRelationshipType = 'depends_on' | 'hosted_on' | 'connected_to'
 export type ArticleStatus = 'draft' | 'published' | 'archived'
+export type ProjectStatus = 'planning' | 'active' | 'on_hold' | 'completed' | 'cancelled'
+export type ProjectHealth = 'green' | 'amber' | 'red'
+export type TaskStatus = 'todo' | 'in_progress' | 'done'
+export type RiskLevel = 'low' | 'medium' | 'high'
+export type RiskStatus = 'open' | 'mitigated' | 'closed'
 
 export interface Database {
   public: {
@@ -450,6 +455,68 @@ export interface Database {
           created_at?: string
         }
         Update: Partial<Database['public']['Tables']['sla_policies']['Insert']>
+        Relationships: []
+      }
+      projects: {
+        Row: {
+          id: string
+          tenant_id: string
+          name: string
+          description: string | null
+          status: ProjectStatus
+          health: ProjectHealth
+          owner_id: string | null
+          start_date: string | null
+          end_date: string | null
+          budget: number | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['projects']['Row'], 'id' | 'created_at' | 'updated_at'> & {
+          id?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['projects']['Insert']>
+        Relationships: []
+      }
+      project_tasks: {
+        Row: {
+          id: string
+          tenant_id: string
+          project_id: string
+          title: string
+          status: TaskStatus
+          assignee_id: string | null
+          due_date: string | null
+          sort_order: number
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['project_tasks']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['project_tasks']['Insert']>
+        Relationships: []
+      }
+      project_risks: {
+        Row: {
+          id: string
+          tenant_id: string
+          project_id: string
+          title: string
+          description: string | null
+          impact: RiskLevel
+          likelihood: RiskLevel
+          status: RiskStatus
+          owner_id: string | null
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['project_risks']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['project_risks']['Insert']>
         Relationships: []
       }
     }
