@@ -238,3 +238,44 @@ export function useAddComment(incidentId: string) {
     },
   })
 }
+
+// ------------------------------------------------------------------
+// SERVİS MASASI ANALİTİK — kanal dağılımı, teknisyen CSAT lideri
+// ------------------------------------------------------------------
+export interface ChannelDistribution {
+  channel: string
+  ticket_count: number
+}
+
+export function useChannelDistribution() {
+  const { profile } = useAuth()
+  return useQuery({
+    queryKey: ['channel-distribution', profile?.tenantId],
+    enabled: !!profile,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_channel_distribution', { p_tenant_id: profile!.tenantId })
+      if (error) throw error
+      return data as ChannelDistribution[]
+    },
+  })
+}
+
+export interface TechnicianCsat {
+  technician_id: string
+  full_name: string
+  avg_csat: number
+  ticket_count: number
+}
+
+export function useTechnicianCsatLeaderboard() {
+  const { profile } = useAuth()
+  return useQuery({
+    queryKey: ['technician-csat', profile?.tenantId],
+    enabled: !!profile,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_technician_csat_leaderboard', { p_tenant_id: profile!.tenantId })
+      if (error) throw error
+      return data as TechnicianCsat[]
+    },
+  })
+}

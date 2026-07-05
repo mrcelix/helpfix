@@ -7,6 +7,7 @@ import { PriorityBadge, StatusBadge } from '@/components/ui/Badge'
 import { useIncidents, useUpdateIncident, type SavedView } from './useIncidents'
 import { TicketDrawer } from './TicketDrawer'
 import { NewTicketModal } from './NewTicketModal'
+import { ServiceDeskAnalytics } from './ServiceDeskAnalytics'
 import type { TicketStatus } from '@/types/database'
 
 const SAVED_VIEWS: { key: SavedView; label: { tr: string; en: string } }[] = [
@@ -33,6 +34,7 @@ function nextStatus(current: TicketStatus): TicketStatus {
 export function ServiceDeskPage() {
   const { lang, t } = useLang()
   const [view, setView] = useState<SavedView>('open')
+  const [pageTab, setPageTab] = useState<'tickets' | 'analytics'>('tickets')
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const openId = useOpenParam()
@@ -95,6 +97,25 @@ export function ServiceDeskPage() {
         <Kpi label={t({ tr: 'Toplam', en: 'Total' })} value={kpis.total} />
       </div>
 
+      <div className="flex gap-1 border-b border-[var(--border)] mb-4">
+        <button
+          onClick={() => setPageTab('tickets')}
+          className={`px-1 py-2.5 text-[13.5px] font-semibold mr-5 border-b-2 ${pageTab === 'tickets' ? 'border-brand text-brand-dim' : 'border-transparent text-[var(--text-faint)]'}`}
+        >
+          {t({ tr: 'Talepler', en: 'Tickets' })}
+        </button>
+        <button
+          onClick={() => setPageTab('analytics')}
+          className={`px-1 py-2.5 text-[13.5px] font-semibold mr-5 border-b-2 ${pageTab === 'analytics' ? 'border-brand text-brand-dim' : 'border-transparent text-[var(--text-faint)]'}`}
+        >
+          {t({ tr: 'Analitik', en: 'Analytics' })}
+        </button>
+      </div>
+
+      {pageTab === 'analytics' ? (
+        <ServiceDeskAnalytics />
+      ) : (
+      <>
       {/* Saved views + export */}
       <div className="flex items-center gap-1.5 mb-3 flex-wrap">
         {SAVED_VIEWS.map((v) => (
@@ -222,6 +243,8 @@ export function ServiceDeskPage() {
           </tbody>
         </table>
       </div>
+      </>
+      )}
       </>
       )}
 

@@ -838,6 +838,14 @@ export interface Database {
         Args: { p_tenant_id: string; p_schedule_id: string }
         Returns: { user_id: string; full_name: string; shift_count: number; total_hours: number }[]
       }
+      get_channel_distribution: {
+        Args: { p_tenant_id: string }
+        Returns: { channel: string; ticket_count: number }[]
+      }
+      get_technician_csat_leaderboard: {
+        Args: { p_tenant_id: string }
+        Returns: { technician_id: string; full_name: string; avg_csat: number; ticket_count: number }[]
+      }
     }
     Enums: Record<string, never>
   }
