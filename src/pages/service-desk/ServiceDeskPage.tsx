@@ -4,11 +4,19 @@ import { Plus, Download, List, Kanban } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import { Button } from '@/components/ui/Button'
 import { PriorityBadge, StatusBadge } from '@/components/ui/Badge'
-import { useIncidents, useUpdateIncident, type SavedView } from './useIncidents'
+import { useIncidents, useUpdateIncident, useMajorIncidents, type SavedView } from './useIncidents'
 import { TicketDrawer } from './TicketDrawer'
 import { NewTicketModal } from './NewTicketModal'
 import { ServiceDeskAnalytics } from './ServiceDeskAnalytics'
-import type { TicketStatus } from '@/types/database'
+import type { TicketStatus, TicketChannel } from '@/types/database'
+
+const CHANNEL_LABEL: Record<TicketChannel, { tr: string; en: string }> = {
+  portal: { tr: 'Portal', en: 'Portal' },
+  email: { tr: 'E-posta', en: 'Email' },
+  chat: { tr: 'Sohbet', en: 'Chat' },
+  phone: { tr: 'Telefon', en: 'Phone' },
+  teams: { tr: 'Teams', en: 'Teams' },
+}
 
 const SAVED_VIEWS: { key: SavedView; label: { tr: string; en: string } }[] = [
   { key: 'all', label: { tr: 'Tümü', en: 'All' } },
@@ -34,6 +42,7 @@ function nextStatus(current: TicketStatus): TicketStatus {
 export function ServiceDeskPage() {
   const { lang, t } = useLang()
   const [view, setView] = useState<SavedView>('open')
+  const [channel, setChannel] = useState<TicketChannel | 'all'>('all')
   const [pageTab, setPageTab] = useState<'tickets' | 'analytics'>('tickets')
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list')
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -41,8 +50,9 @@ export function ServiceDeskPage() {
   useEffect(() => { if (openId) setSelectedId(openId) }, [openId])
   const [showNewModal, setShowNewModal] = useState(false)
 
-  const { data: incidents, isLoading, error } = useIncidents(view)
+  const { data: incidents, isLoading, error } = useIncidents(view, channel)
   const { data: allIncidents } = useIncidents('all')
+  const { data: majorIncidents } = useMajorIncidents()
 
   const kpis = {
     total: allIncidents?.length ?? 0,
@@ -88,6 +98,25 @@ export function ServiceDeskPage() {
           {t({ tr: 'Yeni Talep', en: 'New Ticket' })}
         </Button>
       </div>
+
+      {!!majorIncidents?.length && (
+        <div className="space-y-2 mb-5">
+          {majorIncidents.map((mi) => (
+            <button
+              key={mi.id}
+              onClick={() => setSelectedId(mi.id)}
+              className="w-full flex items-center gap-3 bg-p1-tint border-2 border-p1 rounded-xl px-4 py-3 text-left hover:opacity-90"
+            >
+              <span className="w-2 h-2 rounded-full bg-p1 animate-pulse shrink-0" />
+              <span className="text-[10.5px] font-bold text-p1 uppercase shrink-0">
+                {t({ tr: 'Büyük Olay', en: 'Major Incident' })}
+              </span>
+              <span className="flex-1 font-semibold text-[13px] truncate">{mi.title}</span>
+              <span className="font-mono text-[11px] text-[var(--text-faint)] shrink-0">{mi.ref}</span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* KPI row */}
       <div className="grid grid-cols-4 gap-3 mb-5">
@@ -155,6 +184,26 @@ export function ServiceDeskPage() {
             {t({ tr: 'Dışa Aktar', en: 'Export' })}
           </button>
         </div>
+      </div>
+
+      {/* Omnichannel filtresi */}
+      <div className="flex items-center gap-1.5 mb-4 flex-wrap">
+        <span className="text-[10.5px] font-bold text-[var(--text-faint)] uppercase mr-1">{t({ tr: 'Kanal:', en: 'Channel:' })}</span>
+        <button
+          onClick={() => setChannel('all')}
+          className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${channel === 'all' ? 'bg-brand border-brand text-white' : 'bg-[var(--panel)] border-[var(--border)] text-[var(--text-sub)]'}`}
+        >
+          {t({ tr: 'Tümü', en: 'All' })}
+        </button>
+        {(Object.keys(CHANNEL_LABEL) as TicketChannel[]).map((c) => (
+          <button
+            key={c}
+            onClick={() => setChannel(c)}
+            className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${channel === c ? 'bg-brand border-brand text-white' : 'bg-[var(--panel)] border-[var(--border)] text-[var(--text-sub)]'}`}
+          >
+            {CHANNEL_LABEL[c][lang]}
+          </button>
+        ))}
       </div>
 
       {viewMode === 'kanban' ? (

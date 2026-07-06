@@ -1,7 +1,7 @@
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
+import { BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { Star } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
-import { useChannelDistribution, useTechnicianCsatLeaderboard } from './useIncidents'
+import { useChannelDistribution, useTechnicianCsatLeaderboard, useDailyVolume } from './useIncidents'
 
 const CHANNEL_LABEL: Record<string, { tr: string; en: string }> = {
   portal: { tr: 'Portal', en: 'Portal' },
@@ -16,11 +16,48 @@ export function ServiceDeskAnalytics() {
   const { lang, t } = useLang()
   const { data: channels, isLoading: channelsLoading } = useChannelDistribution()
   const { data: leaderboard, isLoading: leaderboardLoading } = useTechnicianCsatLeaderboard()
+  const { data: dailyVolume, isLoading: volumeLoading } = useDailyVolume()
+
+  const volumeChartData = dailyVolume?.map((d) => ({
+    day: new Date(d.day).toLocaleDateString(lang === 'tr' ? 'tr-TR' : 'en-US', { day: '2-digit', month: '2-digit' }),
+    [t({ tr: 'Açılan', en: 'Opened' })]: d.created_count,
+    [t({ tr: 'Çözülen', en: 'Resolved' })]: d.resolved_count,
+  }))
 
   const chartData = channels?.map((c) => ({ channel: CHANNEL_LABEL[c.channel]?.[lang] ?? c.channel, count: c.ticket_count }))
 
   return (
-    <div className="grid grid-cols-2 gap-4">
+    <div>
+      <div className="bg-[var(--panel)] border border-[var(--border)] rounded-2xl p-5 mb-4">
+        <div className="text-[13px] font-bold mb-1">{t({ tr: '14 Günlük Talep Hacmi', en: '14-Day Ticket Volume' })}</div>
+        <div className="text-[11px] text-[var(--text-faint)] mb-4">{t({ tr: 'Açılan vs çözülen', en: 'Opened vs resolved' })}</div>
+        {volumeLoading ? (
+          <p className="text-[var(--text-faint)] text-sm py-16 text-center">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</p>
+        ) : (
+          <ResponsiveContainer width="100%" height={200}>
+            <AreaChart data={volumeChartData}>
+              <defs>
+                <linearGradient id="sdColorOpened" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#4C6FFF" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#4C6FFF" stopOpacity={0} />
+                </linearGradient>
+                <linearGradient id="sdColorResolved" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#17B0A7" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#17B0A7" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+              <XAxis dataKey="day" tick={{ fontSize: 10.5, fill: 'var(--text-faint)' }} />
+              <YAxis tick={{ fontSize: 11, fill: 'var(--text-faint)' }} allowDecimals={false} />
+              <Tooltip contentStyle={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} />
+              <Area type="monotone" dataKey={t({ tr: 'Açılan', en: 'Opened' })} stroke="#4C6FFF" fill="url(#sdColorOpened)" strokeWidth={2} />
+              <Area type="monotone" dataKey={t({ tr: 'Çözülen', en: 'Resolved' })} stroke="#17B0A7" fill="url(#sdColorResolved)" strokeWidth={2} />
+            </AreaChart>
+          </ResponsiveContainer>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
       <div className="bg-[var(--panel)] border border-[var(--border)] rounded-2xl p-5">
         <div className="text-[13px] font-bold mb-1">{t({ tr: 'Kanal Dağılımı', en: 'Channel Distribution' })}</div>
         <div className="text-[11px] text-[var(--text-faint)] mb-4">{t({ tr: 'Son 30 gün', en: 'Last 30 days' })}</div>
@@ -68,6 +105,7 @@ export function ServiceDeskAnalytics() {
           </div>
         )}
       </div>
+    </div>
     </div>
   )
 }

@@ -109,6 +109,8 @@ export function useCreateIncidentFromAlert() {
           csat_score: null,
           resolved_at: null,
           closed_at: null,
+          is_major_incident: false,
+          major_incident_declared_at: null,
         })
         .select('id')
         .single()

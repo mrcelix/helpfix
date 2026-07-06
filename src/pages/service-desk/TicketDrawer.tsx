@@ -12,7 +12,9 @@ import {
   useAddComment,
   useDuplicateCandidates,
   useMergeIncident,
+  useToggleMajorIncident,
 } from './useIncidents'
+import { WarRoomPanel } from './WarRoomPanel'
 import type { TicketStatus } from '@/types/database'
 
 const STATUS_OPTIONS: TicketStatus[] = ['new', 'open', 'in_progress', 'on_hold', 'resolved', 'closed']
@@ -27,6 +29,7 @@ export function TicketDrawer({ id, onClose }: { id: string; onClose: () => void 
   const addComment = useAddComment(id)
   const { data: duplicates } = useDuplicateCandidates(id, incident?.category ?? null)
   const mergeIncident = useMergeIncident()
+  const toggleMajorIncident = useToggleMajorIncident(id)
 
   const [draft, setDraft] = useState('')
   const [isInternal, setIsInternal] = useState(false)
@@ -67,7 +70,21 @@ export function TicketDrawer({ id, onClose }: { id: string; onClose: () => void 
                 {incident.category}
               </span>
             )}
+            {canManage && incident.priority === 'P1' && (
+              <button
+                onClick={() => toggleMajorIncident.mutate(!incident.is_major_incident)}
+                className={`ml-auto text-[10.5px] font-bold px-2.5 py-1 rounded-full ${incident.is_major_incident ? 'bg-p1 text-white' : 'bg-[var(--panel-2)] border border-p1/40 text-p1'}`}
+              >
+                {incident.is_major_incident
+                  ? t({ tr: 'Büyük Olayı Kapat', en: 'End Major Incident' })
+                  : t({ tr: 'Büyük Olay İlan Et', en: 'Declare Major Incident' })}
+              </button>
+            )}
           </div>
+
+          {incident.is_major_incident && (
+            <WarRoomPanel incidentId={id} declaredAt={incident.major_incident_declared_at} />
+          )}
 
           {incident.description && (
             <p className="text-[13px] text-[var(--text-sub)] leading-relaxed whitespace-pre-wrap">

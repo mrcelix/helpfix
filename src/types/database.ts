@@ -130,6 +130,8 @@ export interface Database {
           assignee_id: string | null
           possible_duplicate_of: string | null
           ci_id: string | null
+          is_major_incident: boolean
+          major_incident_declared_at: string | null
           sla_policy_id: string | null
           sla_due_at: string | null
           csat_score: number | null
@@ -164,6 +166,18 @@ export interface Database {
           created_at?: string
         }
         Update: Partial<Database['public']['Tables']['incident_comments']['Insert']>
+        Relationships: []
+      }
+      incident_responders: {
+        Row: {
+          incident_id: string
+          user_id: string
+          added_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['incident_responders']['Row'], 'added_at'> & {
+          added_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['incident_responders']['Insert']>
         Relationships: []
       }
       incident_timeline: {
@@ -925,6 +939,10 @@ export interface Database {
       get_kb_gap_analysis: {
         Args: { p_tenant_id: string }
         Returns: { query: string; search_count: number; last_searched: string }[]
+      }
+      get_service_desk_daily_volume: {
+        Args: { p_tenant_id: string }
+        Returns: { day: string; created_count: number; resolved_count: number }[]
       }
     }
     Enums: Record<string, never>

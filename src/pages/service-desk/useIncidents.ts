@@ -27,6 +27,8 @@ export interface IncidentDetail extends IncidentListItem {
   csat_score: number | null
   resolved_at: string | null
   closed_at: string | null
+  is_major_incident: boolean
+  major_incident_declared_at: string | null
 }
 
 export interface IncidentComment {
@@ -78,17 +80,21 @@ export function useMyRequests() {
 // ------------------------------------------------------------------
 // LIST
 // ------------------------------------------------------------------
-export function useIncidents(view: SavedView) {
+export function useIncidents(view: SavedView, channel?: TicketChannel | 'all') {
   const { profile } = useAuth()
 
   return useQuery({
-    queryKey: ['incidents', view, profile?.id],
+    queryKey: ['incidents', view, channel, profile?.id],
     enabled: !!profile,
     queryFn: async () => {
       let query = supabase
         .from('incidents')
         .select(SELECT_LIST)
         .order('created_at', { ascending: false })
+
+      if (channel && channel !== 'all') {
+        query = query.eq('channel', channel)
+      }
 
       if (view === 'mine' && profile) {
         query = query.eq('assignee_id', profile.id)
@@ -115,7 +121,7 @@ export function useIncidentDetail(id: string | null) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('incidents')
-        .select(`${SELECT_LIST}, description, csat_score, resolved_at, closed_at`)
+        .select(`${SELECT_LIST}, description, csat_score, resolved_at, closed_at, is_major_incident, major_incident_declared_at`)
         .eq('id', id!)
         .single()
       if (error) throw error
@@ -190,6 +196,8 @@ export function useCreateIncident() {
           ci_id: null,
           resolved_at: null,
           closed_at: null,
+          is_major_incident: false,
+          major_incident_declared_at: null,
         })
         .select('id, ref')
         .single()
@@ -325,6 +333,117 @@ export function useMergeIncident() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['incidents'] })
       qc.invalidateQueries({ queryKey: ['incident'] })
+    },
+  })
+}
+
+// ------------------------------------------------------------------
+// BÜYÜK OLAY (MAJOR INCIDENT) WAR ROOM
+// ------------------------------------------------------------------
+export interface MajorIncident {
+  id: string
+  ref: string
+  title: string
+  status: TicketStatus
+  major_incident_declared_at: string | null
+}
+
+export function useMajorIncidents() {
+  const { profile } = useAuth()
+  return useQuery({
+    queryKey: ['major-incidents', profile?.tenantId],
+    enabled: !!profile,
+    refetchInterval: 15_000,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('incidents')
+        .select('id, ref, title, status, major_incident_declared_at')
+        .eq('is_major_incident', true)
+        .not('status', 'in', '(resolved,closed,merged)')
+        .order('major_incident_declared_at', { ascending: false })
+      if (error) throw error
+      return data as MajorIncident[]
+    },
+  })
+}
+
+export function useToggleMajorIncident(id: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (isMajor: boolean) => {
+      const { error } = await supabase.from('incidents').update({ is_major_incident: isMajor }).eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['major-incidents'] })
+      qc.invalidateQueries({ queryKey: ['incident', id] })
+      qc.invalidateQueries({ queryKey: ['incidents'] })
+    },
+  })
+}
+
+export interface Responder {
+  user_id: string
+  full_name: string
+}
+
+export function useIncidentResponders(incidentId: string) {
+  return useQuery({
+    queryKey: ['incident-responders', incidentId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('incident_responders')
+        .select('user_id, user:user_id ( full_name )')
+        .eq('incident_id', incidentId)
+      if (error) throw error
+      return (data as unknown as { user_id: string; user: { full_name: string } }[]).map((r) => ({
+        user_id: r.user_id,
+        full_name: r.user.full_name,
+      })) as Responder[]
+    },
+  })
+}
+
+export function useAddResponder(incidentId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      const { error } = await supabase.from('incident_responders').insert({ incident_id: incidentId, user_id: userId })
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['incident-responders', incidentId] }),
+  })
+}
+
+export function useRemoveResponder(incidentId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      const { error } = await supabase.from('incident_responders').delete().eq('incident_id', incidentId).eq('user_id', userId)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['incident-responders', incidentId] }),
+  })
+}
+
+// ------------------------------------------------------------------
+// 14 GÜNLÜK HACİM TRENDİ
+// ------------------------------------------------------------------
+export interface DailyVolume {
+  day: string
+  created_count: number
+  resolved_count: number
+}
+
+export function useDailyVolume() {
+  const { profile } = useAuth()
+  return useQuery({
+    queryKey: ['service-desk-daily-volume', profile?.tenantId],
+    enabled: !!profile,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_service_desk_daily_volume', { p_tenant_id: profile!.tenantId })
+      if (error) throw error
+      return data as DailyVolume[]
     },
   })
 }
