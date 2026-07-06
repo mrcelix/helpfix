@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useOpenParam } from '@/hooks/useOpenParam'
-import { Plus, Sparkles } from 'lucide-react'
+import { Plus, Sparkles, Download } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import { Button } from '@/components/ui/Button'
 import { PriorityBadge } from '@/components/ui/Badge'
@@ -37,6 +37,34 @@ export function ProblemsPage() {
 
   const { data: problems, isLoading, error } = useProblems(view)
   const { data: clusters } = useClusterCandidates()
+  const [sortBy, setSortBy] = useState<'created_desc' | 'priority' | 'az'>('created_desc')
+
+  const sortedProblems = problems ? [...problems].sort((a, b) => {
+    if (sortBy === 'priority') return a.priority.localeCompare(b.priority)
+    if (sortBy === 'az') return a.title.localeCompare(b.title)
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  }) : problems
+
+  function exportCsv() {
+    if (!sortedProblems?.length) return
+    const headers = ['Ref', 'Başlık', 'Öncelik', 'Durum', 'Sahibi', 'Oluşturma']
+    const rows = sortedProblems.map((p) => [
+      p.ref,
+      p.title,
+      p.priority,
+      STATUS_LABEL[p.status]?.[lang] ?? p.status,
+      p.owner?.full_name ?? '',
+      new Date(p.created_at).toLocaleDateString(lang === 'tr' ? 'tr-TR' : 'en-US'),
+    ])
+    const csv = [headers, ...rows].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'problemler.csv'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   function openFromCluster(cluster: ClusterCandidate) {
     setPrefillCluster(cluster)
@@ -130,6 +158,22 @@ export function ProblemsPage() {
             {v.label[lang]}
           </button>
         ))}
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+          className="ml-auto text-[11.5px] font-semibold bg-[var(--panel)] border border-[var(--border)] rounded-lg px-2.5 py-1.5"
+        >
+          <option value="created_desc">{t({ tr: 'Sırala: Son Oluşturulan', en: 'Sort: Newest First' })}</option>
+          <option value="priority">{t({ tr: 'Sırala: Öncelik', en: 'Sort: Priority' })}</option>
+          <option value="az">{t({ tr: 'Sırala: A-Z', en: 'Sort: A-Z' })}</option>
+        </select>
+        <button
+          onClick={exportCsv}
+          className="flex items-center gap-1.5 text-[12px] font-semibold px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--panel)] text-[var(--text-sub)] hover:border-brand hover:text-brand-dim"
+        >
+          <Download className="w-[13px] h-[13px]" />
+          {t({ tr: 'Dışa Aktar', en: 'Export' })}
+        </button>
       </div>
 
       <div className="border border-[var(--border)] rounded-[var(--radius-app)] overflow-hidden bg-[var(--panel)]">
@@ -166,7 +210,7 @@ export function ProblemsPage() {
                 </td>
               </tr>
             )}
-            {problems?.map((p) => (
+            {sortedProblems?.map((p) => (
               <tr
                 key={p.id}
                 onClick={() => setSelectedId(p.id)}
