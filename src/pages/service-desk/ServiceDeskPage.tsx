@@ -50,9 +50,21 @@ export function ServiceDeskPage() {
   useEffect(() => { if (openId) setSelectedId(openId) }, [openId])
   const [showNewModal, setShowNewModal] = useState(false)
 
-  const { data: incidents, isLoading, error } = useIncidents(view, channel)
+  const { data: incidentsRaw, isLoading, error } = useIncidents(view, channel)
   const { data: allIncidents } = useIncidents('all')
   const { data: majorIncidents } = useMajorIncidents()
+  const [sortBy, setSortBy] = useState<'created_desc' | 'priority' | 'sla' | 'az'>('created_desc')
+
+  const incidents = incidentsRaw ? [...incidentsRaw].sort((a, b) => {
+    if (sortBy === 'priority') return a.priority.localeCompare(b.priority)
+    if (sortBy === 'sla') {
+      if (!a.sla_due_at) return 1
+      if (!b.sla_due_at) return -1
+      return new Date(a.sla_due_at).getTime() - new Date(b.sla_due_at).getTime()
+    }
+    if (sortBy === 'az') return a.title.localeCompare(b.title)
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  }) : incidentsRaw
 
   const kpis = {
     total: allIncidents?.length ?? 0,
@@ -186,7 +198,7 @@ export function ServiceDeskPage() {
         </div>
       </div>
 
-      {/* Omnichannel filtresi */}
+      {/* Omnichannel filtresi + Sırala */}
       <div className="flex items-center gap-1.5 mb-4 flex-wrap">
         <span className="text-[10.5px] font-bold text-[var(--text-faint)] uppercase mr-1">{t({ tr: 'Kanal:', en: 'Channel:' })}</span>
         <button
@@ -204,6 +216,16 @@ export function ServiceDeskPage() {
             {CHANNEL_LABEL[c][lang]}
           </button>
         ))}
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+          className="ml-auto text-[11.5px] font-semibold bg-[var(--panel)] border border-[var(--border)] rounded-lg px-2.5 py-1.5"
+        >
+          <option value="created_desc">{t({ tr: 'Sırala: Son Oluşturulan', en: 'Sort: Newest First' })}</option>
+          <option value="priority">{t({ tr: 'Sırala: Öncelik', en: 'Sort: Priority' })}</option>
+          <option value="sla">{t({ tr: 'Sırala: SLA Süresi', en: 'Sort: SLA Due Date' })}</option>
+          <option value="az">{t({ tr: 'Sırala: A-Z', en: 'Sort: A-Z' })}</option>
+        </select>
       </div>
 
       {viewMode === 'kanban' ? (
