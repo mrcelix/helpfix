@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useOpenParam } from '@/hooks/useOpenParam'
-import { Plus, List, Share2 } from 'lucide-react'
+import { Plus, List, Share2, Download } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import { Button } from '@/components/ui/Button'
 import { useConfigurationItems, useDuplicateCis, type CiSavedView } from './useCmdb'
@@ -49,6 +49,38 @@ export function CmdbPage() {
 
   const { data: items, isLoading, error } = useConfigurationItems(view)
   const { data: duplicates } = useDuplicateCis()
+  const [sortBy, setSortBy] = useState<'created_desc' | 'warranty' | 'az'>('created_desc')
+
+  const sortedItems = items ? [...items].sort((a, b) => {
+    if (sortBy === 'warranty') {
+      if (!a.warranty_expiry) return 1
+      if (!b.warranty_expiry) return -1
+      return new Date(a.warranty_expiry).getTime() - new Date(b.warranty_expiry).getTime()
+    }
+    if (sortBy === 'az') return a.name.localeCompare(b.name)
+    return 0
+  }) : items
+
+  function exportCsv() {
+    if (!sortedItems?.length) return
+    const headers = ['Etiket', 'Ad', 'Tip', 'Zimmetli', 'Durum', 'Garanti']
+    const rows = sortedItems.map((ci) => [
+      ci.tag,
+      ci.name,
+      TYPE_LABEL[ci.ci_type]?.[lang] ?? ci.ci_type,
+      ci.assigned_user?.full_name ?? '',
+      STATUS_LABEL[ci.status]?.[lang] ?? ci.status,
+      ci.warranty_expiry ? new Date(ci.warranty_expiry).toLocaleDateString(lang === 'tr' ? 'tr-TR' : 'en-US') : '',
+    ])
+    const csv = [headers, ...rows].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'varliklar.csv'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   return (
     <div>
@@ -117,6 +149,22 @@ export function CmdbPage() {
             {v.label[lang]}
           </button>
         ))}
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+          className="ml-auto text-[11.5px] font-semibold bg-[var(--panel)] border border-[var(--border)] rounded-lg px-2.5 py-1.5"
+        >
+          <option value="created_desc">{t({ tr: 'Sırala: Varsayılan', en: 'Sort: Default' })}</option>
+          <option value="warranty">{t({ tr: 'Sırala: Garanti Bitiş', en: 'Sort: Warranty Expiry' })}</option>
+          <option value="az">{t({ tr: 'Sırala: A-Z', en: 'Sort: A-Z' })}</option>
+        </select>
+        <button
+          onClick={exportCsv}
+          className="flex items-center gap-1.5 text-[12px] font-semibold px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--panel)] text-[var(--text-sub)] hover:border-brand hover:text-brand-dim"
+        >
+          <Download className="w-[13px] h-[13px]" />
+          {t({ tr: 'Dışa Aktar', en: 'Export' })}
+        </button>
       </div>
 
       <div className="border border-[var(--border)] rounded-[var(--radius-app)] overflow-hidden bg-[var(--panel)]">
@@ -153,7 +201,7 @@ export function CmdbPage() {
                 </td>
               </tr>
             )}
-            {items?.map((ci) => (
+            {sortedItems?.map((ci) => (
               <tr
                 key={ci.id}
                 onClick={() => setSelectedId(ci.id)}

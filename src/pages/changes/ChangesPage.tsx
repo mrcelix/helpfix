@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useOpenParam } from '@/hooks/useOpenParam'
-import { Plus, Snowflake } from 'lucide-react'
+import { Plus, Snowflake, Download } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import { Button } from '@/components/ui/Button'
 import { useChanges, type ChangeSavedView } from './useChanges'
@@ -53,6 +53,34 @@ export function ChangesPage() {
   const [showTemplatesModal, setShowTemplatesModal] = useState(false)
 
   const { data: changes, isLoading, error } = useChanges(view)
+  const [sortBy, setSortBy] = useState<'created_desc' | 'risk' | 'az'>('created_desc')
+
+  const sortedChanges = changes ? [...changes].sort((a, b) => {
+    if (sortBy === 'risk') return b.risk_score - a.risk_score
+    if (sortBy === 'az') return a.title.localeCompare(b.title)
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  }) : changes
+
+  function exportCsv() {
+    if (!sortedChanges?.length) return
+    const headers = ['Ref', 'Başlık', 'Tip', 'Risk Skoru', 'Durum', 'Planlanan']
+    const rows = sortedChanges.map((c) => [
+      c.ref,
+      c.title,
+      TYPE_LABEL[c.change_type]?.[lang] ?? c.change_type,
+      c.risk_score,
+      STATUS_LABEL[c.status]?.[lang] ?? c.status,
+      c.scheduled_start ? new Date(c.scheduled_start).toLocaleDateString(lang === 'tr' ? 'tr-TR' : 'en-US') : '',
+    ])
+    const csv = [headers, ...rows].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'degisiklikler.csv'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   return (
     <div>
@@ -114,6 +142,22 @@ export function ChangesPage() {
             {v.label[lang]}
           </button>
         ))}
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+          className="ml-auto text-[11.5px] font-semibold bg-[var(--panel)] border border-[var(--border)] rounded-lg px-2.5 py-1.5"
+        >
+          <option value="created_desc">{t({ tr: 'Sırala: Son Oluşturulan', en: 'Sort: Newest First' })}</option>
+          <option value="risk">{t({ tr: 'Sırala: Risk Skoru', en: 'Sort: Risk Score' })}</option>
+          <option value="az">{t({ tr: 'Sırala: A-Z', en: 'Sort: A-Z' })}</option>
+        </select>
+        <button
+          onClick={exportCsv}
+          className="flex items-center gap-1.5 text-[12px] font-semibold px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--panel)] text-[var(--text-sub)] hover:border-brand hover:text-brand-dim"
+        >
+          <Download className="w-[13px] h-[13px]" />
+          {t({ tr: 'Dışa Aktar', en: 'Export' })}
+        </button>
       </div>
 
       <div className="border border-[var(--border)] rounded-[var(--radius-app)] overflow-hidden bg-[var(--panel)]">
@@ -150,7 +194,7 @@ export function ChangesPage() {
                 </td>
               </tr>
             )}
-            {changes?.map((c) => (
+            {sortedChanges?.map((c) => (
               <tr
                 key={c.id}
                 onClick={() => setSelectedId(c.id)}
