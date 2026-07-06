@@ -164,7 +164,10 @@ export function SlaPage() {
               )}
               {policies?.map((p) => (
                 <tr key={p.id} className="border-b border-[var(--border)] last:border-0">
-                  <td className="px-3.5 py-3 font-semibold">{p.name}</td>
+                  <td className="px-3.5 py-3 font-semibold">
+                    {p.name}
+                    <span className="ml-2 text-[9px] font-mono font-bold bg-purple-tint text-purple rounded-full px-1.5 py-0.5">{p.tier.toUpperCase()}</span>
+                  </td>
                   <td className="px-3.5 py-3"><PriorityBadge priority={p.priority} /></td>
                   <td className="px-3.5 py-3 text-[var(--text-sub)]">{p.response_time_minutes} {t({ tr: 'dk', en: 'min' })}</td>
                   <td className="px-3.5 py-3 text-[var(--text-sub)]">{p.resolution_time_minutes} {t({ tr: 'dk', en: 'min' })}</td>

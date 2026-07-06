@@ -64,6 +64,7 @@ export type FishboneCategory = 'people' | 'process' | 'technology' | 'environmen
 export type EscalationNotifyRole = 'agent' | 'manager' | 'tenant_admin'
 export type OncallNotifyMethod = 'push' | 'call' | 'team_lead'
 export type NotificationType = 'ticket_assigned' | 'approval_needed' | 'swap_request' | 'new_comment'
+export type SlaTier = 'sla' | 'ola' | 'uc'
 
 export interface Database {
   public: {
@@ -462,6 +463,7 @@ export interface Database {
           resolution_time_minutes: number
           escalation_warning_percent: number
           business_hours_only: boolean
+          tier: SlaTier
           is_active: boolean
           created_at: string
         }

@@ -22,6 +22,7 @@ export function NewPolicyModal({ onClose }: { onClose: () => void }) {
   const [responseTime, setResponseTime] = useState(DEFAULTS.P2.response)
   const [resolutionTime, setResolutionTime] = useState(DEFAULTS.P2.resolution)
   const [businessHoursOnly, setBusinessHoursOnly] = useState(false)
+  const [tier, setTier] = useState<'sla' | 'ola' | 'uc'>('sla')
 
   function selectPriority(p: Priority) {
     setPriority(p)
@@ -37,6 +38,7 @@ export function NewPolicyModal({ onClose }: { onClose: () => void }) {
       response_time_minutes: responseTime,
       resolution_time_minutes: resolutionTime,
       businessHoursOnly,
+      tier,
     })
     onClose()
   }
@@ -91,6 +93,30 @@ export function NewPolicyModal({ onClose }: { onClose: () => void }) {
               </button>
             ))}
           </div>
+        </div>
+        <div>
+          <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">
+            {t({ tr: 'Katman', en: 'Tier' })}
+          </label>
+          <div className="flex gap-1.5">
+            {(['sla', 'ola', 'uc'] as const).map((tr) => (
+              <button
+                type="button"
+                key={tr}
+                onClick={() => setTier(tr)}
+                className={`flex-1 text-[11px] font-bold py-2 rounded-lg border ${tier === tr ? 'bg-purple border-purple text-white' : 'bg-[var(--panel-2)] border-[var(--border)] text-[var(--text-sub)]'}`}
+              >
+                {tr.toUpperCase()}
+              </button>
+            ))}
+          </div>
+          <p className="text-[10px] text-[var(--text-faint)] mt-1">
+            {tier === 'sla'
+              ? t({ tr: 'SLA: Müşteriyle yapılan hizmet anlaşması', en: 'SLA: Agreement with the customer' })
+              : tier === 'ola'
+                ? t({ tr: 'OLA: İç ekipler arası operasyonel anlaşma', en: 'OLA: Internal team-to-team agreement' })
+                : t({ tr: 'UC: Tedarikçi ile taahhüt sözleşmesi', en: 'UC: Underpinning contract with a vendor' })}
+          </p>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
