@@ -829,6 +829,22 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['audit_log']['Insert']>
         Relationships: []
       }
+      kb_search_log: {
+        Row: {
+          id: string
+          tenant_id: string
+          query: string
+          result_count: number
+          searched_by: string | null
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['kb_search_log']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['kb_search_log']['Insert']>
+        Relationships: []
+      }
     }
     Views: Record<string, never>
     Functions: {
@@ -905,6 +921,10 @@ export interface Database {
       get_duplicate_ci_names: {
         Args: { p_tenant_id: string }
         Returns: { name: string; ci_count: number; ci_ids: string[] }[]
+      }
+      get_kb_gap_analysis: {
+        Args: { p_tenant_id: string }
+        Returns: { query: string; search_count: number; last_searched: string }[]
       }
     }
     Enums: Record<string, never>

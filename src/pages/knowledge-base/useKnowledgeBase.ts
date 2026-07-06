@@ -154,3 +154,41 @@ export function useUpdateArticle(id: string) {
     },
   })
 }
+
+// ------------------------------------------------------------------
+// BİLGİ BOŞLUĞU ANALİZİ — sonuçsuz aramaları loglar ve raporlar
+// ------------------------------------------------------------------
+export function useLogSearch() {
+  const { profile } = useAuth()
+  return useMutation({
+    mutationFn: async (input: { query: string; resultCount: number }) => {
+      if (!profile || input.query.trim().length < 3) return
+      const { error } = await supabase.from('kb_search_log').insert({
+        tenant_id: profile.tenantId,
+        query: input.query.trim(),
+        result_count: input.resultCount,
+        searched_by: profile.id,
+      })
+      if (error) throw error
+    },
+  })
+}
+
+export interface KbGap {
+  query: string
+  search_count: number
+  last_searched: string
+}
+
+export function useKbGapAnalysis() {
+  const { profile } = useAuth()
+  return useQuery({
+    queryKey: ['kb-gap-analysis', profile?.tenantId],
+    enabled: !!profile,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_kb_gap_analysis', { p_tenant_id: profile!.tenantId })
+      if (error) throw error
+      return data as KbGap[]
+    },
+  })
+}

@@ -4,7 +4,7 @@ import { Plus, Search } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/Button'
-import { useArticles, type KbSavedView } from './useKnowledgeBase'
+import { useArticles, useLogSearch, useKbGapAnalysis, type KbSavedView } from './useKnowledgeBase'
 import { ArticleDrawer } from './ArticleDrawer'
 import { NewArticleModal } from './NewArticleModal'
 
@@ -27,6 +27,19 @@ export function KnowledgeBasePage() {
   const [showNewModal, setShowNewModal] = useState(false)
 
   const { data: articles, isLoading, error } = useArticles(view, search)
+  const logSearch = useLogSearch()
+  const { data: gaps } = useKbGapAnalysis()
+
+  // Sonuçsuz (veya sonuçlu) her aramayı debounce ile logla — Bilgi
+  // Boşluğu Analizi'nin veri kaynağı.
+  useEffect(() => {
+    if (search.trim().length < 3) return
+    const timeout = setTimeout(() => {
+      logSearch.mutate({ query: search, resultCount: articles?.length ?? 0 })
+    }, 1200)
+    return () => clearTimeout(timeout)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search])
 
   return (
     <div>
@@ -46,6 +59,21 @@ export function KnowledgeBasePage() {
           </Button>
         )}
       </div>
+
+      {canManage && !!gaps?.length && (
+        <div className="bg-p2-tint border border-p2/40 rounded-xl p-3.5 mb-4">
+          <div className="text-[11px] font-bold text-p2 uppercase mb-1.5">
+            🔍 {t({ tr: 'Bilgi Boşluğu Analizi — Sonuçsuz Aramalar', en: 'Knowledge Gap Analysis — Searches with No Results' })}
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {gaps.slice(0, 8).map((g) => (
+              <span key={g.query} className="text-[11px] font-semibold bg-[var(--panel)] border border-[var(--border)] rounded-full px-2.5 py-1">
+                "{g.query}" <span className="text-[var(--text-faint)]">×{g.search_count}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="flex items-center gap-2 bg-[var(--panel)] border border-[var(--border)] rounded-lg px-3 py-2 mb-4 max-w-md">
         <Search className="w-[15px] h-[15px] text-[var(--text-faint)]" />
