@@ -3,6 +3,8 @@ import { Plus } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import { NAV_MODULES } from '@/components/layout/nav-modules'
 import { AdminCatalogTab } from './AdminCatalogTab'
+import { NewUserModal } from './NewUserModal'
+import { Button } from '@/components/ui/Button'
 import {
   useTenantUsers,
   useUpdateUserRole,
@@ -82,17 +84,25 @@ function UsersTab() {
   const { data: users, isLoading } = useTenantUsers()
   const updateRole = useUpdateUserRole()
   const toggleActive = useToggleUserActive()
+  const [showNewUserModal, setShowNewUserModal] = useState(false)
 
   return (
-    <div className="border border-[var(--border)] rounded-[var(--radius-app)] overflow-hidden bg-[var(--panel)]">
-      <table className="w-full text-[12.5px]">
-        <thead>
-          <tr className="bg-[var(--panel-2)] border-b border-[var(--border)]">
-            <Th>{t({ tr: 'Ad Soyad', en: 'Name' })}</Th>
-            <Th>{t({ tr: 'E-posta', en: 'Email' })}</Th>
-            <Th>{t({ tr: 'Departman', en: 'Department' })}</Th>
-            <Th>{t({ tr: 'Rol', en: 'Role' })}</Th>
-            <Th>{t({ tr: 'Aktif', en: 'Active' })}</Th>
+    <div>
+      <div className="flex justify-end mb-3">
+        <Button onClick={() => setShowNewUserModal(true)}>
+          <Plus className="w-[15px] h-[15px]" />
+          {t({ tr: 'Yeni Kullanıcı', en: 'New User' })}
+        </Button>
+      </div>
+      <div className="border border-[var(--border)] rounded-[var(--radius-app)] overflow-hidden bg-[var(--panel)]">
+        <table className="w-full text-[12.5px]">
+          <thead>
+            <tr className="bg-[var(--panel-2)] border-b border-[var(--border)]">
+              <Th>{t({ tr: 'Ad Soyad', en: 'Name' })}</Th>
+              <Th>{t({ tr: 'E-posta', en: 'Email' })}</Th>
+              <Th>{t({ tr: 'Departman', en: 'Department' })}</Th>
+              <Th>{t({ tr: 'Rol', en: 'Role' })}</Th>
+              <Th>{t({ tr: 'Aktif', en: 'Active' })}</Th>
           </tr>
         </thead>
         <tbody>
@@ -131,8 +141,10 @@ function UsersTab() {
               </td>
             </tr>
           ))}
-        </tbody>
-      </table>
+          </tbody>
+        </table>
+      </div>
+      {showNewUserModal && <NewUserModal onClose={() => setShowNewUserModal(false)} />}
     </div>
   )
 }

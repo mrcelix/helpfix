@@ -145,3 +145,36 @@ export function useAuditLog() {
     },
   })
 }
+
+// ------------------------------------------------------------------
+// YENİ KULLANICI OLUŞTURMA — Edge Function üzerinden
+// ------------------------------------------------------------------
+export function useCreateUser() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: { email: string; password: string; fullName: string; role: UserRole; departmentId: string | null }) => {
+      const { data, error } = await supabase.functions.invoke('create-user', {
+        body: {
+          email: input.email,
+          password: input.password,
+          fullName: input.fullName,
+          role: input.role,
+          departmentId: input.departmentId,
+        },
+      })
+      if (error) throw error
+      if (data?.error) throw new Error(data.error)
+      return data
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-users'] }),
+  })
+}
+
+/** Rastgele, yeterince güçlü bir geçici şifre üretir — yeni kullanıcıya
+ * iletmeniz için (e-posta gönderimi altyapımız yok, elle paylaşılır). */
+export function generateTempPassword(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$'
+  let pass = ''
+  for (let i = 0; i < 12; i++) pass += chars[Math.floor(Math.random() * chars.length)]
+  return pass
+}
