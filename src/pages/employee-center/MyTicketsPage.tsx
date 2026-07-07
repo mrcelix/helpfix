@@ -7,6 +7,24 @@ import { useMyRequests } from '@/pages/service-desk/useIncidents'
 import { TicketDrawer } from '@/pages/service-desk/TicketDrawer'
 import { NewTicketModal } from '@/pages/service-desk/NewTicketModal'
 
+function slaState(slaDueAt: string | null): 'ok' | 'warning' | 'breached' {
+  if (!slaDueAt) return 'ok'
+  const remainingMs = new Date(slaDueAt).getTime() - Date.now()
+  if (remainingMs < 0) return 'breached'
+  if (remainingMs < 4 * 3_600_000) return 'warning'
+  return 'ok'
+}
+const SLA_STYLE: Record<string, string> = {
+  ok: 'text-ok bg-[#0F2E1F]',
+  warning: 'text-p2 bg-p2-tint',
+  breached: 'text-p1 bg-p1-tint',
+}
+const SLA_LABEL: Record<string, { tr: string; en: string }> = {
+  ok: { tr: 'Zamanında', en: 'On Track' },
+  warning: { tr: 'Riskte', en: 'At Risk' },
+  breached: { tr: 'Gecikti', en: 'Overdue' },
+}
+
 export function MyTicketsPage() {
   const { lang, t } = useLang()
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -36,7 +54,10 @@ export function MyTicketsPage() {
       )}
 
       <div className="space-y-2.5">
-        {requests?.map((r) => (
+        {requests?.map((r) => {
+          const isOpen = !['resolved', 'closed'].includes(r.status)
+          const state = slaState(r.sla_due_at)
+          return (
           <div
             key={r.id}
             onClick={() => setSelectedId(r.id)}
@@ -47,9 +68,15 @@ export function MyTicketsPage() {
               <div className="font-semibold text-[13.5px] truncate">{r.title}</div>
               <div className="text-[11px] text-[var(--text-faint)] font-mono">{r.ref}</div>
             </div>
+            {isOpen && r.sla_due_at && (
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${SLA_STYLE[state]}`}>
+                {SLA_LABEL[state][lang]}
+              </span>
+            )}
             <StatusBadge status={r.status} lang={lang} />
           </div>
-        ))}
+          )
+        })}
       </div>
 
       {selectedId && <TicketDrawer id={selectedId} onClose={() => setSelectedId(null)} />}

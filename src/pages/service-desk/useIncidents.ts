@@ -68,11 +68,11 @@ export function useMyRequests() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('incidents')
-        .select(SELECT_LIST)
+        .select(`${SELECT_LIST}, resolved_at`)
         .eq('requester_id', profile!.id)
         .order('created_at', { ascending: false })
       if (error) throw error
-      return data as unknown as IncidentListItem[]
+      return data as unknown as (IncidentListItem & { resolved_at: string | null })[]
     },
   })
 }
