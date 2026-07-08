@@ -18,6 +18,10 @@ interface AuthContextValue {
   loading: boolean
   signInWithPassword: (email: string, password: string) => Promise<{ error: string | null }>
   signOut: () => Promise<void>
+  sendPasswordResetEmail: (email: string) => Promise<{ error: string | null }>
+  updatePassword: (newPassword: string) => Promise<{ error: string | null }>
+  updateFullName: (fullName: string) => Promise<{ error: string | null }>
+  refreshProfile: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -80,8 +84,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut()
   }
 
+  async function sendPasswordResetEmail(email: string) {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/login`,
+    })
+    return { error: error?.message ?? null }
+  }
+
+  async function updatePassword(newPassword: string) {
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    return { error: error?.message ?? null }
+  }
+
+  async function updateFullName(fullName: string) {
+    if (!session?.user) return { error: 'Oturum yok' }
+    const { error } = await supabase.from('user_profiles').update({ full_name: fullName }).eq('auth_user_id', session.user.id)
+    if (!error) await loadProfile(session.user.id)
+    return { error: error?.message ?? null }
+  }
+
+  async function refreshProfile() {
+    if (session?.user) await loadProfile(session.user.id)
+  }
+
   return (
-    <AuthContext.Provider value={{ session, profile, loading, signInWithPassword, signOut }}>
+    <AuthContext.Provider
+      value={{ session, profile, loading, signInWithPassword, signOut, sendPasswordResetEmail, updatePassword, updateFullName, refreshProfile }}
+    >
       {children}
     </AuthContext.Provider>
   )

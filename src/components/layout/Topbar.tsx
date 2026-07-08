@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { useLang } from '@/contexts/LangContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useNotifications, useMarkAsRead, useMarkAllAsRead, type Notification } from './useNotifications'
+import { AccountMenu } from './AccountMenu'
 import { cn } from '@/lib/utils'
 
 const TYPE_ICON: Record<string, string> = {
@@ -130,6 +131,7 @@ export function Topbar({ crumb }: { crumb: string }) {
             </>
           )}
         </div>
+        <AccountMenu />
       </div>
     </header>
   )

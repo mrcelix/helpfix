@@ -1,29 +1,74 @@
-import { useState, type FormEvent } from 'react'
+import { useState, useEffect, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useLang } from '@/contexts/LangContext'
 import { Button } from '@/components/ui/Button'
+import { supabase } from '@/lib/supabase'
+
+type Mode = 'signin' | 'forgot' | 'forgot-sent' | 'reset-password'
 
 export function LoginPage() {
-  const { signInWithPassword } = useAuth()
+  const { signInWithPassword, sendPasswordResetEmail, updatePassword } = useAuth()
   const { t, lang, setLang } = useLang()
   const navigate = useNavigate()
+
+  const [mode, setMode] = useState<Mode>('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
-  async function handleSubmit(e: FormEvent) {
+  // Supabase, şifre sıfırlama linkinden dönüldüğünde bu event'i tetikler
+  // — ekranı otomatik "yeni şifre belirle" moduna geçiriyoruz.
+  useEffect(() => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') setMode('reset-password')
+    })
+    return () => listener.subscription.unsubscribe()
+  }, [])
+
+  async function handleSignIn(e: FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError(null)
     const { error } = await signInWithPassword(email, password)
     setLoading(false)
     if (error) {
+      setError(t({ tr: 'E-posta veya şifre hatalı.', en: 'Incorrect email or password.' }))
+      return
+    }
+    navigate('/')
+  }
+
+  async function handleForgot(e: FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+    const { error } = await sendPasswordResetEmail(email)
+    setLoading(false)
+    if (error) {
       setError(error)
       return
     }
-    navigate('/service-desk')
+    setMode('forgot-sent')
+  }
+
+  async function handleResetPassword(e: FormEvent) {
+    e.preventDefault()
+    if (newPassword.length < 8) {
+      setError(t({ tr: 'Şifre en az 8 karakter olmalı.', en: 'Password must be at least 8 characters.' }))
+      return
+    }
+    setLoading(true)
+    setError(null)
+    const { error } = await updatePassword(newPassword)
+    setLoading(false)
+    if (error) {
+      setError(error)
+      return
+    }
+    navigate('/')
   }
 
   return (
@@ -51,51 +96,132 @@ export function LoginPage() {
         </div>
 
         <div className="bg-[var(--panel)] border border-[var(--border)] rounded-2xl p-7">
-          <h1 className="font-display font-bold text-lg mb-1">{t({ tr: 'Giriş Yap', en: 'Sign In' })}</h1>
-          <p className="text-[13px] text-[var(--text-faint)] mb-6">
-            {t({ tr: 'Kurumsal hesabınızla devam edin', en: 'Continue with your work account' })}
-          </p>
+          {mode === 'signin' && (
+            <>
+              <h1 className="font-display font-bold text-lg mb-1">{t({ tr: 'Giriş Yap', en: 'Sign In' })}</h1>
+              <p className="text-[13px] text-[var(--text-faint)] mb-6">
+                {t({ tr: 'Kurumsal hesabınızla devam edin', en: 'Continue with your work account' })}
+              </p>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">
-                {t({ tr: 'E-posta', en: 'Email' })}
-              </label>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-brand"
-                placeholder="ad.soyad@sirket.com"
-              />
+              <form onSubmit={handleSignIn} className="space-y-4">
+                <div>
+                  <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">
+                    {t({ tr: 'E-posta', en: 'Email' })}
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-brand"
+                    placeholder="ad.soyad@sirket.com"
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide">
+                      {t({ tr: 'Şifre', en: 'Password' })}
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => { setMode('forgot'); setError(null) }}
+                      className="text-[11px] font-semibold text-brand-dim"
+                    >
+                      {t({ tr: 'Şifremi unuttum', en: 'Forgot password' })}
+                    </button>
+                  </div>
+                  <input
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-brand"
+                    placeholder="••••••••"
+                  />
+                </div>
+
+                {error && <p className="text-p1 text-xs">{error}</p>}
+
+                <Button type="submit" disabled={loading} className="w-full justify-center">
+                  {loading ? t({ tr: 'Giriş yapılıyor…', en: 'Signing in…' }) : t({ tr: 'Giriş Yap', en: 'Sign In' })}
+                </Button>
+              </form>
+            </>
+          )}
+
+          {mode === 'forgot' && (
+            <>
+              <h1 className="font-display font-bold text-lg mb-1">{t({ tr: 'Şifremi Unuttum', en: 'Forgot Password' })}</h1>
+              <p className="text-[13px] text-[var(--text-faint)] mb-6">
+                {t({ tr: 'E-posta adresinize bir sıfırlama linki gönderelim.', en: "We'll send a reset link to your email." })}
+              </p>
+              <form onSubmit={handleForgot} className="space-y-4">
+                <div>
+                  <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">
+                    {t({ tr: 'E-posta', en: 'Email' })}
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-brand"
+                  />
+                </div>
+                {error && <p className="text-p1 text-xs">{error}</p>}
+                <Button type="submit" disabled={loading} className="w-full justify-center">
+                  {loading ? t({ tr: 'Gönderiliyor…', en: 'Sending…' }) : t({ tr: 'Sıfırlama Linki Gönder', en: 'Send Reset Link' })}
+                </Button>
+                <button type="button" onClick={() => setMode('signin')} className="w-full text-center text-[12px] font-semibold text-[var(--text-faint)]">
+                  {t({ tr: '← Girişe dön', en: '← Back to sign in' })}
+                </button>
+              </form>
+            </>
+          )}
+
+          {mode === 'forgot-sent' && (
+            <div className="text-center py-2">
+              <div className="w-12 h-12 rounded-full bg-ok flex items-center justify-center mx-auto mb-4">
+                <svg viewBox="0 0 24 24" className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth={3}>
+                  <path d="M5 12l4 4L19 6" />
+                </svg>
+              </div>
+              <p className="text-[13.5px] text-[var(--text-sub)] mb-5">
+                {t({ tr: `${email} adresine bir sıfırlama linki gönderdik.`, en: `We sent a reset link to ${email}.` })}
+              </p>
+              <button onClick={() => setMode('signin')} className="text-[12.5px] font-semibold text-brand-dim">
+                {t({ tr: '← Girişe dön', en: '← Back to sign in' })}
+              </button>
             </div>
-            <div>
-              <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">
-                {t({ tr: 'Şifre', en: 'Password' })}
-              </label>
-              <input
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-brand"
-                placeholder="••••••••"
-              />
-            </div>
+          )}
 
-            {error && <p className="text-p1 text-xs">{error}</p>}
-
-            <Button type="submit" disabled={loading} className="w-full justify-center">
-              {loading ? t({ tr: 'Giriş yapılıyor…', en: 'Signing in…' }) : t({ tr: 'Giriş Yap', en: 'Sign In' })}
-            </Button>
-          </form>
-
-          <div className="mt-5 pt-5 border-t border-[var(--border)] text-center">
-            <button className="text-[12.5px] font-semibold text-brand-dim">
-              {t({ tr: 'SSO ile giriş yap', en: 'Sign in with SSO' })}
-            </button>
-          </div>
+          {mode === 'reset-password' && (
+            <>
+              <h1 className="font-display font-bold text-lg mb-1">{t({ tr: 'Yeni Şifre Belirle', en: 'Set New Password' })}</h1>
+              <p className="text-[13px] text-[var(--text-faint)] mb-6">
+                {t({ tr: 'Hesabınız için yeni bir şifre girin.', en: 'Enter a new password for your account.' })}
+              </p>
+              <form onSubmit={handleResetPassword} className="space-y-4">
+                <div>
+                  <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">
+                    {t({ tr: 'Yeni Şifre', en: 'New Password' })}
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-brand"
+                    placeholder="••••••••"
+                  />
+                </div>
+                {error && <p className="text-p1 text-xs">{error}</p>}
+                <Button type="submit" disabled={loading} className="w-full justify-center">
+                  {loading ? t({ tr: 'Kaydediliyor…', en: 'Saving…' }) : t({ tr: 'Şifreyi Güncelle', en: 'Update Password' })}
+                </Button>
+              </form>
+            </>
+          )}
         </div>
       </div>
     </div>
