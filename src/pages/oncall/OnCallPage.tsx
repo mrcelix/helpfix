@@ -178,8 +178,8 @@ export function OnCallPage() {
           <div className="text-[10.5px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-2.5">
             {t({ tr: 'Yaklaşan Vardiyalar', en: 'Upcoming Shifts' })}
           </div>
-          <div className="border border-[var(--border)] rounded-[var(--radius-app)] overflow-hidden bg-[var(--panel)]">
-            <table className="w-full text-[12.5px]">
+          <div className="border border-[var(--border)] rounded-[var(--radius-app)] overflow-x-auto bg-[var(--panel)]">
+            <table className="w-full text-[12.5px] min-w-[720px]">
               <tbody>
                 {upcoming?.length === 0 && (
                   <tr>

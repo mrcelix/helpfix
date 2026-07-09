@@ -45,7 +45,7 @@ export function ProjectsPage() {
         </Button>
       </div>
 
-      <div className="flex gap-1 border-b border-[var(--border)] mb-5">
+      <div className="flex gap-1 border-b border-[var(--border)] mb-5 overflow-x-auto">
         <button
           onClick={() => setTab('projects')}
           className={`px-1 py-2.5 text-[13.5px] font-semibold mr-5 border-b-2 ${tab === 'projects' ? 'border-brand text-brand-dim' : 'border-transparent text-[var(--text-faint)]'}`}

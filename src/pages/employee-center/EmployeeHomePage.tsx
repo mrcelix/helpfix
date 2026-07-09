@@ -72,7 +72,7 @@ export function EmployeeHomePage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-4 gap-3.5 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 mb-6">
         <div className="bg-[var(--panel)] border border-[var(--border)] rounded-2xl p-4">
           <div className="font-display text-2xl font-bold">{openCount}</div>
           <div className="text-[11px] text-[var(--text-faint)] mt-1">{t({ tr: 'Açık Talebim', en: 'Open Tickets' })}</div>
@@ -93,7 +93,7 @@ export function EmployeeHomePage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-3.5 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-6">
         <ActionCard
           icon={Ticket}
           title={t({ tr: 'Yeni Talep Oluştur', en: 'Create a Ticket' })}

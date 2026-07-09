@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Search, Sun, Moon, Bell, Check } from 'lucide-react'
+import { Search, Sun, Moon, Bell, Check, Menu } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useLang } from '@/contexts/LangContext'
 import { useTheme } from '@/contexts/ThemeContext'
@@ -18,7 +18,7 @@ function openCommandPalette() {
   window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true, ctrlKey: true }))
 }
 
-export function Topbar({ crumb }: { crumb: string }) {
+export function Topbar({ crumb, onMenuClick }: { crumb: string; onMenuClick?: () => void }) {
   const { lang, setLang, t } = useLang()
   const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
@@ -36,24 +36,34 @@ export function Topbar({ crumb }: { crumb: string }) {
   }
 
   return (
-    <header className="h-[60px] border-b border-[var(--border)] flex items-center gap-4 px-6 sticky top-0 bg-[var(--bg)] z-20">
-      <div className="text-xs text-[var(--text-faint)]">
+    <header className="h-[60px] border-b border-[var(--border)] flex items-center gap-2.5 sm:gap-4 px-3 sm:px-6 sticky top-0 bg-[var(--bg)] z-20">
+      {onMenuClick && (
+        <button
+          onClick={onMenuClick}
+          className="lg:hidden w-8 h-8 shrink-0 rounded-lg flex items-center justify-center text-[var(--text-sub)] hover:bg-[var(--panel)]"
+          aria-label="Menu"
+        >
+          <Menu className="w-[19px] h-[19px]" />
+        </button>
+      )}
+
+      <div className="hidden sm:block text-xs text-[var(--text-faint)] shrink-0">
         <span>HelpFix</span> / <b className="text-[var(--text)] font-semibold">{crumb}</b>
       </div>
 
       <button
         onClick={openCommandPalette}
-        className="flex-1 max-w-[380px] flex items-center gap-2 bg-[var(--panel)] border border-[var(--border)] rounded-lg px-3 py-1.5 ml-3 text-left"
+        className="flex-1 sm:max-w-[380px] flex items-center gap-2 bg-[var(--panel)] border border-[var(--border)] rounded-lg px-3 py-1.5 sm:ml-3 text-left"
       >
         <Search className="w-[15px] h-[15px] text-[var(--text-faint)] shrink-0" />
-        <span className="text-[13px] text-[var(--text-faint)] flex-1">{t({ tr: 'Her yerde ara…', en: 'Search anywhere…' })}</span>
-        <span className="text-[9.5px] font-mono font-bold bg-[var(--panel-2)] border border-[var(--border)] rounded px-1.5 py-0.5 text-[var(--text-faint)]">
+        <span className="hidden sm:inline text-[13px] text-[var(--text-faint)] flex-1">{t({ tr: 'Her yerde ara…', en: 'Search anywhere…' })}</span>
+        <span className="hidden md:inline text-[9.5px] font-mono font-bold bg-[var(--panel-2)] border border-[var(--border)] rounded px-1.5 py-0.5 text-[var(--text-faint)]">
           ⌘K
         </span>
       </button>
 
-      <div className="ml-auto flex items-center gap-2">
-        <div className="flex border border-[var(--border)] rounded-lg overflow-hidden text-[11.5px] font-semibold">
+      <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
+        <div className="hidden sm:flex border border-[var(--border)] rounded-lg overflow-hidden text-[11.5px] font-semibold">
           {(['tr', 'en'] as const).map((l) => (
             <button
               key={l}
@@ -70,7 +80,7 @@ export function Topbar({ crumb }: { crumb: string }) {
 
         <button
           onClick={toggleTheme}
-          className="w-[34px] h-[34px] rounded-lg border border-[var(--border)] bg-[var(--panel)] flex items-center justify-center text-[var(--text-sub)]"
+          className="w-[34px] h-[34px] shrink-0 rounded-lg border border-[var(--border)] bg-[var(--panel)] flex items-center justify-center text-[var(--text-sub)]"
           aria-label="Toggle theme"
         >
           {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
@@ -79,7 +89,7 @@ export function Topbar({ crumb }: { crumb: string }) {
         <div className="relative">
           <button
             onClick={() => setShowNotifications((s) => !s)}
-            className="relative w-[34px] h-[34px] rounded-lg border border-[var(--border)] bg-[var(--panel)] flex items-center justify-center text-[var(--text-sub)]"
+            className="relative w-[34px] h-[34px] shrink-0 rounded-lg border border-[var(--border)] bg-[var(--panel)] flex items-center justify-center text-[var(--text-sub)]"
             aria-label="Notifications"
           >
             <Bell className="w-4 h-4" />
@@ -91,7 +101,7 @@ export function Topbar({ crumb }: { crumb: string }) {
           {showNotifications && (
             <>
               <div className="fixed inset-0 z-30" onClick={() => setShowNotifications(false)} />
-              <div className="absolute right-0 top-[calc(100%+8px)] w-[340px] bg-[var(--panel)] border border-[var(--border)] rounded-2xl shadow-2xl z-40 overflow-hidden">
+              <div className="fixed sm:absolute right-2 sm:right-0 left-2 sm:left-auto top-[64px] sm:top-[calc(100%+8px)] sm:w-[340px] bg-[var(--panel)] border border-[var(--border)] rounded-2xl shadow-2xl z-40 overflow-hidden">
                 <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
                   <span className="font-bold text-[13px]">{t({ tr: 'Bildirimler', en: 'Notifications' })}</span>
                   {unreadCount > 0 && (

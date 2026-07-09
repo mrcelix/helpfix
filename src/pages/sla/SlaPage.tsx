@@ -78,7 +78,7 @@ export function SlaPage() {
         <KpiCard label={t({ tr: 'Aktif Politika', en: 'Active Policies' })} value={policies?.filter((p) => p.is_active).length ?? 0} color="text-brand" />
       </div>
 
-      <div className="flex gap-1 border-b border-[var(--border)] mb-5">
+      <div className="flex gap-1 border-b border-[var(--border)] mb-5 overflow-x-auto">
         <button
           onClick={() => setTab('monitor')}
           className={`px-1 py-2.5 text-[13.5px] font-semibold mr-5 border-b-2 ${tab === 'monitor' ? 'border-brand text-brand-dim' : 'border-transparent text-[var(--text-faint)]'}`}
@@ -100,8 +100,8 @@ export function SlaPage() {
       </div>
 
       {tab === 'monitor' && (
-        <div className="border border-[var(--border)] rounded-[var(--radius-app)] overflow-hidden bg-[var(--panel)]">
-          <table className="w-full text-[12.5px]">
+        <div className="border border-[var(--border)] rounded-[var(--radius-app)] overflow-x-auto bg-[var(--panel)]">
+          <table className="w-full text-[12.5px] min-w-[720px]">
             <thead>
               <tr className="bg-[var(--panel-2)] border-b border-[var(--border)]">
                 <Th>Ref</Th>
@@ -150,8 +150,8 @@ export function SlaPage() {
       )}
 
       {tab === 'policies' && (
-        <div className="border border-[var(--border)] rounded-[var(--radius-app)] overflow-hidden bg-[var(--panel)]">
-          <table className="w-full text-[12.5px]">
+        <div className="border border-[var(--border)] rounded-[var(--radius-app)] overflow-x-auto bg-[var(--panel)]">
+          <table className="w-full text-[12.5px] min-w-[720px]">
             <thead>
               <tr className="bg-[var(--panel-2)] border-b border-[var(--border)]">
                 <Th>{t({ tr: 'Ad', en: 'Name' })}</Th>

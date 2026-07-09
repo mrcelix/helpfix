@@ -168,7 +168,7 @@ export function ServiceDeskPage() {
       )}
 
       {/* KPI row */}
-      <div className="grid grid-cols-4 gap-3 mb-5">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
         <Kpi label={t({ tr: 'Açık Kayıt', en: 'Open Tickets' })} value={kpis.open} />
         <Kpi label={t({ tr: 'Kritik', en: 'Critical' })} value={kpis.p1} accent="p1" />
         <Kpi label={t({ tr: 'Atanmamış', en: 'Unassigned' })} value={kpis.unassigned} accent="p2" />
@@ -301,7 +301,7 @@ export function ServiceDeskPage() {
       </div>
 
       {viewMode === 'kanban' ? (
-        <div className="grid grid-cols-5 gap-2.5">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
           {KANBAN_COLUMNS.map((col) => (
             <div key={col.key}>
               <div className="text-[10.5px] font-bold text-[var(--text-faint)] uppercase mb-2 flex items-center justify-between">
@@ -321,8 +321,8 @@ export function ServiceDeskPage() {
       ) : (
       <>
       {/* Table */}
-      <div className="border border-[var(--border)] rounded-[var(--radius-app)] overflow-hidden bg-[var(--panel)]">
-        <table className="w-full text-[12.5px]">
+      <div className="border border-[var(--border)] rounded-[var(--radius-app)] overflow-x-auto bg-[var(--panel)]">
+        <table className="w-full text-[12.5px] min-w-[820px]">
           <thead>
             <tr className="bg-[var(--panel-2)] border-b border-[var(--border)]">
               <Th>{t({ tr: 'Ref', en: 'Ref' })}</Th>

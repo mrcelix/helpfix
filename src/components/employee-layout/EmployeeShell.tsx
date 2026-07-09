@@ -23,8 +23,10 @@ export function EmployeeShell() {
   const crumb = activeItem?.name[lang] ?? ''
 
   return (
-    <div className="grid grid-cols-[248px_1fr] min-h-screen">
-      <aside className="w-[248px] shrink-0 h-screen sticky top-0 flex flex-col bg-[var(--panel)] border-r border-[var(--border)]">
+    // Mobilde (< md) tek kolon + altta sabit tab bar; md ve üzeri klasik
+    // sidebar + içerik grid'i.
+    <div className="flex flex-col md:grid md:grid-cols-[248px_1fr] min-h-screen">
+      <aside className="hidden md:flex w-[248px] shrink-0 h-screen sticky top-0 flex-col bg-[var(--panel)] border-r border-[var(--border)]">
         <div className="flex items-center gap-2.5 px-5 pt-5 pb-4">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand to-brand-dim flex items-center justify-center shrink-0">
             <svg viewBox="0 0 24 24" className="w-[18px] h-[18px]" fill="white">
@@ -73,10 +75,36 @@ export function EmployeeShell() {
 
       <div className="flex flex-col min-h-screen">
         <Topbar crumb={crumb} />
-        <main className="flex-1 px-6 py-6">
+        <main className="flex-1 px-4 py-5 md:px-6 md:py-6 pb-24 md:pb-6">
           <Outlet />
         </main>
       </div>
+
+      {/* Mobil alt gezinme çubuğu — md ve üzerinde gizli */}
+      <nav
+        className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-[var(--panel)] border-t border-[var(--border)] flex items-stretch"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      >
+        {EMPLOYEE_NAV.map((item) => {
+          const Icon = item.icon
+          return (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              className={({ isActive }) =>
+                cn(
+                  'flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-semibold',
+                  isActive ? 'text-brand-dim' : 'text-[var(--text-faint)]'
+                )
+              }
+            >
+              <Icon className="w-5 h-5" />
+              <span className="truncate max-w-full px-0.5">{item.name[lang]}</span>
+            </NavLink>
+          )
+        })}
+      </nav>
+
       <CommandPalette />
     </div>
   )

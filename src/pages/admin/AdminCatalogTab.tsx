@@ -140,8 +140,8 @@ export function AdminCatalogTab() {
         </div>
       )}
 
-      <div className="border border-[var(--border)] rounded-[var(--radius-app)] overflow-hidden bg-[var(--panel)]">
-        <table className="w-full text-[12.5px]">
+      <div className="border border-[var(--border)] rounded-[var(--radius-app)] overflow-x-auto bg-[var(--panel)]">
+        <table className="w-full text-[12.5px] min-w-[720px]">
           <thead>
             <tr className="bg-[var(--panel-2)] border-b border-[var(--border)]">
               <th className="text-left text-[10.5px] uppercase tracking-wide text-[var(--text-faint)] font-semibold px-3.5 py-2.5">{t({ tr: 'Ad', en: 'Name' })}</th>

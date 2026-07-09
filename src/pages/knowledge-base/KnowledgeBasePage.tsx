@@ -104,8 +104,8 @@ export function KnowledgeBasePage() {
         ))}
       </div>
 
-      <div className="border border-[var(--border)] rounded-[var(--radius-app)] overflow-hidden bg-[var(--panel)]">
-        <table className="w-full text-[12.5px]">
+      <div className="border border-[var(--border)] rounded-[var(--radius-app)] overflow-x-auto bg-[var(--panel)]">
+        <table className="w-full text-[12.5px] min-w-[720px]">
           <thead>
             <tr className="bg-[var(--panel-2)] border-b border-[var(--border)]">
               <Th>{t({ tr: 'Başlık', en: 'Title' })}</Th>

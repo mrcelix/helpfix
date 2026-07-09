@@ -40,7 +40,7 @@ export function AdminPage() {
         </p>
       </div>
 
-      <div className="flex gap-1 border-b border-[var(--border)] mb-5">
+      <div className="flex gap-1 border-b border-[var(--border)] mb-5 overflow-x-auto">
         <TabButton active={tab === 'users'} onClick={() => setTab('users')}>
           {t({ tr: 'Kullanıcılar', en: 'Users' })}
         </TabButton>
@@ -78,7 +78,7 @@ export function AdminPage() {
     return (
       <button
         onClick={onClick}
-        className={`px-1 py-2.5 text-[13.5px] font-semibold mr-5 border-b-2 ${active ? 'border-brand text-brand-dim' : 'border-transparent text-[var(--text-faint)]'}`}
+        className={`shrink-0 whitespace-nowrap px-1 py-2.5 text-[13.5px] font-semibold mr-5 border-b-2 ${active ? 'border-brand text-brand-dim' : 'border-transparent text-[var(--text-faint)]'}`}
       >
         {children}
       </button>
@@ -122,8 +122,8 @@ function UsersTab() {
           {t({ tr: 'Yeni Kullanıcı', en: 'New User' })}
         </Button>
       </div>
-      <div className="border border-[var(--border)] rounded-[var(--radius-app)] overflow-hidden bg-[var(--panel)]">
-        <table className="w-full text-[12.5px]">
+      <div className="border border-[var(--border)] rounded-[var(--radius-app)] overflow-x-auto bg-[var(--panel)]">
+        <table className="w-full text-[12.5px] min-w-[720px]">
           <thead>
             <tr className="bg-[var(--panel-2)] border-b border-[var(--border)]">
               <Th>{t({ tr: 'Ad Soyad', en: 'Name' })}</Th>
@@ -231,8 +231,8 @@ function DepartmentsTab() {
           <Plus className="w-4 h-4" />
         </button>
       </div>
-      <div className="border border-[var(--border)] rounded-[var(--radius-app)] overflow-hidden bg-[var(--panel)]">
-        <table className="w-full text-[12.5px]">
+      <div className="border border-[var(--border)] rounded-[var(--radius-app)] overflow-x-auto bg-[var(--panel)]">
+        <table className="w-full text-[12.5px] min-w-[720px]">
           <tbody>
             {isLoading && (
               <tr>
@@ -324,8 +324,8 @@ function AuditLogTab() {
           en: 'Security-sensitive actions (role changes, module toggles) are automatically logged here.',
         })}
       </p>
-      <div className="border border-[var(--border)] rounded-[var(--radius-app)] overflow-hidden bg-[var(--panel)]">
-        <table className="w-full text-[12.5px]">
+      <div className="border border-[var(--border)] rounded-[var(--radius-app)] overflow-x-auto bg-[var(--panel)]">
+        <table className="w-full text-[12.5px] min-w-[720px]">
           <thead>
             <tr className="bg-[var(--panel-2)] border-b border-[var(--border)]">
               <Th>{t({ tr: 'İşlem', en: 'Action' })}</Th>

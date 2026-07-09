@@ -1,12 +1,12 @@
 import { NavLink } from 'react-router-dom'
-import { Settings } from 'lucide-react'
+import { Settings, X } from 'lucide-react'
 import { NAV_MODULES } from './nav-modules'
 import { useLang } from '@/contexts/LangContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { useFeatureFlags } from '@/pages/admin/useAdmin'
 import { cn } from '@/lib/utils'
 
-export function Sidebar() {
+function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const { lang, t } = useLang()
   const { profile } = useAuth()
   const { data: flags } = useFeatureFlags()
@@ -14,7 +14,7 @@ export function Sidebar() {
   const visibleModules = NAV_MODULES.filter((m) => flags?.[m.code] ?? true)
 
   return (
-    <aside className="w-[248px] shrink-0 h-screen sticky top-0 flex flex-col bg-[var(--panel)] border-r border-[var(--border)]">
+    <>
       <div className="flex items-center gap-2.5 px-5 pt-5 pb-4">
         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand to-brand-dim flex items-center justify-center shrink-0">
           <svg viewBox="0 0 24 24" className="w-[18px] h-[18px]" fill="white">
@@ -36,6 +36,7 @@ export function Sidebar() {
             <NavLink
               key={mod.code}
               to={mod.path}
+              onClick={onNavigate}
               className={({ isActive }) =>
                 cn(
                   'flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13.5px] font-medium mb-0.5 transition-colors',
@@ -61,6 +62,7 @@ export function Sidebar() {
             <div className="h-px bg-[var(--border)] my-2 mx-1" />
             <NavLink
               to="/admin"
+              onClick={onNavigate}
               className={({ isActive }) =>
                 cn(
                   'flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13.5px] font-medium mb-0.5 transition-colors',
@@ -88,7 +90,35 @@ export function Sidebar() {
           </div>
         </div>
       </div>
+    </>
+  )
+}
+
+/** Masaüstü/tablet (lg+): her zaman görünen sabit sidebar. */
+export function Sidebar() {
+  return (
+    <aside className="hidden lg:flex w-[248px] shrink-0 h-screen sticky top-0 flex-col bg-[var(--panel)] border-r border-[var(--border)]">
+      <SidebarContent />
     </aside>
+  )
+}
+
+/** Mobil (< lg): hamburger ile açılan slide-over drawer. */
+export function MobileSidebarDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
+  if (!open) return null
+  return (
+    <div className="lg:hidden fixed inset-0 z-50 flex">
+      <div className="fixed inset-0 bg-black/60" onClick={onClose} />
+      <aside className="relative w-[248px] max-w-[80vw] h-full flex flex-col bg-[var(--panel)] border-r border-[var(--border)] shadow-2xl">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-3 w-7 h-7 rounded-md flex items-center justify-center text-[var(--text-faint)] hover:text-[var(--text)]"
+        >
+          <X className="w-4 h-4" />
+        </button>
+        <SidebarContent onNavigate={onClose} />
+      </aside>
+    </div>
   )
 }
 
