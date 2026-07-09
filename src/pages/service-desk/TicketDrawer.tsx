@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Send, Star, Eye, Zap, BookmarkPlus, Trash2, Sparkles, Loader2 } from 'lucide-react'
 import { Drawer } from '@/components/ui/Drawer'
 import { PriorityBadge, StatusBadge } from '@/components/ui/Badge'
@@ -15,6 +15,7 @@ import {
   useToggleMajorIncident,
 } from './useIncidents'
 import { WarRoomPanel } from './WarRoomPanel'
+import { LinkedIncidentsSection } from './LinkedIncidentsSection'
 import {
   useTicketPresence,
   useCannedResponses,
@@ -29,21 +30,27 @@ const STATUS_OPTIONS: TicketStatus[] = ['new', 'open', 'in_progress', 'on_hold',
 export function TicketDrawer({ id, onClose }: { id: string; onClose: () => void }) {
   const { lang, t } = useLang()
   const { profile } = useAuth()
-  const { data: incident, isLoading } = useIncidentDetail(id)
-  const { data: comments } = useIncidentComments(id)
-  const { data: timeline } = useIncidentTimeline(id)
-  const updateIncident = useUpdateIncident(id)
-  const addComment = useAddComment(id)
-  const { data: duplicates } = useDuplicateCandidates(id, incident?.category ?? null)
+
+  // Faz AY — İlişkili Kayıtlar'dan başka bir kayda tıklanınca drawer
+  // içeriği kapanmadan o kayda geçer (parent'ın selectedId'sini bilmeden).
+  const [currentId, setCurrentId] = useState(id)
+  useEffect(() => setCurrentId(id), [id])
+
+  const { data: incident, isLoading } = useIncidentDetail(currentId)
+  const { data: comments } = useIncidentComments(currentId)
+  const { data: timeline } = useIncidentTimeline(currentId)
+  const updateIncident = useUpdateIncident(currentId)
+  const addComment = useAddComment(currentId)
+  const { data: duplicates } = useDuplicateCandidates(currentId, incident?.category ?? null)
   const mergeIncident = useMergeIncident()
-  const toggleMajorIncident = useToggleMajorIncident(id)
+  const toggleMajorIncident = useToggleMajorIncident(currentId)
 
   const [draft, setDraft] = useState('')
   const [isInternal, setIsInternal] = useState(false)
   const [showCanned, setShowCanned] = useState(false)
 
   // Cila Faz AR — ajan çarpışma göstergesi + hazır yanıtlar
-  const viewers = useTicketPresence(id)
+  const viewers = useTicketPresence(currentId)
   const { data: cannedResponses } = useCannedResponses()
   const createCanned = useCreateCannedResponse()
   const deleteCanned = useDeleteCannedResponse()
@@ -156,7 +163,7 @@ export function TicketDrawer({ id, onClose }: { id: string; onClose: () => void 
           </div>
 
           {incident.is_major_incident && (
-            <WarRoomPanel incidentId={id} declaredAt={incident.major_incident_declared_at} />
+            <WarRoomPanel incidentId={currentId} declaredAt={incident.major_incident_declared_at} />
           )}
 
           {incident.description && (
@@ -231,7 +238,7 @@ export function TicketDrawer({ id, onClose }: { id: string; onClose: () => void 
                     <span className="font-mono text-[var(--text-faint)] shrink-0">{d.ref}</span>
                     <span className="flex-1 truncate">{d.title}</span>
                     <button
-                      onClick={() => mergeIncident.mutate({ incidentId: id, mergeIntoId: d.id })}
+                      onClick={() => mergeIncident.mutate({ incidentId: currentId, mergeIntoId: d.id })}
                       className="text-[10.5px] font-bold text-brand-dim shrink-0"
                     >
                       {t({ tr: 'Bununla Birleştir', en: 'Merge Into This' })}
@@ -241,6 +248,10 @@ export function TicketDrawer({ id, onClose }: { id: string; onClose: () => void 
               </div>
             </div>
           )}
+
+          <div>
+            <LinkedIncidentsSection incidentId={currentId} onOpen={(newId) => setCurrentId(newId)} />
+          </div>
 
           <div>
             <div className="text-[10.5px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-2.5">

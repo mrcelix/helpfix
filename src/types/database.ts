@@ -575,6 +575,23 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['ai_usage_log']['Insert']>
         Relationships: []
       }
+      incident_links: {
+        Row: {
+          id: string
+          tenant_id: string
+          incident_id: string
+          linked_incident_id: string
+          link_type: 'related_to' | 'duplicate_of' | 'caused_by'
+          created_by: string | null
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['incident_links']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['incident_links']['Insert']>
+        Relationships: []
+      }
       projects: {
         Row: {
           id: string

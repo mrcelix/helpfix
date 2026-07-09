@@ -462,3 +462,127 @@ export function useDailyVolume() {
     },
   })
 }
+
+// ------------------------------------------------------------------
+// Faz AY — İLİŞKİLİ OLAYLAR (incident_links)
+// ------------------------------------------------------------------
+export type IncidentLinkType = 'related_to' | 'duplicate_of' | 'caused_by'
+
+export interface IncidentLinkRow {
+  id: string
+  link_type: IncidentLinkType
+  /** true ise bu kayıt 'incident_id' tarafıydı (yani `other` ona bağlı/onu
+   * etkiledi); false ise bu kayıt 'linked_incident_id' tarafıydı (yön tersine
+   * çevrilerek gösterilmeli). */
+  isSourceSide: boolean
+  other: { id: string; ref: string; title: string; status: TicketStatus; priority: Priority }
+}
+
+const LINK_OTHER_SELECT = 'id, ref, title, status, priority'
+
+/** Bir kaydın TÜM ilişkilerini (her iki yönde de) getirir. */
+export function useIncidentLinks(incidentId: string) {
+  return useQuery({
+    queryKey: ['incident-links', incidentId],
+    enabled: !!incidentId,
+    queryFn: async () => {
+      const [asSource, asTarget] = await Promise.all([
+        supabase
+          .from('incident_links')
+          .select(`id, link_type, other:linked_incident_id ( ${LINK_OTHER_SELECT} )`)
+          .eq('incident_id', incidentId),
+        supabase
+          .from('incident_links')
+          .select(`id, link_type, other:incident_id ( ${LINK_OTHER_SELECT} )`)
+          .eq('linked_incident_id', incidentId),
+      ])
+      if (asSource.error) throw asSource.error
+      if (asTarget.error) throw asTarget.error
+
+      const rows: IncidentLinkRow[] = [
+        ...(asSource.data as unknown as { id: string; link_type: IncidentLinkType; other: IncidentLinkRow['other'] }[]).map((r) => ({
+          ...r,
+          isSourceSide: true,
+        })),
+        ...(asTarget.data as unknown as { id: string; link_type: IncidentLinkType; other: IncidentLinkRow['other'] }[]).map((r) => ({
+          ...r,
+          isSourceSide: false,
+        })),
+      ]
+      return rows
+    },
+  })
+}
+
+/** Büyük Olay'a "caused_by" ile bağlı çocuk kayıtlar — War Room paneli için. */
+export function useMajorIncidentChildren(majorIncidentId: string) {
+  return useQuery({
+    queryKey: ['major-incident-children', majorIncidentId],
+    enabled: !!majorIncidentId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('incident_links')
+        .select(`id, other:incident_id ( ${LINK_OTHER_SELECT} )`)
+        .eq('linked_incident_id', majorIncidentId)
+        .eq('link_type', 'caused_by')
+      if (error) throw error
+      return data as unknown as { id: string; other: IncidentLinkRow['other'] }[]
+    },
+  })
+}
+
+/** Bağlanacak kayıt aramak için — ref veya başlığa göre, kendisi hariç. */
+export function useSearchIncidentsToLink(query: string, excludeId: string) {
+  return useQuery({
+    queryKey: ['search-incidents-to-link', query, excludeId],
+    enabled: query.trim().length >= 2,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('incidents')
+        .select('id, ref, title, status, priority')
+        .neq('id', excludeId)
+        .or(`title.ilike.%${query.trim()}%,ref.ilike.%${query.trim()}%`)
+        .order('created_at', { ascending: false })
+        .limit(8)
+      if (error) throw error
+      return data as IncidentLinkRow['other'][]
+    },
+  })
+}
+
+export function useCreateIncidentLink() {
+  const qc = useQueryClient()
+  const { profile } = useAuth()
+  return useMutation({
+    mutationFn: async (input: { incidentId: string; linkedIncidentId: string; linkType: IncidentLinkType }) => {
+      if (!profile) throw new Error('Profil yüklenmedi')
+      const { error } = await supabase.from('incident_links').insert({
+        tenant_id: profile.tenantId,
+        incident_id: input.incidentId,
+        linked_incident_id: input.linkedIncidentId,
+        link_type: input.linkType,
+        created_by: profile.id,
+      })
+      if (error) throw error
+    },
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ['incident-links', vars.incidentId] })
+      qc.invalidateQueries({ queryKey: ['incident-links', vars.linkedIncidentId] })
+      qc.invalidateQueries({ queryKey: ['major-incident-children', vars.linkedIncidentId] })
+    },
+  })
+}
+
+export function useDeleteIncidentLink() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (linkId: string) => {
+      const { error } = await supabase.from('incident_links').delete().eq('id', linkId)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['incident-links'] })
+      qc.invalidateQueries({ queryKey: ['major-incident-children'] })
+    },
+  })
+}
