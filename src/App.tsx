@@ -8,6 +8,7 @@ import { ComingSoonPage } from '@/pages/ComingSoon'
 import { ConfigMissingPage } from '@/pages/ConfigMissing'
 import { NAV_MODULES } from '@/components/layout/nav-modules'
 import { ServiceDeskPage } from '@/pages/service-desk/ServiceDeskPage'
+import { WallboardPage } from '@/pages/service-desk/WallboardPage'
 import { ProblemsPage } from '@/pages/problems/ProblemsPage'
 import { ChangesPage } from '@/pages/changes/ChangesPage'
 import { CatalogPage } from '@/pages/catalog/CatalogPage'
@@ -85,6 +86,7 @@ function RoleBasedShell() {
 
   return (
     <Routes>
+      <Route path="/service-desk/wallboard" element={<WallboardPage />} />
       <Route element={<AppShell />}>
         <Route index element={<Navigate to="/service-desk" replace />} />
         <Route path="/admin" element={<AdminRoute />} />

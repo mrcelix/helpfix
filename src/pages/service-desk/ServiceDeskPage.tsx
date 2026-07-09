@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useOpenParam } from '@/hooks/useOpenParam'
-import { Plus, Download, List, Kanban, BookmarkPlus, X } from 'lucide-react'
+import { Plus, Download, List, Kanban, BookmarkPlus, X, MonitorPlay } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import { Button } from '@/components/ui/Button'
 import { PriorityBadge, StatusBadge } from '@/components/ui/Badge'
@@ -131,10 +131,21 @@ export function ServiceDeskPage() {
             {t({ tr: 'Olay ve talep yönetimi', en: 'Incident & request management' })}
           </p>
         </div>
-        <Button onClick={() => setShowNewModal(true)}>
-          <Plus className="w-[15px] h-[15px]" />
-          {t({ tr: 'Yeni Talep', en: 'New Ticket' })}
-        </Button>
+        <div className="flex items-center gap-2">
+          <a
+            href="/service-desk/wallboard"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 text-[12.5px] font-bold px-3.5 py-2 rounded-lg border border-[var(--border)] text-[var(--text-sub)] hover:border-brand hover:text-brand-dim"
+          >
+            <MonitorPlay className="w-[15px] h-[15px]" />
+            {t({ tr: 'Duvar Ekranı', en: 'Wallboard' })}
+          </a>
+          <Button onClick={() => setShowNewModal(true)}>
+            <Plus className="w-[15px] h-[15px]" />
+            {t({ tr: 'Yeni Talep', en: 'New Ticket' })}
+          </Button>
+        </div>
       </div>
 
       {!!majorIncidents?.length && (
