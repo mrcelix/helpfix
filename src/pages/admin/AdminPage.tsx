@@ -1,19 +1,23 @@
 import { useState } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, Pencil, KeyRound, Trash2 } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import { NAV_MODULES } from '@/components/layout/nav-modules'
 import { AdminCatalogTab } from './AdminCatalogTab'
 import { NewUserModal } from './NewUserModal'
+import { EditUserModal } from './EditUserModal'
+import { ResetPasswordModal } from './ResetPasswordModal'
 import { Button } from '@/components/ui/Button'
 import {
   useTenantUsers,
   useUpdateUserRole,
   useToggleUserActive,
+  useDeleteUser,
   useDepartments,
   useCreateDepartment,
   useFeatureFlags,
   useToggleModule,
   useAuditLog,
+  type TenantUser,
 } from './useAdmin'
 import type { UserRole } from '@/types/database'
 
@@ -84,7 +88,21 @@ function UsersTab() {
   const { data: users, isLoading } = useTenantUsers()
   const updateRole = useUpdateUserRole()
   const toggleActive = useToggleUserActive()
+  const deleteUser = useDeleteUser()
   const [showNewUserModal, setShowNewUserModal] = useState(false)
+  const [editingUser, setEditingUser] = useState<TenantUser | null>(null)
+  const [resettingUser, setResettingUser] = useState<TenantUser | null>(null)
+
+  function handleDelete(u: TenantUser) {
+    const confirmed = window.confirm(
+      t({
+        tr: `${u.full_name} kalıcı olarak silinsin mi? Bu işlem geri alınamaz.`,
+        en: `Permanently delete ${u.full_name}? This cannot be undone.`,
+      })
+    )
+    if (!confirmed) return
+    deleteUser.mutate(u.id)
+  }
 
   return (
     <div>
@@ -103,12 +121,13 @@ function UsersTab() {
               <Th>{t({ tr: 'Departman', en: 'Department' })}</Th>
               <Th>{t({ tr: 'Rol', en: 'Role' })}</Th>
               <Th>{t({ tr: 'Aktif', en: 'Active' })}</Th>
+              <Th>{t({ tr: 'Aksiyonlar', en: 'Actions' })}</Th>
           </tr>
         </thead>
         <tbody>
           {isLoading && (
             <tr>
-              <td colSpan={5} className="text-center py-10 text-[var(--text-faint)]">
+              <td colSpan={6} className="text-center py-10 text-[var(--text-faint)]">
                 {t({ tr: 'Yükleniyor…', en: 'Loading…' })}
               </td>
             </tr>
@@ -139,12 +158,39 @@ function UsersTab() {
                   <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${u.is_active ? 'left-[18px]' : 'left-0.5'}`} />
                 </button>
               </td>
+              <td className="px-3.5 py-3">
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setEditingUser(u)}
+                    title={t({ tr: 'Düzenle', en: 'Edit' })}
+                    className="p-1.5 rounded-md text-[var(--text-faint)] hover:text-brand-dim hover:bg-[var(--panel-2)]"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => setResettingUser(u)}
+                    title={t({ tr: 'Şifreyi Yeniden Ata', en: 'Reset Password' })}
+                    className="p-1.5 rounded-md text-[var(--text-faint)] hover:text-p2 hover:bg-[var(--panel-2)]"
+                  >
+                    <KeyRound className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(u)}
+                    title={t({ tr: 'Sil', en: 'Delete' })}
+                    className="p-1.5 rounded-md text-[var(--text-faint)] hover:text-p1 hover:bg-[var(--panel-2)]"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </td>
             </tr>
           ))}
           </tbody>
         </table>
       </div>
       {showNewUserModal && <NewUserModal onClose={() => setShowNewUserModal(false)} />}
+      {editingUser && <EditUserModal user={editingUser} onClose={() => setEditingUser(null)} />}
+      {resettingUser && <ResetPasswordModal user={resettingUser} onClose={() => setResettingUser(null)} />}
     </div>
   )
 }

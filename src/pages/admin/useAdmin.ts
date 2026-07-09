@@ -10,6 +10,7 @@ export interface TenantUser {
   email: string
   role: UserRole
   is_active: boolean
+  department_id: string | null
   department: { name: string } | null
 }
 
@@ -27,7 +28,7 @@ export function useTenantUsers() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('id, full_name, email, role, is_active, department:department_id ( name )')
+        .select('id, full_name, email, role, is_active, department_id, department:department_id ( name )')
         .order('full_name')
       if (error) throw error
       return data as unknown as TenantUser[]
@@ -177,4 +178,62 @@ export function generateTempPassword(): string {
   let pass = ''
   for (let i = 0; i < 12; i++) pass += chars[Math.floor(Math.random() * chars.length)]
   return pass
+}
+
+// ------------------------------------------------------------------
+// KULLANICI DÜZENLEME / SİLME / ŞİFRE SIFIRLAMA — Edge Function üzerinden
+//
+// NOT: Supabase (hiçbir düzgün auth sistemi gibi) şifreleri okunabilir
+// biçimde saklamaz — yalnızca tek yönlü hash tutar. "Mevcut şifreyi
+// görüntüleme" diye bir işlem YOKTUR. Yapılabilecek olan, kullanıcıya
+// admin tarafından YENİ bir şifre atamaktır (aşağıdaki useResetPassword).
+// ------------------------------------------------------------------
+export function useUpdateUser() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: {
+      userId: string
+      fullName?: string
+      email?: string
+      role?: UserRole
+      departmentId?: string | null
+      isActive?: boolean
+    }) => {
+      const { data, error } = await supabase.functions.invoke('manage-user', {
+        body: { action: 'update', ...input },
+      })
+      if (error) throw error
+      if (data?.error) throw new Error(data.error)
+      return data
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-users'] }),
+  })
+}
+
+export function useDeleteUser() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (userId: string) => {
+      const { data, error } = await supabase.functions.invoke('manage-user', {
+        body: { action: 'delete', userId },
+      })
+      if (error) throw error
+      if (data?.error) throw new Error(data.error)
+      return data
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-users'] }),
+  })
+}
+
+export function useResetPassword() {
+  return useMutation({
+    mutationFn: async (input: { userId: string; newPassword: string }) => {
+      const { data, error } = await supabase.functions.invoke('manage-user', {
+        body: { action: 'reset-password', userId: input.userId, newPassword: input.newPassword },
+      })
+      if (error) throw error
+      if (data?.error) throw new Error(data.error)
+      return data
+    },
+  })
 }

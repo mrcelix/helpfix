@@ -1,0 +1,127 @@
+import { useState } from 'react'
+import { Modal } from '@/components/ui/Modal'
+import { Button } from '@/components/ui/Button'
+import { useLang } from '@/contexts/LangContext'
+import { useUpdateUser, useDepartments, type TenantUser } from './useAdmin'
+import type { UserRole } from '@/types/database'
+
+const ROLE_LABEL: Record<UserRole, { tr: string; en: string }> = {
+  tenant_admin: { tr: 'Tenant Admin', en: 'Tenant Admin' },
+  manager: { tr: 'Ekip Yöneticisi', en: 'Team Manager' },
+  agent: { tr: 'Teknisyen', en: 'Agent' },
+  requester: { tr: 'Son Kullanıcı', en: 'Requester' },
+}
+
+export function EditUserModal({ user, onClose }: { user: TenantUser; onClose: () => void }) {
+  const { lang, t } = useLang()
+  const updateUser = useUpdateUser()
+  const { data: departments } = useDepartments()
+
+  const [fullName, setFullName] = useState(user.full_name)
+  const [email, setEmail] = useState(user.email)
+  const [role, setRole] = useState<UserRole>(user.role)
+  const [departmentId, setDepartmentId] = useState(user.department_id ?? '')
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleSubmit() {
+    if (!fullName.trim() || !email.trim()) return
+    setError(null)
+    try {
+      await updateUser.mutateAsync({
+        userId: user.id,
+        fullName: fullName.trim(),
+        email: email.trim(),
+        role,
+        departmentId: departmentId || null,
+      })
+      onClose()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t({ tr: 'Bilinmeyen hata', en: 'Unknown error' }))
+    }
+  }
+
+  return (
+    <Modal
+      open
+      onClose={onClose}
+      title={t({ tr: 'Kullanıcıyı Düzenle', en: 'Edit User' })}
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>
+            {t({ tr: 'Vazgeç', en: 'Cancel' })}
+          </Button>
+          <Button onClick={handleSubmit} disabled={updateUser.isPending || !fullName.trim() || !email.trim()}>
+            {updateUser.isPending ? t({ tr: 'Kaydediliyor…', en: 'Saving…' }) : t({ tr: 'Kaydet', en: 'Save' })}
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-4">
+        <div>
+          <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">
+            {t({ tr: 'Ad Soyad', en: 'Full Name' })}
+          </label>
+          <input
+            autoFocus
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-[13px]"
+          />
+        </div>
+        <div>
+          <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">
+            {t({ tr: 'E-posta', en: 'Email' })}
+          </label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-[13px]"
+          />
+          <p className="text-[10.5px] text-[var(--text-faint)] mt-1">
+            {t({
+              tr: 'E-posta değiştirilirse kullanıcı bir sonraki girişte yeni adresi kullanmalıdır.',
+              en: 'If email changes, the user must log in with the new address next time.',
+            })}
+          </p>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">
+              {t({ tr: 'Rol', en: 'Role' })}
+            </label>
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value as UserRole)}
+              className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-2.5 py-2.5 text-[13px]"
+            >
+              {(Object.keys(ROLE_LABEL) as UserRole[]).map((r) => (
+                <option key={r} value={r}>
+                  {ROLE_LABEL[r][lang]}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">
+              {t({ tr: 'Departman', en: 'Department' })}
+            </label>
+            <select
+              value={departmentId}
+              onChange={(e) => setDepartmentId(e.target.value)}
+              className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-2.5 py-2.5 text-[13px]"
+            >
+              <option value="">{t({ tr: 'Yok', en: 'None' })}</option>
+              {departments?.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+        {error && <p className="text-p1 text-[12px]">{error}</p>}
+      </div>
+    </Modal>
+  )
+}
