@@ -550,6 +550,31 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['tenant_holidays']['Insert']>
         Relationships: []
       }
+      ai_quota: {
+        Row: {
+          tenant_id: string
+          monthly_limit: number
+          updated_at: string
+        }
+        Insert: Partial<Database['public']['Tables']['ai_quota']['Row']> & { tenant_id: string }
+        Update: Partial<Database['public']['Tables']['ai_quota']['Insert']>
+        Relationships: []
+      }
+      ai_usage_log: {
+        Row: {
+          id: string
+          tenant_id: string
+          user_id: string | null
+          action: string
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['ai_usage_log']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['ai_usage_log']['Insert']>
+        Relationships: []
+      }
       projects: {
         Row: {
           id: string
@@ -969,6 +994,10 @@ export interface Database {
       get_channel_distribution: {
         Args: { p_tenant_id: string }
         Returns: { channel: string; ticket_count: number }[]
+      }
+      get_ai_usage_current_month: {
+        Args: { p_tenant_id: string }
+        Returns: { action: string; call_count: number }[]
       }
       get_technician_csat_leaderboard: {
         Args: { p_tenant_id: string }

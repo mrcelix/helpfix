@@ -237,3 +237,62 @@ export function useResetPassword() {
     },
   })
 }
+
+// ------------------------------------------------------------------
+// AI KULLANIM KOTASI — Faz AT+1
+// ------------------------------------------------------------------
+export interface AiUsageBreakdown {
+  action: string
+  call_count: number
+}
+
+const ACTION_LABEL: Record<string, { tr: string; en: string }> = {
+  'suggest-triage': { tr: 'Triyaj Önerisi', en: 'Triage Suggestion' },
+  summarize: { tr: 'Özetleme', en: 'Summarize' },
+  'draft-reply': { tr: 'Yanıt Taslağı', en: 'Draft Reply' },
+}
+
+export function getActionLabel(action: string, lang: 'tr' | 'en'): string {
+  return ACTION_LABEL[action]?.[lang] ?? action
+}
+
+export function useAiQuota() {
+  const { profile } = useAuth()
+  return useQuery({
+    queryKey: ['ai-quota', profile?.tenantId],
+    enabled: !!profile,
+    queryFn: async () => {
+      const { data, error } = await supabase.from('ai_quota').select('monthly_limit').eq('tenant_id', profile!.tenantId).maybeSingle()
+      if (error) throw error
+      return data?.monthly_limit ?? 500
+    },
+  })
+}
+
+export function useAiUsageThisMonth() {
+  const { profile } = useAuth()
+  return useQuery({
+    queryKey: ['ai-usage-this-month', profile?.tenantId],
+    enabled: !!profile,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_ai_usage_current_month', { p_tenant_id: profile!.tenantId })
+      if (error) throw error
+      return data as AiUsageBreakdown[]
+    },
+  })
+}
+
+export function useSetAiQuota() {
+  const qc = useQueryClient()
+  const { profile } = useAuth()
+  return useMutation({
+    mutationFn: async (monthlyLimit: number) => {
+      if (!profile) throw new Error('Profil yüklenmedi')
+      const { error } = await supabase
+        .from('ai_quota')
+        .upsert({ tenant_id: profile.tenantId, monthly_limit: monthlyLimit, updated_at: new Date().toISOString() })
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['ai-quota'] }),
+  })
+}

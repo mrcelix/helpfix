@@ -3,6 +3,7 @@ import { Plus, Pencil, KeyRound, Trash2 } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import { NAV_MODULES } from '@/components/layout/nav-modules'
 import { AdminCatalogTab } from './AdminCatalogTab'
+import { AiUsageTab } from './AiUsageTab'
 import { NewUserModal } from './NewUserModal'
 import { EditUserModal } from './EditUserModal'
 import { ResetPasswordModal } from './ResetPasswordModal'
@@ -25,7 +26,7 @@ const ROLE_OPTIONS: UserRole[] = ['tenant_admin', 'manager', 'agent', 'requester
 
 export function AdminPage() {
   const { t } = useLang()
-  const [tab, setTab] = useState<'users' | 'departments' | 'modules' | 'catalog' | 'audit'>('users')
+  const [tab, setTab] = useState<'users' | 'departments' | 'modules' | 'catalog' | 'audit' | 'ai'>('users')
 
   return (
     <div>
@@ -54,6 +55,9 @@ export function AdminPage() {
         <TabButton active={tab === 'audit'} onClick={() => setTab('audit')}>
           {t({ tr: 'Denetim Günlüğü', en: 'Audit Log' })}
         </TabButton>
+        <TabButton active={tab === 'ai'} onClick={() => setTab('ai')}>
+          {t({ tr: 'AI Kullanımı', en: 'AI Usage' })}
+        </TabButton>
       </div>
 
       {tab === 'users' && <UsersTab />}
@@ -61,6 +65,7 @@ export function AdminPage() {
       {tab === 'modules' && <ModulesTab />}
       {tab === 'catalog' && <AdminCatalogTab />}
       {tab === 'audit' && <AuditLogTab />}
+      {tab === 'ai' && <AiUsageTab />}
     </div>
   )
 
