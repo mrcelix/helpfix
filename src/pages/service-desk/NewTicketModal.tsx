@@ -1,8 +1,10 @@
 import { useState, type FormEvent } from 'react'
+import { Sparkles, Loader2 } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { useLang } from '@/contexts/LangContext'
-import { useCreateIncident } from './useIncidents'
+import { useCreateIncident, useDistinctCategories } from './useIncidents'
+import { useSuggestTriage, type TriageSuggestion } from './useAiAssist'
 import type { Priority } from '@/types/database'
 
 const PRIORITIES: Priority[] = ['P1', 'P2', 'P3', 'P4']
@@ -10,11 +12,32 @@ const PRIORITIES: Priority[] = ['P1', 'P2', 'P3', 'P4']
 export function NewTicketModal({ onClose }: { onClose: () => void }) {
   const { t } = useLang()
   const createIncident = useCreateIncident()
+  const { data: existingCategories } = useDistinctCategories()
+  const suggestTriage = useSuggestTriage()
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [priority, setPriority] = useState<Priority>('P3')
   const [category, setCategory] = useState('')
+  const [suggestion, setSuggestion] = useState<TriageSuggestion | null>(null)
+
+  async function handleSuggest() {
+    if (!title.trim()) return
+    setSuggestion(null)
+    try {
+      const result = await suggestTriage.mutateAsync({
+        title: title.trim(),
+        description: description.trim(),
+        existingCategories,
+      })
+      setCategory(result.category)
+      setPriority(result.priority)
+      setSuggestion(result)
+    } catch {
+      // Sessizce yut — AI önerisi başarısız olursa kullanıcı zaten
+      // formu elle doldurabilir, akışı bloklamaya gerek yok.
+    }
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -72,6 +95,24 @@ export function NewTicketModal({ onClose }: { onClose: () => void }) {
             className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-[13px] outline-none focus:border-brand resize-none"
           />
         </div>
+
+        <div className="flex items-center justify-between -mt-1">
+          <button
+            type="button"
+            onClick={handleSuggest}
+            disabled={!title.trim() || suggestTriage.isPending}
+            className="flex items-center gap-1.5 text-[11.5px] font-bold text-brand-dim disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {suggestTriage.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+            {t({ tr: 'AI ile Kategori & Öncelik Öner', en: 'Suggest Category & Priority with AI' })}
+          </button>
+        </div>
+        {suggestion && (
+          <div className="flex items-start gap-2 bg-brand-tint border border-brand/30 rounded-lg px-3 py-2.5 text-[12px] text-[var(--text-sub)]">
+            <Sparkles className="w-3.5 h-3.5 text-brand-dim shrink-0 mt-0.5" />
+            <span>{suggestion.reasoning}</span>
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-3">
           <div>

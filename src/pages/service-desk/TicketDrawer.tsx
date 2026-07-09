@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Send, Star, Eye, Zap, BookmarkPlus, Trash2 } from 'lucide-react'
+import { Send, Star, Eye, Zap, BookmarkPlus, Trash2, Sparkles, Loader2 } from 'lucide-react'
 import { Drawer } from '@/components/ui/Drawer'
 import { PriorityBadge, StatusBadge } from '@/components/ui/Badge'
 import { useLang } from '@/contexts/LangContext'
@@ -21,6 +21,7 @@ import {
   useCreateCannedResponse,
   useDeleteCannedResponse,
 } from './useServiceDeskExtras'
+import { useSummarizeTicket, useDraftReply } from './useAiAssist'
 import type { TicketStatus } from '@/types/database'
 
 const STATUS_OPTIONS: TicketStatus[] = ['new', 'open', 'in_progress', 'on_hold', 'resolved', 'closed']
@@ -46,6 +47,48 @@ export function TicketDrawer({ id, onClose }: { id: string; onClose: () => void 
   const { data: cannedResponses } = useCannedResponses()
   const createCanned = useCreateCannedResponse()
   const deleteCanned = useDeleteCannedResponse()
+
+  // Faz AT — AI destekli özet ve yanıt taslağı
+  const summarizeTicket = useSummarizeTicket()
+  const draftReply = useDraftReply()
+  const [aiSummary, setAiSummary] = useState<string | null>(null)
+
+  function threadForAi() {
+    return (comments ?? []).map((c) => ({
+      author: c.author?.full_name ?? '—',
+      body: c.body,
+      isInternal: c.is_internal,
+    }))
+  }
+
+  async function handleSummarize() {
+    if (!incident) return
+    setAiSummary(null)
+    try {
+      const result = await summarizeTicket.mutateAsync({
+        title: incident.title,
+        description: incident.description ?? '',
+        comments: threadForAi(),
+      })
+      setAiSummary(result.summary)
+    } catch {
+      // sessizce yut — buton yeniden denenebilir
+    }
+  }
+
+  async function handleAiDraft() {
+    if (!incident) return
+    try {
+      const result = await draftReply.mutateAsync({
+        title: incident.title,
+        description: incident.description ?? '',
+        comments: threadForAi(),
+      })
+      setDraft(result.draft)
+    } catch {
+      // sessizce yut
+    }
+  }
 
   function saveDraftAsTemplate() {
     const title = window.prompt(t({ tr: 'Şablon adı:', en: 'Template name:' }))
@@ -120,6 +163,25 @@ export function TicketDrawer({ id, onClose }: { id: string; onClose: () => void 
             <p className="text-[13px] text-[var(--text-sub)] leading-relaxed whitespace-pre-wrap">
               {incident.description}
             </p>
+          )}
+
+          {canManage && (
+            <div>
+              <button
+                onClick={handleSummarize}
+                disabled={summarizeTicket.isPending}
+                className="flex items-center gap-1.5 text-[11.5px] font-bold text-brand-dim disabled:opacity-40"
+              >
+                {summarizeTicket.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                {t({ tr: 'AI ile Özetle', en: 'Summarize with AI' })}
+              </button>
+              {aiSummary && (
+                <div className="mt-2 flex items-start gap-2 bg-brand-tint border border-brand/30 rounded-lg px-3 py-2.5 text-[12px] text-[var(--text-sub)]">
+                  <Sparkles className="w-3.5 h-3.5 text-brand-dim shrink-0 mt-0.5" />
+                  <span>{aiSummary}</span>
+                </div>
+              )}
+            </div>
           )}
 
           {['resolved', 'closed'].includes(incident.status) && incident.requester_id === profile?.id && (
@@ -242,6 +304,14 @@ export function TicketDrawer({ id, onClose }: { id: string; onClose: () => void 
                   >
                     <Zap className="w-3 h-3" />
                     {t({ tr: 'Hazır Yanıt', en: 'Canned Response' })}
+                  </button>
+                  <button
+                    onClick={handleAiDraft}
+                    disabled={draftReply.isPending}
+                    className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1.5 rounded-lg border border-brand/30 bg-brand-tint text-brand-dim disabled:opacity-40"
+                  >
+                    {draftReply.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                    {t({ tr: 'AI Taslağı', en: 'AI Draft' })}
                   </button>
                   {draft.trim() && (
                     <button

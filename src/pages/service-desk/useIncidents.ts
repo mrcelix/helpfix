@@ -163,6 +163,21 @@ export function useIncidentTimeline(incidentId: string | null) {
 }
 
 // ------------------------------------------------------------------
+// AI Triyaj önerisinde tutarlılık için mevcut kategori listesi
+// ------------------------------------------------------------------
+export function useDistinctCategories() {
+  return useQuery({
+    queryKey: ['distinct-categories'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('incidents').select('category').not('category', 'is', null).limit(500)
+      if (error) throw error
+      const set = new Set((data as { category: string }[]).map((r) => r.category))
+      return Array.from(set).sort()
+    },
+  })
+}
+
+// ------------------------------------------------------------------
 // MUTATIONS
 // ------------------------------------------------------------------
 export function useCreateIncident() {
