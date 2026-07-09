@@ -3,6 +3,7 @@ import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { useLang } from '@/contexts/LangContext'
 import { useCreateProblem, type ClusterCandidate } from './useProblems'
+import { priorityLabel } from '@/lib/priority'
 import type { Priority } from '@/types/database'
 
 const PRIORITIES: Priority[] = ['P1', 'P2', 'P3', 'P4']
@@ -14,7 +15,7 @@ export function NewProblemModal({
   onClose: () => void
   prefillCluster: ClusterCandidate | null
 }) {
-  const { t } = useLang()
+  const { lang, t } = useLang()
   const createProblem = useCreateProblem()
 
   const [title, setTitle] = useState('')
@@ -122,7 +123,7 @@ export function NewProblemModal({
                       : 'bg-[var(--panel-2)] border-[var(--border)] text-[var(--text-sub)]')
                   }
                 >
-                  {p}
+                  {priorityLabel(p, lang)}
                 </button>
               ))}
             </div>

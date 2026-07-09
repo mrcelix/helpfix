@@ -39,7 +39,7 @@ export function ProblemDrawer({ id, onClose }: { id: string; onClose: () => void
       ) : (
         <div className="space-y-5">
           <div className="flex items-center gap-2">
-            <PriorityBadge priority={problem.priority} />
+            <PriorityBadge priority={problem.priority} lang={lang} />
             {problem.is_known_error && (
               <span className="text-[10px] font-bold uppercase bg-purple-tint text-purple rounded-full px-2 py-0.5">
                 {t({ tr: 'Bilinen Hata', en: 'Known Error' })}

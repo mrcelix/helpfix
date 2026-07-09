@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Settings, ArrowUp, ArrowDown, Check } from 'lucide-react'
 import { AreaChart, Area, BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { useLang } from '@/contexts/LangContext'
+import { priorityLabel } from '@/lib/priority'
+import type { Priority } from '@/types/database'
 import {
   useWeeklyTrend,
   useSlaCompliance,
@@ -151,7 +153,7 @@ export function AnalyticsPage() {
               <p className="text-[var(--text-faint)] text-sm py-16 text-center">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</p>
             ) : (
               <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={priorityData}>
+                <BarChart data={priorityData?.map((d) => ({ ...d, priority: priorityLabel(d.priority as Priority, lang) }))}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
                   <XAxis dataKey="priority" tick={{ fontSize: 11, fill: 'var(--text-faint)' }} />
                   <YAxis tick={{ fontSize: 11, fill: 'var(--text-faint)' }} allowDecimals={false} />

@@ -125,7 +125,7 @@ export function TicketDrawer({ id, onClose }: { id: string; onClose: () => void 
       ) : (
         <div className="space-y-5">
           <div className="flex items-center gap-2">
-            <PriorityBadge priority={incident.priority} />
+            <PriorityBadge priority={incident.priority} lang={lang} />
             <StatusBadge status={incident.status} lang={lang} />
             {incident.category && (
               <span className="text-[11px] text-[var(--text-faint)] bg-[var(--panel-2)] border border-[var(--border)] rounded-full px-2.5 py-0.5">

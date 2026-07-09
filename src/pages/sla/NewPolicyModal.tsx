@@ -3,6 +3,7 @@ import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { useLang } from '@/contexts/LangContext'
 import { useCreatePolicy } from './useSla'
+import { priorityLabel } from '@/lib/priority'
 import type { Priority } from '@/types/database'
 
 const PRIORITIES: Priority[] = ['P1', 'P2', 'P3', 'P4']
@@ -14,7 +15,7 @@ const DEFAULTS: Record<Priority, { response: number; resolution: number }> = {
 }
 
 export function NewPolicyModal({ onClose }: { onClose: () => void }) {
-  const { t } = useLang()
+  const { lang, t } = useLang()
   const createPolicy = useCreatePolicy()
 
   const [name, setName] = useState('')
@@ -91,7 +92,7 @@ export function NewPolicyModal({ onClose }: { onClose: () => void }) {
                   (priority === p ? 'bg-brand border-brand text-white' : 'bg-[var(--panel-2)] border-[var(--border)] text-[var(--text-sub)]')
                 }
               >
-                {p}
+                {priorityLabel(p, lang)}
               </button>
             ))}
           </div>

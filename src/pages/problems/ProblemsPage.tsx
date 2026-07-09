@@ -226,7 +226,7 @@ export function ProblemsPage() {
                   )}
                 </td>
                 <td className="px-3.5 py-3">
-                  <PriorityBadge priority={p.priority} />
+                  <PriorityBadge priority={p.priority} lang={lang} />
                 </td>
                 <td className="px-3.5 py-3 text-[var(--text-sub)]">{STATUS_LABEL[p.status]?.[lang] ?? p.status}</td>
                 <td className="px-3.5 py-3 text-[var(--text-sub)]">

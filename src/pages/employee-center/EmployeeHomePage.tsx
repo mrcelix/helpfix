@@ -93,21 +93,7 @@ export function EmployeeHomePage() {
         </div>
       </div>
 
-      <div className="bg-[var(--panel)] border border-[var(--border)] rounded-2xl p-5 mb-6">
-        <div className="text-[13px] font-bold mb-1">{t({ tr: 'Talep Hacminiz', en: 'Your Ticket Volume' })}</div>
-        <div className="text-[11px] text-[var(--text-faint)] mb-3">{t({ tr: 'Son 6 ay', en: 'Last 6 months' })}</div>
-        <ResponsiveContainer width="100%" height={140}>
-          <BarChart data={monthlyVolume}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-            <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'var(--text-faint)' }} />
-            <YAxis tick={{ fontSize: 11, fill: 'var(--text-faint)' }} allowDecimals={false} width={24} />
-            <Tooltip contentStyle={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} />
-            <Bar dataKey="count" fill="#17B0A7" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-
-      <div className="grid grid-cols-3 gap-3.5 mb-8">
+      <div className="grid grid-cols-3 gap-3.5 mb-6">
         <ActionCard
           icon={Ticket}
           title={t({ tr: 'Yeni Talep Oluştur', en: 'Create a Ticket' })}
@@ -126,6 +112,20 @@ export function EmployeeHomePage() {
           desc={t({ tr: 'Sık sorulan sorulara kendiniz çözüm bulun.', en: 'Find answers to common questions yourself.' })}
           onClick={() => navigate('/knowledge-base')}
         />
+      </div>
+
+      <div className="bg-[var(--panel)] border border-[var(--border)] rounded-2xl p-5 mb-8">
+        <div className="text-[13px] font-bold mb-1">{t({ tr: 'Talep Hacminiz', en: 'Your Ticket Volume' })}</div>
+        <div className="text-[11px] text-[var(--text-faint)] mb-3">{t({ tr: 'Son 6 ay', en: 'Last 6 months' })}</div>
+        <ResponsiveContainer width="100%" height={140}>
+          <BarChart data={monthlyVolume}>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+            <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'var(--text-faint)' }} />
+            <YAxis tick={{ fontSize: 11, fill: 'var(--text-faint)' }} allowDecimals={false} width={24} />
+            <Tooltip contentStyle={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} />
+            <Bar dataKey="count" fill="#17B0A7" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
       </div>
 
       {!!myRequests?.length && (

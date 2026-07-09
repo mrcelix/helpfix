@@ -57,7 +57,7 @@ export function CreateIncidentModal({ alert, onClose }: { alert: { id: string; t
           />
         </div>
         <p className="text-[10.5px] text-[var(--text-faint)]">
-          {t({ tr: 'Bu olay otomatik olarak P2 önceliğinde oluşturulacak ve uyarıyla bağlantılı kalacak.', en: 'This incident will be created as P2 priority and remain linked to the alert.' })}
+          {t({ tr: 'Bu olay otomatik olarak Acil önceliğinde oluşturulacak ve uyarıyla bağlantılı kalacak.', en: 'This incident will be created as Urgent priority and remain linked to the alert.' })}
         </p>
       </div>
     </Modal>

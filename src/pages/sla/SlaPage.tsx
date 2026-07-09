@@ -125,7 +125,7 @@ export function SlaPage() {
                   <tr key={i.id} className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--row-hover)]">
                     <td className="px-3.5 py-3 font-mono text-[var(--text-faint)]">{i.ref}</td>
                     <td className="px-3.5 py-3 font-semibold">{i.title}</td>
-                    <td className="px-3.5 py-3"><PriorityBadge priority={i.priority} /></td>
+                    <td className="px-3.5 py-3"><PriorityBadge priority={i.priority} lang={lang} /></td>
                     <td className="px-3.5 py-3">
                       <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold ${STATE_STYLE[state]}`}>
                         {i.sla_due_at ? formatCountdown(i.sla_due_at, lang) : '—'}
@@ -178,7 +178,7 @@ export function SlaPage() {
                       <span className="ml-1.5 text-[9px] font-bold bg-brand-tint text-brand-dim rounded-full px-1.5 py-0.5">{p.category}</span>
                     )}
                   </td>
-                  <td className="px-3.5 py-3"><PriorityBadge priority={p.priority} /></td>
+                  <td className="px-3.5 py-3"><PriorityBadge priority={p.priority} lang={lang} /></td>
                   <td className="px-3.5 py-3 text-[var(--text-sub)]">{p.response_time_minutes} {t({ tr: 'dk', en: 'min' })}</td>
                   <td className="px-3.5 py-3 text-[var(--text-sub)]">{p.resolution_time_minutes} {t({ tr: 'dk', en: 'min' })}</td>
                   <td className="px-3.5 py-3">

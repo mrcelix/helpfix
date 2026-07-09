@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { useLang } from '@/contexts/LangContext'
+import { priorityLabel } from '@/lib/priority'
 import { useCreateRule } from './useAutomation'
 import { useAssignableUsers } from '@/pages/oncall/useOnCall'
 import type { Priority, AutomationAction, AutomationTrigger } from '@/types/database'
@@ -14,7 +15,7 @@ const TRIGGERS: { key: AutomationTrigger; label: { tr: string; en: string } }[] 
 ]
 
 export function NewRuleModal({ onClose }: { onClose: () => void }) {
-  const { t } = useLang()
+  const { lang, t } = useLang()
   const createRule = useCreateRule()
   const { data: users } = useAssignableUsers()
 
@@ -107,7 +108,7 @@ export function NewRuleModal({ onClose }: { onClose: () => void }) {
               <option value="">{t({ tr: 'Öncelik: Hepsi', en: 'Priority: Any' })}</option>
               {PRIORITIES.map((p) => (
                 <option key={p} value={p}>
-                  {p}
+                  {priorityLabel(p, lang)}
                 </option>
               ))}
             </select>
@@ -153,7 +154,7 @@ export function NewRuleModal({ onClose }: { onClose: () => void }) {
             >
               {PRIORITIES.map((p) => (
                 <option key={p} value={p}>
-                  {p}
+                  {priorityLabel(p, lang)}
                 </option>
               ))}
             </select>

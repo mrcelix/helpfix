@@ -159,7 +159,7 @@ export function ServiceDeskPage() {
       {/* KPI row */}
       <div className="grid grid-cols-4 gap-3 mb-5">
         <Kpi label={t({ tr: 'Açık Kayıt', en: 'Open Tickets' })} value={kpis.open} />
-        <Kpi label="P1" value={kpis.p1} accent="p1" />
+        <Kpi label={t({ tr: 'Kritik', en: 'Critical' })} value={kpis.p1} accent="p1" />
         <Kpi label={t({ tr: 'Atanmamış', en: 'Unassigned' })} value={kpis.unassigned} accent="p2" />
         <Kpi label={t({ tr: 'Toplam', en: 'Total' })} value={kpis.total} />
       </div>
@@ -355,7 +355,7 @@ export function ServiceDeskPage() {
                 <td className="px-3.5 py-3 font-mono text-[var(--text-faint)]">{i.ref}</td>
                 <td className="px-3.5 py-3 font-semibold">{i.title}</td>
                 <td className="px-3.5 py-3">
-                  <PriorityBadge priority={i.priority} />
+                  <PriorityBadge priority={i.priority} lang={lang} />
                 </td>
                 <td className="px-3.5 py-3">
                   <StatusBadge status={i.status} lang={lang} />

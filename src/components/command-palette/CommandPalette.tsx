@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, Ticket, CircleDot, GitBranch, BookOpen, LayoutGrid, Server } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
+import { VoiceInputButton } from '@/components/ui/VoiceInputButton'
 import { useGlobalSearch, type SearchResult } from './useGlobalSearch'
 
 const TYPE_ICON: Record<SearchResult['type'], typeof Ticket> = {
@@ -67,6 +68,7 @@ export function CommandPalette() {
             placeholder={t({ tr: 'Olay, problem, değişiklik, makale, hizmet veya varlık ara…', en: 'Search incidents, problems, changes, articles, services, or assets…' })}
             className="flex-1 bg-transparent outline-none text-[14px]"
           />
+          <VoiceInputButton onResult={(text) => setQuery(text)} />
           <span className="text-[10px] font-mono font-bold bg-[var(--panel-2)] border border-[var(--border)] rounded-md px-1.5 py-0.5 text-[var(--text-faint)] shrink-0">
             ESC
           </span>

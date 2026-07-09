@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils'
 import type { Priority, TicketStatus } from '@/types/database'
+import { PRIORITY_LABEL } from '@/lib/priority'
 
 const PRIORITY_STYLES: Record<Priority, string> = {
   P1: 'bg-p1-tint text-p1',
@@ -8,7 +9,7 @@ const PRIORITY_STYLES: Record<Priority, string> = {
   P4: 'bg-p4-tint text-p4',
 }
 
-export function PriorityBadge({ priority }: { priority: Priority }) {
+export function PriorityBadge({ priority, lang = 'tr' }: { priority: Priority; lang?: 'tr' | 'en' }) {
   return (
     <span
       className={cn(
@@ -16,7 +17,7 @@ export function PriorityBadge({ priority }: { priority: Priority }) {
         PRIORITY_STYLES[priority]
       )}
     >
-      {priority}
+      {PRIORITY_LABEL[priority][lang]}
     </span>
   )
 }

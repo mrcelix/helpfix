@@ -63,7 +63,7 @@ export function MyTicketsPage() {
             onClick={() => setSelectedId(r.id)}
             className="flex items-center gap-3.5 bg-[var(--panel)] border border-[var(--border)] rounded-xl px-4 py-3.5 cursor-pointer hover:border-brand transition-colors"
           >
-            <PriorityBadge priority={r.priority} />
+            <PriorityBadge priority={r.priority} lang={lang} />
             <div className="flex-1 min-w-0">
               <div className="font-semibold text-[13.5px] truncate">{r.title}</div>
               <div className="text-[11px] text-[var(--text-faint)] font-mono">{r.ref}</div>

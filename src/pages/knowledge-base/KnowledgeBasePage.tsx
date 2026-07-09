@@ -4,6 +4,7 @@ import { Plus, Search } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/Button'
+import { VoiceInputButton } from '@/components/ui/VoiceInputButton'
 import { useArticles, useLogSearch, useKbGapAnalysis, type KbSavedView } from './useKnowledgeBase'
 import { ArticleDrawer } from './ArticleDrawer'
 import { NewArticleModal } from './NewArticleModal'
@@ -83,6 +84,7 @@ export function KnowledgeBasePage() {
           placeholder={t({ tr: 'Makale ara…', en: 'Search articles…' })}
           className="bg-transparent outline-none text-[13px] w-full"
         />
+        <VoiceInputButton onResult={(text) => setSearch(text)} />
       </div>
 
       <div className="flex items-center gap-1.5 mb-3 flex-wrap">
