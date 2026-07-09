@@ -19,6 +19,10 @@ export function useSuggestTriage() {
   return useMutation({
     mutationFn: (input: { title: string; description: string; existingCategories?: string[] }) =>
       invokeAiAssist<TriageSuggestion>({ action: 'suggest-triage', ...input }),
+    // Çağıran taraf hatayı zaten yerel olarak sessizce yutuyor (öneri
+    // başarısız olursa form akışını bozmasın diye) — global toast'u da
+    // ikinci kez tetiklemesin.
+    meta: { silent: true },
   })
 }
 
@@ -32,6 +36,7 @@ export function useSummarizeTicket() {
   return useMutation({
     mutationFn: (input: { title: string; description: string; comments: ThreadComment[] }) =>
       invokeAiAssist<{ summary: string }>({ action: 'summarize', ...input }),
+    meta: { silent: true },
   })
 }
 
@@ -39,5 +44,6 @@ export function useDraftReply() {
   return useMutation({
     mutationFn: (input: { title: string; description: string; comments: ThreadComment[]; instruction?: string }) =>
       invokeAiAssist<{ draft: string }>({ action: 'draft-reply', ...input }),
+    meta: { silent: true },
   })
 }
