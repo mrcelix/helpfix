@@ -168,6 +168,38 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['incident_comments']['Insert']>
         Relationships: []
       }
+      canned_responses: {
+        Row: {
+          id: string
+          tenant_id: string
+          title: string
+          body: string
+          created_by: string | null
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['canned_responses']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['canned_responses']['Insert']>
+        Relationships: []
+      }
+      saved_filters: {
+        Row: {
+          id: string
+          tenant_id: string
+          user_id: string
+          name: string
+          filters: Record<string, unknown>
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['saved_filters']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['saved_filters']['Insert']>
+        Relationships: []
+      }
       incident_responders: {
         Row: {
           incident_id: string

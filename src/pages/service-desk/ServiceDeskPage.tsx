@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useOpenParam } from '@/hooks/useOpenParam'
-import { Plus, Download, List, Kanban } from 'lucide-react'
+import { Plus, Download, List, Kanban, BookmarkPlus, X } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import { Button } from '@/components/ui/Button'
 import { PriorityBadge, StatusBadge } from '@/components/ui/Badge'
@@ -8,6 +8,13 @@ import { useIncidents, useUpdateIncident, useMajorIncidents, type SavedView } fr
 import { TicketDrawer } from './TicketDrawer'
 import { NewTicketModal } from './NewTicketModal'
 import { ServiceDeskAnalytics } from './ServiceDeskAnalytics'
+import {
+  useSavedFilters,
+  useSaveFilter,
+  useDeleteSavedFilter,
+  computeSlaMeter,
+  type SavedFilterState,
+} from './useServiceDeskExtras'
 import type { TicketStatus, TicketChannel } from '@/types/database'
 
 const CHANNEL_LABEL: Record<TicketChannel, { tr: string; en: string }> = {
@@ -54,6 +61,25 @@ export function ServiceDeskPage() {
   const { data: allIncidents } = useIncidents('all')
   const { data: majorIncidents } = useMajorIncidents()
   const [sortBy, setSortBy] = useState<'created_desc' | 'priority' | 'sla' | 'az'>('created_desc')
+
+  // Cila Faz AR — kullanıcı tanımlı kaydedilmiş görünümler
+  const { data: savedFilters } = useSavedFilters()
+  const saveFilter = useSaveFilter()
+  const deleteSavedFilter = useDeleteSavedFilter()
+  const [activeSavedId, setActiveSavedId] = useState<string | null>(null)
+
+  function applySavedFilter(id: string, f: SavedFilterState) {
+    setView(f.view)
+    setChannel(f.channel)
+    setSortBy(f.sortBy)
+    setActiveSavedId(id)
+  }
+
+  function saveCurrentView() {
+    const name = window.prompt(t({ tr: 'Görünüm adı:', en: 'View name:' }))
+    if (!name?.trim()) return
+    saveFilter.mutate({ name: name.trim(), filters: { view, channel, sortBy } })
+  }
 
   const incidents = incidentsRaw ? [...incidentsRaw].sort((a, b) => {
     if (sortBy === 'priority') return a.priority.localeCompare(b.priority)
@@ -162,10 +188,13 @@ export function ServiceDeskPage() {
         {SAVED_VIEWS.map((v) => (
           <button
             key={v.key}
-            onClick={() => setView(v.key)}
+            onClick={() => {
+              setView(v.key)
+              setActiveSavedId(null)
+            }}
             className={
               'text-[12.5px] font-bold px-3.5 py-2 rounded-lg border transition-colors ' +
-              (view === v.key
+              (view === v.key && !activeSavedId
                 ? 'bg-brand border-brand text-white'
                 : 'bg-[var(--panel)] border-[var(--border)] text-[var(--text-sub)]')
             }
@@ -173,6 +202,38 @@ export function ServiceDeskPage() {
             {v.label[lang]}
           </button>
         ))}
+        {savedFilters?.map((sf) => (
+          <span
+            key={sf.id}
+            className={
+              'group flex items-center gap-1.5 text-[12.5px] font-bold pl-3.5 pr-2 py-2 rounded-lg border cursor-pointer transition-colors ' +
+              (activeSavedId === sf.id
+                ? 'bg-brand border-brand text-white'
+                : 'bg-[var(--panel)] border-dashed border-[var(--border)] text-[var(--text-sub)]')
+            }
+            onClick={() => applySavedFilter(sf.id, sf.filters)}
+          >
+            {sf.name}
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                deleteSavedFilter.mutate(sf.id)
+                if (activeSavedId === sf.id) setActiveSavedId(null)
+              }}
+              className={`opacity-0 group-hover:opacity-100 ${activeSavedId === sf.id ? 'text-white/80' : 'text-[var(--text-faint)]'} hover:text-p1`}
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </span>
+        ))}
+        <button
+          onClick={saveCurrentView}
+          title={t({ tr: 'Geçerli filtre + kanal + sıralamayı görünüm olarak kaydet', en: 'Save current filter + channel + sort as a view' })}
+          className="flex items-center gap-1 text-[11.5px] font-semibold px-2.5 py-2 rounded-lg border border-[var(--border)] text-[var(--text-faint)] hover:border-brand hover:text-brand-dim"
+        >
+          <BookmarkPlus className="w-3.5 h-3.5" />
+          {t({ tr: 'Görünümü Kaydet', en: 'Save View' })}
+        </button>
         <div className="ml-auto flex items-center gap-2">
           <div className="flex border border-[var(--border)] rounded-lg overflow-hidden">
             <button
@@ -257,6 +318,7 @@ export function ServiceDeskPage() {
               <Th>{t({ tr: 'Başlık', en: 'Title' })}</Th>
               <Th>{t({ tr: 'Öncelik', en: 'Priority' })}</Th>
               <Th>{t({ tr: 'Durum', en: 'Status' })}</Th>
+              <Th>SLA</Th>
               <Th>{t({ tr: 'Talep Eden', en: 'Requester' })}</Th>
               <Th>{t({ tr: 'Atanan', en: 'Assignee' })}</Th>
               <Th>{t({ tr: 'Oluşturma', en: 'Created' })}</Th>
@@ -265,21 +327,21 @@ export function ServiceDeskPage() {
           <tbody>
             {isLoading && (
               <tr>
-                <td colSpan={7} className="text-center py-10 text-[var(--text-faint)]">
+                <td colSpan={8} className="text-center py-10 text-[var(--text-faint)]">
                   {t({ tr: 'Yükleniyor…', en: 'Loading…' })}
                 </td>
               </tr>
             )}
             {error && (
               <tr>
-                <td colSpan={7} className="text-center py-10 text-p1">
+                <td colSpan={8} className="text-center py-10 text-p1">
                   {t({ tr: 'Bir hata oluştu. Supabase bağlantınızı kontrol edin.', en: 'Something went wrong. Check your Supabase connection.' })}
                 </td>
               </tr>
             )}
             {!isLoading && !error && incidents?.length === 0 && (
               <tr>
-                <td colSpan={7} className="text-center py-14 text-[var(--text-faint)]">
+                <td colSpan={8} className="text-center py-14 text-[var(--text-faint)]">
                   {t({ tr: 'Bu görünümde kayıt yok.', en: 'Nothing in this view.' })}
                 </td>
               </tr>
@@ -297,6 +359,9 @@ export function ServiceDeskPage() {
                 </td>
                 <td className="px-3.5 py-3">
                   <StatusBadge status={i.status} lang={lang} />
+                </td>
+                <td className="px-3.5 py-3">
+                  <SlaMeter incident={i} />
                 </td>
                 <td className="px-3.5 py-3 text-[var(--text-sub)]">{i.requester?.full_name ?? '—'}</td>
                 <td className="px-3.5 py-3 text-[var(--text-sub)]">
@@ -354,6 +419,37 @@ function KanbanCard({
           →
         </button>
       )}
+    </div>
+  )
+}
+
+function SlaMeter({
+  incident,
+}: {
+  incident: { sla_due_at: string | null; created_at: string; status: TicketStatus }
+}) {
+  const { t } = useLang()
+  if (['resolved', 'closed', 'merged'].includes(incident.status)) {
+    return <span className="text-[10.5px] text-[var(--text-faint)]">—</span>
+  }
+  if (!incident.sla_due_at) {
+    return <span className="text-[10.5px] text-[var(--text-faint)] italic">{t({ tr: 'SLA yok', en: 'No SLA' })}</span>
+  }
+  const m = computeSlaMeter(incident.created_at, incident.sla_due_at)
+  const color =
+    m.level === 'breached' || m.level === 'danger' ? 'bg-p1' : m.level === 'warn' ? 'bg-p2' : 'bg-ok'
+  const textColor =
+    m.level === 'breached' ? 'text-p1 font-bold' : m.level === 'danger' ? 'text-p1' : m.level === 'warn' ? 'text-p2' : 'text-[var(--text-faint)]'
+  return (
+    <div className="w-[92px]">
+      <div className="h-1.5 rounded-full bg-[var(--panel-2)] border border-[var(--border)] overflow-hidden mb-1">
+        <div className={`h-full ${color}`} style={{ width: `${m.pct}%` }} />
+      </div>
+      <div className={`text-[10px] ${textColor}`}>
+        {m.level === 'breached'
+          ? t({ tr: `${m.remainingLabel} ihlal`, en: `${m.remainingLabel} overdue` })
+          : t({ tr: `${m.remainingLabel} kaldı`, en: `${m.remainingLabel} left` })}
+      </div>
     </div>
   )
 }

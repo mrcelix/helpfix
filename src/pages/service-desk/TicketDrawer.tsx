@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Send, Star } from 'lucide-react'
+import { Send, Star, Eye, Zap, BookmarkPlus, Trash2 } from 'lucide-react'
 import { Drawer } from '@/components/ui/Drawer'
 import { PriorityBadge, StatusBadge } from '@/components/ui/Badge'
 import { useLang } from '@/contexts/LangContext'
@@ -15,6 +15,12 @@ import {
   useToggleMajorIncident,
 } from './useIncidents'
 import { WarRoomPanel } from './WarRoomPanel'
+import {
+  useTicketPresence,
+  useCannedResponses,
+  useCreateCannedResponse,
+  useDeleteCannedResponse,
+} from './useServiceDeskExtras'
 import type { TicketStatus } from '@/types/database'
 
 const STATUS_OPTIONS: TicketStatus[] = ['new', 'open', 'in_progress', 'on_hold', 'resolved', 'closed']
@@ -33,6 +39,19 @@ export function TicketDrawer({ id, onClose }: { id: string; onClose: () => void 
 
   const [draft, setDraft] = useState('')
   const [isInternal, setIsInternal] = useState(false)
+  const [showCanned, setShowCanned] = useState(false)
+
+  // Cila Faz AR — ajan çarpışma göstergesi + hazır yanıtlar
+  const viewers = useTicketPresence(id)
+  const { data: cannedResponses } = useCannedResponses()
+  const createCanned = useCreateCannedResponse()
+  const deleteCanned = useDeleteCannedResponse()
+
+  function saveDraftAsTemplate() {
+    const title = window.prompt(t({ tr: 'Şablon adı:', en: 'Template name:' }))
+    if (!title?.trim() || !draft.trim()) return
+    createCanned.mutate({ title: title.trim(), body: draft.trim() })
+  }
 
   function submitComment() {
     if (!draft.trim()) return
@@ -68,6 +87,17 @@ export function TicketDrawer({ id, onClose }: { id: string; onClose: () => void 
             {incident.category && (
               <span className="text-[11px] text-[var(--text-faint)] bg-[var(--panel-2)] border border-[var(--border)] rounded-full px-2.5 py-0.5">
                 {incident.category}
+              </span>
+            )}
+            {viewers.length > 0 && (
+              <span
+                title={viewers.map((v) => v.fullName).join(', ')}
+                className="flex items-center gap-1 text-[10.5px] font-bold text-p2 bg-p2-tint border border-p2/40 rounded-full px-2.5 py-0.5"
+              >
+                <Eye className="w-3 h-3" />
+                {viewers.length === 1
+                  ? t({ tr: `${viewers[0].fullName} da görüntülüyor`, en: `${viewers[0].fullName} is also viewing` })
+                  : t({ tr: `${viewers.length} kişi daha görüntülüyor`, en: `${viewers.length} others viewing` })}
               </span>
             )}
             {canManage && incident.priority === 'P1' && (
@@ -203,11 +233,74 @@ export function TicketDrawer({ id, onClose }: { id: string; onClose: () => void 
               ))}
             </div>
 
+            {canManage && (
+              <div className="relative mb-2">
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setShowCanned((s) => !s)}
+                    className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--panel-2)] text-[var(--text-sub)] hover:border-brand hover:text-brand-dim"
+                  >
+                    <Zap className="w-3 h-3" />
+                    {t({ tr: 'Hazır Yanıt', en: 'Canned Response' })}
+                  </button>
+                  {draft.trim() && (
+                    <button
+                      onClick={saveDraftAsTemplate}
+                      className="flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1.5 rounded-lg border border-[var(--border)] text-[var(--text-faint)] hover:border-brand hover:text-brand-dim"
+                    >
+                      <BookmarkPlus className="w-3 h-3" />
+                      {t({ tr: 'Şablon Olarak Kaydet', en: 'Save as Template' })}
+                    </button>
+                  )}
+                </div>
+                {showCanned && (
+                  <div className="absolute z-20 bottom-full mb-1.5 left-0 w-full max-h-56 overflow-y-auto bg-[var(--panel)] border border-[var(--border)] rounded-xl shadow-lg p-1.5">
+                    {!cannedResponses?.length && (
+                      <div className="text-[11.5px] text-[var(--text-faint)] italic px-2.5 py-3">
+                        {t({
+                          tr: 'Henüz şablon yok. Bir yanıt yazıp "Şablon Olarak Kaydet" ile başlayın.',
+                          en: 'No templates yet. Write a reply and use "Save as Template".',
+                        })}
+                      </div>
+                    )}
+                    {cannedResponses?.map((cr) => (
+                      <div
+                        key={cr.id}
+                        className="group flex items-start gap-2 px-2.5 py-2 rounded-lg hover:bg-[var(--row-hover)] cursor-pointer"
+                        onClick={() => {
+                          setDraft((d) => (d.trim() === '' || d.trim() === '/' ? cr.body : `${d}\n${cr.body}`))
+                          setShowCanned(false)
+                        }}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[11.5px] font-bold truncate">{cr.title}</div>
+                          <div className="text-[11px] text-[var(--text-faint)] truncate">{cr.body}</div>
+                        </div>
+                        {(cr.created_by === profile?.id || ['tenant_admin', 'manager'].includes(profile?.role ?? '')) && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              deleteCanned.mutate(cr.id)
+                            }}
+                            className="opacity-0 group-hover:opacity-100 text-[var(--text-faint)] hover:text-p1 shrink-0 mt-0.5"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             <div className="flex items-start gap-2">
               <textarea
                 value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                placeholder={t({ tr: 'Yanıt yazın…', en: 'Write a reply…' })}
+                onChange={(e) => {
+                  setDraft(e.target.value)
+                  if (e.target.value === '/') setShowCanned(true)
+                }}
+                placeholder={t({ tr: 'Yanıt yazın… ("/" ile hazır yanıt)', en: 'Write a reply… ("/" for canned responses)' })}
                 rows={2}
                 className="flex-1 bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2 text-[12.5px] outline-none focus:border-brand resize-none"
               />
