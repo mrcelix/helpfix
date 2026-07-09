@@ -19,6 +19,7 @@ export function NewPolicyModal({ onClose }: { onClose: () => void }) {
 
   const [name, setName] = useState('')
   const [priority, setPriority] = useState<Priority>('P2')
+  const [category, setCategory] = useState('')
   const [responseTime, setResponseTime] = useState(DEFAULTS.P2.response)
   const [resolutionTime, setResolutionTime] = useState(DEFAULTS.P2.resolution)
   const [businessHoursOnly, setBusinessHoursOnly] = useState(false)
@@ -35,6 +36,7 @@ export function NewPolicyModal({ onClose }: { onClose: () => void }) {
     await createPolicy.mutateAsync({
       name: name.trim(),
       priority,
+      category: category.trim() || null,
       response_time_minutes: responseTime,
       resolution_time_minutes: resolutionTime,
       businessHoursOnly,
@@ -118,6 +120,23 @@ export function NewPolicyModal({ onClose }: { onClose: () => void }) {
                 : t({ tr: 'UC: Tedarikçi ile taahhüt sözleşmesi', en: 'UC: Underpinning contract with a vendor' })}
           </p>
         </div>
+        <div>
+          <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">
+            {t({ tr: 'Kategori (opsiyonel)', en: 'Category (optional)' })}
+          </label>
+          <input
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            placeholder={t({ tr: 'örn. Ağ & VPN — boş bırakılırsa bu öncelik için genel politika olur', en: 'e.g. Network & VPN — leave blank for this priority\'s general policy' })}
+            className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-[13px] outline-none focus:border-brand"
+          />
+          <p className="text-[10.5px] text-[var(--text-faint)] mt-1.5">
+            {t({
+              tr: 'Kategori girilirse, bu politika sadece o öncelik + kategori kombinasyonunda kullanılır ve genel politikadan daha spesifik sayılır (örn. P1 + "Ağ" için 30dk, P1 genel için 4s).',
+              en: 'If set, this policy applies only to that priority + category combination and takes precedence over the general policy for that priority.',
+            })}
+          </p>
+        </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">
@@ -144,7 +163,10 @@ export function NewPolicyModal({ onClose }: { onClose: () => void }) {
         </div>
         <label className="flex items-center gap-2 bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-[12px] text-[var(--text-sub)]">
           <input type="checkbox" checked={businessHoursOnly} onChange={(e) => setBusinessHoursOnly(e.target.checked)} />
-          {t({ tr: 'Sadece iş günlerinde say (hafta sonları hariç)', en: 'Count business days only (skip weekends)' })}
+          {t({
+            tr: 'Sadece mesai saatlerinde say (İş Takvimi sekmesindeki mesai + tatil günlerine göre)',
+            en: 'Count business hours only (per the Business Calendar tab\'s hours + holidays)',
+          })}
         </label>
       </div>
     </Modal>

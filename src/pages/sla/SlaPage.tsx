@@ -6,6 +6,7 @@ import { PriorityBadge } from '@/components/ui/Badge'
 import { usePolicies, useMonitoredIncidents, useTogglePolicy, useAllEscalationLevels, computeTriggeredLevel, type MonitoredIncident } from './useSla'
 import { NewPolicyModal } from './NewPolicyModal'
 import { EscalationMatrixModal } from './EscalationMatrixModal'
+import { BusinessCalendarTab } from './BusinessCalendarTab'
 
 function slaState(incident: MonitoredIncident): 'ok' | 'warning' | 'breached' {
   if (!incident.sla_due_at) return 'ok'
@@ -40,7 +41,7 @@ const STATE_STYLE: Record<string, string> = {
 
 export function SlaPage() {
   const { lang, t } = useLang()
-  const [tab, setTab] = useState<'monitor' | 'policies'>('monitor')
+  const [tab, setTab] = useState<'monitor' | 'policies' | 'calendar'>('monitor')
   const [showNewModal, setShowNewModal] = useState(false)
   const [escalationPolicy, setEscalationPolicy] = useState<{ id: string; name: string } | null>(null)
 
@@ -89,6 +90,12 @@ export function SlaPage() {
           className={`px-1 py-2.5 text-[13.5px] font-semibold mr-5 border-b-2 ${tab === 'policies' ? 'border-brand text-brand-dim' : 'border-transparent text-[var(--text-faint)]'}`}
         >
           {t({ tr: 'Politikalar', en: 'Policies' })}
+        </button>
+        <button
+          onClick={() => setTab('calendar')}
+          className={`px-1 py-2.5 text-[13.5px] font-semibold mr-5 border-b-2 ${tab === 'calendar' ? 'border-brand text-brand-dim' : 'border-transparent text-[var(--text-faint)]'}`}
+        >
+          {t({ tr: 'İş Takvimi', en: 'Business Calendar' })}
         </button>
       </div>
 
@@ -167,6 +174,9 @@ export function SlaPage() {
                   <td className="px-3.5 py-3 font-semibold">
                     {p.name}
                     <span className="ml-2 text-[9px] font-mono font-bold bg-purple-tint text-purple rounded-full px-1.5 py-0.5">{p.tier.toUpperCase()}</span>
+                    {p.category && (
+                      <span className="ml-1.5 text-[9px] font-bold bg-brand-tint text-brand-dim rounded-full px-1.5 py-0.5">{p.category}</span>
+                    )}
                   </td>
                   <td className="px-3.5 py-3"><PriorityBadge priority={p.priority} /></td>
                   <td className="px-3.5 py-3 text-[var(--text-sub)]">{p.response_time_minutes} {t({ tr: 'dk', en: 'min' })}</td>
@@ -195,6 +205,8 @@ export function SlaPage() {
           </table>
         </div>
       )}
+
+      {tab === 'calendar' && <BusinessCalendarTab />}
 
       {showNewModal && <NewPolicyModal onClose={() => setShowNewModal(false)} />}
       {escalationPolicy && (

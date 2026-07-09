@@ -7,6 +7,7 @@ export interface SlaPolicy {
   id: string
   name: string
   priority: Priority
+  category: string | null
   response_time_minutes: number
   resolution_time_minutes: number
   escalation_warning_percent: number
@@ -34,7 +35,7 @@ export function usePolicies() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('sla_policies')
-        .select('id, name, priority, response_time_minutes, resolution_time_minutes, escalation_warning_percent, business_hours_only, tier, is_active')
+        .select('id, name, priority, category, response_time_minutes, resolution_time_minutes, escalation_warning_percent, business_hours_only, tier, is_active')
         .order('priority')
       if (error) throw error
       return data as SlaPolicy[]
@@ -49,6 +50,7 @@ export function useCreatePolicy() {
     mutationFn: async (input: {
       name: string
       priority: Priority
+      category: string | null
       response_time_minutes: number
       resolution_time_minutes: number
       businessHoursOnly: boolean
@@ -59,6 +61,7 @@ export function useCreatePolicy() {
         tenant_id: profile.tenantId,
         name: input.name,
         priority: input.priority,
+        category: input.category,
         response_time_minutes: input.response_time_minutes,
         resolution_time_minutes: input.resolution_time_minutes,
         escalation_warning_percent: 80,
@@ -206,4 +209,110 @@ export function computeTriggeredLevel(
   // En yüksek tetiklenen seviyeyi bul (trigger_percent <= elapsedPercent olanlar arasında en büyüğü)
   const triggered = levels.filter((l) => l.trigger_percent <= elapsedPercent).sort((a, b) => b.trigger_percent - a.trigger_percent)
   return triggered[0] ?? null
+}
+
+// ------------------------------------------------------------------
+// İŞ TAKVİMİ — mesai saatleri (Faz AS)
+// day_of_week: 0=Pazar … 6=Cumartesi (Postgres extract(dow) ile aynı)
+// ------------------------------------------------------------------
+export interface BusinessHourRow {
+  id: string
+  day_of_week: number
+  start_time: string // "09:00:00"
+  end_time: string
+}
+
+export function useBusinessHours() {
+  const { profile } = useAuth()
+  return useQuery({
+    queryKey: ['business-hours', profile?.tenantId],
+    enabled: !!profile,
+    queryFn: async () => {
+      const { data, error } = await supabase.from('business_hours').select('id, day_of_week, start_time, end_time').order('day_of_week')
+      if (error) throw error
+      return data as BusinessHourRow[]
+    },
+  })
+}
+
+/** Bir gün için mesai penceresini oluşturur/günceller; end_time'ı
+ * start_time'a eşit ya da öncesine ayarlamak o günü "kapalı" yapar
+ * (satırı siler). */
+export function useSetBusinessDay() {
+  const qc = useQueryClient()
+  const { profile } = useAuth()
+  return useMutation({
+    mutationFn: async (input: { dayOfWeek: number; startTime: string; endTime: string }) => {
+      if (!profile) throw new Error('Profil yüklenmedi')
+      const { error } = await supabase
+        .from('business_hours')
+        .upsert(
+          { tenant_id: profile.tenantId, day_of_week: input.dayOfWeek, start_time: input.startTime, end_time: input.endTime },
+          { onConflict: 'tenant_id,day_of_week' }
+        )
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['business-hours'] }),
+  })
+}
+
+/** Bir günü tamamen kapalı yapar (satırı siler — mesai tanımlı olmayan
+ * günler SLA hesaplamasında otomatik olarak "kapalı gün" sayılır). */
+export function useCloseBusinessDay() {
+  const qc = useQueryClient()
+  const { profile } = useAuth()
+  return useMutation({
+    mutationFn: async (dayOfWeek: number) => {
+      if (!profile) throw new Error('Profil yüklenmedi')
+      const { error } = await supabase.from('business_hours').delete().eq('tenant_id', profile.tenantId).eq('day_of_week', dayOfWeek)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['business-hours'] }),
+  })
+}
+
+// ------------------------------------------------------------------
+// TATİL GÜNLERİ (resmi + dini — Diyanet takviminden elle girilir)
+// ------------------------------------------------------------------
+export interface TenantHoliday {
+  id: string
+  holiday_date: string // "2026-04-20"
+  name: string
+}
+
+export function useHolidays() {
+  const { profile } = useAuth()
+  return useQuery({
+    queryKey: ['tenant-holidays', profile?.tenantId],
+    enabled: !!profile,
+    queryFn: async () => {
+      const { data, error } = await supabase.from('tenant_holidays').select('id, holiday_date, name').order('holiday_date')
+      if (error) throw error
+      return data as TenantHoliday[]
+    },
+  })
+}
+
+export function useCreateHoliday() {
+  const qc = useQueryClient()
+  const { profile } = useAuth()
+  return useMutation({
+    mutationFn: async (input: { date: string; name: string }) => {
+      if (!profile) throw new Error('Profil yüklenmedi')
+      const { error } = await supabase.from('tenant_holidays').insert({ tenant_id: profile.tenantId, holiday_date: input.date, name: input.name })
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['tenant-holidays'] }),
+  })
+}
+
+export function useDeleteHoliday() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('tenant_holidays').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['tenant-holidays'] }),
+  })
 }

@@ -505,6 +505,7 @@ export interface Database {
           tenant_id: string
           name: string
           priority: Priority
+          category: string | null
           response_time_minutes: number
           resolution_time_minutes: number
           escalation_warning_percent: number
@@ -518,6 +519,35 @@ export interface Database {
           created_at?: string
         }
         Update: Partial<Database['public']['Tables']['sla_policies']['Insert']>
+        Relationships: []
+      }
+      business_hours: {
+        Row: {
+          id: string
+          tenant_id: string
+          day_of_week: number
+          start_time: string
+          end_time: string
+        }
+        Insert: Omit<Database['public']['Tables']['business_hours']['Row'], 'id'> & {
+          id?: string
+        }
+        Update: Partial<Database['public']['Tables']['business_hours']['Insert']>
+        Relationships: []
+      }
+      tenant_holidays: {
+        Row: {
+          id: string
+          tenant_id: string
+          holiday_date: string
+          name: string
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['tenant_holidays']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['tenant_holidays']['Insert']>
         Relationships: []
       }
       projects: {
