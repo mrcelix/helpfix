@@ -999,6 +999,10 @@ export interface Database {
         Args: { p_tenant_id: string }
         Returns: { action: string; call_count: number }[]
       }
+      search_kb_articles: {
+        Args: { p_tenant_id: string; p_query: string; p_limit?: number }
+        Returns: { id: string; title: string; slug: string; category: string | null; rank: number }[]
+      }
       get_technician_csat_leaderboard: {
         Args: { p_tenant_id: string }
         Returns: { technician_id: string; full_name: string; avg_csat: number; ticket_count: number }[]

@@ -192,3 +192,34 @@ export function useKbGapAnalysis() {
     },
   })
 }
+
+// ------------------------------------------------------------------
+// Faz AX — Bilgi Bankası Deflection: talep yazılırken olası çözümü
+// içeren yayınlanmış makaleleri önerir. Çağıran taraf (NewTicketModal)
+// debounce'u kendisi yapar — burada sadece query boşsa hiç istek atılmaz.
+// ------------------------------------------------------------------
+export interface SuggestedArticle {
+  id: string
+  title: string
+  slug: string
+  category: string | null
+  rank: number
+}
+
+export function useSuggestedArticles(query: string) {
+  const { profile } = useAuth()
+  const trimmed = query.trim()
+  return useQuery({
+    queryKey: ['kb-suggested-articles', profile?.tenantId, trimmed],
+    enabled: !!profile && trimmed.length >= 4,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('search_kb_articles', {
+        p_tenant_id: profile!.tenantId,
+        p_query: trimmed,
+        p_limit: 4,
+      })
+      if (error) throw error
+      return data as SuggestedArticle[]
+    },
+  })
+}

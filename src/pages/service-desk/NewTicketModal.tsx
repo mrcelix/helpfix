@@ -1,11 +1,12 @@
-import { useState, type FormEvent } from 'react'
-import { Sparkles, Loader2, ChevronLeft, Check, Pencil, Search } from 'lucide-react'
+import { useState, useEffect, type FormEvent } from 'react'
+import { Sparkles, Loader2, ChevronLeft, Check, Pencil, Search, BookOpen, ExternalLink } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { VoiceInputButton } from '@/components/ui/VoiceInputButton'
 import { useLang } from '@/contexts/LangContext'
 import { useCreateIncident, useDistinctCategories } from './useIncidents'
 import { useSuggestTriage, type TriageSuggestion } from './useAiAssist'
+import { useSuggestedArticles } from '@/pages/knowledge-base/useKnowledgeBase'
 import { TICKET_CATEGORIES, resolveCategoryLabel, type TicketCategory, type TicketSubcategory } from './ticket-categories'
 import { priorityLabel } from '@/lib/priority'
 import type { Priority } from '@/types/database'
@@ -44,6 +45,14 @@ export function NewTicketModal({ onClose }: { onClose: () => void }) {
   const [description, setDescription] = useState('')
   const [priority, setPriority] = useState<Priority>('P3')
   const [suggestion, setSuggestion] = useState<TriageSuggestion | null>(null)
+
+  // Faz AX — Bilgi Bankası Deflection: yazarken debounce'lu KB araması
+  const [kbQuery, setKbQuery] = useState('')
+  useEffect(() => {
+    const timer = setTimeout(() => setKbQuery(`${title} ${description}`.trim()), 500)
+    return () => clearTimeout(timer)
+  }, [title, description])
+  const { data: suggestedArticles } = useSuggestedArticles(kbQuery)
 
   const finalCategory =
     categoryOverride ?? (selectedCategory ? resolveCategoryLabel(selectedCategory, selectedSubcategory, lang) : '')
@@ -290,6 +299,34 @@ export function NewTicketModal({ onClose }: { onClose: () => void }) {
               <VoiceInputButton onResult={(text) => setTitle((prev) => (prev.trim() ? `${prev.trim()} ${text}` : text))} />
             </div>
           </div>
+
+          {!!suggestedArticles?.length && (
+            <div className="bg-brand-tint/60 border border-brand/30 rounded-lg px-3 py-2.5">
+              <div className="flex items-center gap-1.5 text-[11px] font-bold text-brand-dim uppercase tracking-wide mb-2">
+                <BookOpen className="w-3.5 h-3.5" />
+                {t({ tr: 'Bu sorunla ilgili olabilir', en: 'This might be related' })}
+              </div>
+              <div className="flex flex-col gap-1">
+                {suggestedArticles.map((a) => (
+                  <button
+                    key={a.id}
+                    type="button"
+                    onClick={() => window.open(`/knowledge-base?open=${a.id}`, '_blank', 'noopener,noreferrer')}
+                    className="flex items-center justify-between gap-2 text-left text-[12.5px] font-medium text-[var(--text-sub)] hover:text-brand-dim py-0.5"
+                  >
+                    <span className="truncate">{a.title}</span>
+                    <ExternalLink className="w-3 h-3 shrink-0 text-[var(--text-faint)]" />
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10.5px] text-[var(--text-faint)] mt-2">
+                {t({
+                  tr: 'Çözüm buradaysa talebi göndermeden önce sorunu giderebilirsiniz.',
+                  en: "If the answer is here, you can resolve it before submitting the ticket.",
+                })}
+              </p>
+            </div>
+          )}
 
           <div>
             <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">
