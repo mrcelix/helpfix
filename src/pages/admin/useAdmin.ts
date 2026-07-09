@@ -239,6 +239,22 @@ export function useResetPassword() {
 }
 
 // ------------------------------------------------------------------
+// Faz AZ — Gerçek Omnichannel: tenant'ın e-posta gelen kutusu adresi
+// ------------------------------------------------------------------
+export function useTenantInboundEmail() {
+  const { profile } = useAuth()
+  return useQuery({
+    queryKey: ['tenant-inbound-email', profile?.tenantId],
+    enabled: !!profile,
+    queryFn: async () => {
+      const { data, error } = await supabase.from('tenants').select('inbound_email').eq('id', profile!.tenantId).single()
+      if (error) throw error
+      return data.inbound_email as string
+    },
+  })
+}
+
+// ------------------------------------------------------------------
 // AI KULLANIM KOTASI — Faz AT+1
 // ------------------------------------------------------------------
 export interface AiUsageBreakdown {

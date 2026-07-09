@@ -75,6 +75,7 @@ export interface Database {
           name: string
           slug: string
           plan: 'starter' | 'growth' | 'enterprise'
+          inbound_email: string
           created_at: string
         }
         Insert: Omit<Database['public']['Tables']['tenants']['Row'], 'id' | 'created_at'> & {

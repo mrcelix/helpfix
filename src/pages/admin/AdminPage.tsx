@@ -4,6 +4,7 @@ import { useLang } from '@/contexts/LangContext'
 import { NAV_MODULES } from '@/components/layout/nav-modules'
 import { AdminCatalogTab } from './AdminCatalogTab'
 import { AiUsageTab } from './AiUsageTab'
+import { EmailSettingsTab } from './EmailSettingsTab'
 import { NewUserModal } from './NewUserModal'
 import { EditUserModal } from './EditUserModal'
 import { ResetPasswordModal } from './ResetPasswordModal'
@@ -26,7 +27,7 @@ const ROLE_OPTIONS: UserRole[] = ['tenant_admin', 'manager', 'agent', 'requester
 
 export function AdminPage() {
   const { t } = useLang()
-  const [tab, setTab] = useState<'users' | 'departments' | 'modules' | 'catalog' | 'audit' | 'ai'>('users')
+  const [tab, setTab] = useState<'users' | 'departments' | 'modules' | 'catalog' | 'audit' | 'ai' | 'email'>('users')
 
   return (
     <div>
@@ -58,6 +59,9 @@ export function AdminPage() {
         <TabButton active={tab === 'ai'} onClick={() => setTab('ai')}>
           {t({ tr: 'AI Kullanımı', en: 'AI Usage' })}
         </TabButton>
+        <TabButton active={tab === 'email'} onClick={() => setTab('email')}>
+          {t({ tr: 'E-posta Ayarları', en: 'Email Settings' })}
+        </TabButton>
       </div>
 
       {tab === 'users' && <UsersTab />}
@@ -66,6 +70,7 @@ export function AdminPage() {
       {tab === 'catalog' && <AdminCatalogTab />}
       {tab === 'audit' && <AuditLogTab />}
       {tab === 'ai' && <AiUsageTab />}
+      {tab === 'email' && <EmailSettingsTab />}
     </div>
   )
 
