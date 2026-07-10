@@ -105,6 +105,7 @@ export function useCreateCi() {
       vendor: string
       cost: number | null
       warranty_expiry: string | null
+      site_id?: string | null
     }) => {
       if (!profile) throw new Error('Profil yüklenmedi')
       const { data, error } = await supabase
@@ -116,6 +117,7 @@ export function useCreateCi() {
           status: 'active',
           serial_number: input.serial_number || null,
           assigned_user_id: null,
+          site_id: input.site_id ?? null,
           vendor: input.vendor || null,
           cost: input.cost,
           purchase_date: null,

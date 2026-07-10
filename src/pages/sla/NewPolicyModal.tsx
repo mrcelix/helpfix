@@ -3,6 +3,7 @@ import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { useLang } from '@/contexts/LangContext'
 import { useCreatePolicy } from './useSla'
+import { useSites } from '@/pages/admin/useSites'
 import { priorityLabel } from '@/lib/priority'
 import type { Priority } from '@/types/database'
 
@@ -17,10 +18,12 @@ const DEFAULTS: Record<Priority, { response: number; resolution: number }> = {
 export function NewPolicyModal({ onClose }: { onClose: () => void }) {
   const { lang, t } = useLang()
   const createPolicy = useCreatePolicy()
+  const { data: sites } = useSites()
 
   const [name, setName] = useState('')
   const [priority, setPriority] = useState<Priority>('P2')
   const [category, setCategory] = useState('')
+  const [siteId, setSiteId] = useState('')
   const [responseTime, setResponseTime] = useState(DEFAULTS.P2.response)
   const [resolutionTime, setResolutionTime] = useState(DEFAULTS.P2.resolution)
   const [businessHoursOnly, setBusinessHoursOnly] = useState(false)
@@ -38,6 +41,7 @@ export function NewPolicyModal({ onClose }: { onClose: () => void }) {
       name: name.trim(),
       priority,
       category: category.trim() || null,
+      site_id: siteId || null,
       response_time_minutes: responseTime,
       resolution_time_minutes: resolutionTime,
       businessHoursOnly,
@@ -135,6 +139,29 @@ export function NewPolicyModal({ onClose }: { onClose: () => void }) {
             {t({
               tr: 'Kategori girilirse, bu politika sadece o öncelik + kategori kombinasyonunda kullanılır ve genel politikadan daha spesifik sayılır (örn. P1 + "Ağ" için 30dk, P1 genel için 4s).',
               en: 'If set, this policy applies only to that priority + category combination and takes precedence over the general policy for that priority.',
+            })}
+          </p>
+        </div>
+        <div>
+          <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">
+            {t({ tr: 'Site (opsiyonel)', en: 'Site (optional)' })}
+          </label>
+          <select
+            value={siteId}
+            onChange={(e) => setSiteId(e.target.value)}
+            className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-2.5 py-2.5 text-[13px]"
+          >
+            <option value="">{t({ tr: 'Tüm siteler', en: 'All sites' })}</option>
+            {sites?.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
+          <p className="text-[10.5px] text-[var(--text-faint)] mt-1.5">
+            {t({
+              tr: 'Site seçilirse, bu politika sadece o siteden gelen talepler için kullanılır ve genel politikadan daha spesifik sayılır.',
+              en: 'If set, this policy applies only to tickets from that site and takes precedence over the general policy.',
             })}
           </p>
         </div>

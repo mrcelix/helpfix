@@ -2,7 +2,8 @@ import { useState } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { useLang } from '@/contexts/LangContext'
-import { useUpdateUser, useDepartments, type TenantUser } from './useAdmin'
+import { useUpdateUser, useUpdateUserSite, useDepartments, type TenantUser } from './useAdmin'
+import { useSites } from './useSites'
 import type { UserRole } from '@/types/database'
 
 const ROLE_LABEL: Record<UserRole, { tr: string; en: string }> = {
@@ -15,25 +16,31 @@ const ROLE_LABEL: Record<UserRole, { tr: string; en: string }> = {
 export function EditUserModal({ user, onClose }: { user: TenantUser; onClose: () => void }) {
   const { lang, t } = useLang()
   const updateUser = useUpdateUser()
+  const updateUserSite = useUpdateUserSite()
   const { data: departments } = useDepartments()
+  const { data: sites } = useSites()
 
   const [fullName, setFullName] = useState(user.full_name)
   const [email, setEmail] = useState(user.email)
   const [role, setRole] = useState<UserRole>(user.role)
   const [departmentId, setDepartmentId] = useState(user.department_id ?? '')
+  const [siteId, setSiteId] = useState(user.site_id ?? '')
   const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit() {
     if (!fullName.trim() || !email.trim()) return
     setError(null)
     try {
-      await updateUser.mutateAsync({
-        userId: user.id,
-        fullName: fullName.trim(),
-        email: email.trim(),
-        role,
-        departmentId: departmentId || null,
-      })
+      await Promise.all([
+        updateUser.mutateAsync({
+          userId: user.id,
+          fullName: fullName.trim(),
+          email: email.trim(),
+          role,
+          departmentId: departmentId || null,
+        }),
+        siteId !== (user.site_id ?? '') ? updateUserSite.mutateAsync({ userId: user.id, siteId: siteId || null }) : Promise.resolve(),
+      ])
       onClose()
     } catch (e) {
       setError(e instanceof Error ? e.message : t({ tr: 'Bilinmeyen hata', en: 'Unknown error' }))
@@ -119,6 +126,23 @@ export function EditUserModal({ user, onClose }: { user: TenantUser; onClose: ()
               ))}
             </select>
           </div>
+        </div>
+        <div>
+          <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">
+            {t({ tr: 'Site', en: 'Site' })}
+          </label>
+          <select
+            value={siteId}
+            onChange={(e) => setSiteId(e.target.value)}
+            className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-2.5 py-2.5 text-[13px]"
+          >
+            <option value="">{t({ tr: 'Yok', en: 'None' })}</option>
+            {sites?.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </select>
         </div>
         {error && <p className="text-p1 text-[12px]">{error}</p>}
       </div>

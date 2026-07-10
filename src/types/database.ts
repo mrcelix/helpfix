@@ -94,13 +94,15 @@ export interface Database {
           email: string
           role: UserRole
           department_id: string | null
+          site_id: string | null
           avatar_initials: string | null
           is_active: boolean
           created_at: string
         }
-        Insert: Omit<Database['public']['Tables']['user_profiles']['Row'], 'id' | 'created_at'> & {
+        Insert: Omit<Database['public']['Tables']['user_profiles']['Row'], 'id' | 'created_at' | 'site_id'> & {
           id?: string
           created_at?: string
+          site_id?: string | null
         }
         Update: Partial<Database['public']['Tables']['user_profiles']['Insert']>
         Relationships: []
@@ -138,6 +140,7 @@ export interface Database {
           csat_score: number | null
           email_message_id: string | null
           custom_fields: Record<string, string>
+          site_id: string | null
           created_at: string
           updated_at: string
           resolved_at: string | null
@@ -145,13 +148,14 @@ export interface Database {
         }
         Insert: Omit<
           Database['public']['Tables']['incidents']['Row'],
-          'id' | 'ref' | 'created_at' | 'updated_at' | 'custom_fields'
+          'id' | 'ref' | 'created_at' | 'updated_at' | 'custom_fields' | 'site_id'
         > & {
           id?: string
           ref?: string
           created_at?: string
           updated_at?: string
           custom_fields?: Record<string, string>
+          site_id?: string | null
         }
         Update: Partial<Database['public']['Tables']['incidents']['Insert']>
         Relationships: []
@@ -601,6 +605,7 @@ export interface Database {
           status: CiStatus
           serial_number: string | null
           assigned_user_id: string | null
+          site_id: string | null
           vendor: string | null
           cost: number | null
           purchase_date: string | null
@@ -611,12 +616,13 @@ export interface Database {
         }
         Insert: Omit<
           Database['public']['Tables']['configuration_items']['Row'],
-          'id' | 'tag' | 'created_at' | 'updated_at'
+          'id' | 'tag' | 'created_at' | 'updated_at' | 'site_id'
         > & {
           id?: string
           tag?: string
           created_at?: string
           updated_at?: string
+          site_id?: string | null
         }
         Update: Partial<Database['public']['Tables']['configuration_items']['Insert']>
         Relationships: []
@@ -677,6 +683,7 @@ export interface Database {
           name: string
           priority: Priority
           category: string | null
+          site_id: string | null
           response_time_minutes: number
           resolution_time_minutes: number
           escalation_warning_percent: number
@@ -685,9 +692,10 @@ export interface Database {
           is_active: boolean
           created_at: string
         }
-        Insert: Omit<Database['public']['Tables']['sla_policies']['Row'], 'id' | 'created_at'> & {
+        Insert: Omit<Database['public']['Tables']['sla_policies']['Row'], 'id' | 'created_at' | 'site_id'> & {
           id?: string
           created_at?: string
+          site_id?: string | null
         }
         Update: Partial<Database['public']['Tables']['sla_policies']['Insert']>
         Relationships: []
@@ -699,11 +707,30 @@ export interface Database {
           day_of_week: number
           start_time: string
           end_time: string
+          site_id: string | null
         }
-        Insert: Omit<Database['public']['Tables']['business_hours']['Row'], 'id'> & {
+        Insert: Omit<Database['public']['Tables']['business_hours']['Row'], 'id' | 'site_id'> & {
           id?: string
+          site_id?: string | null
         }
         Update: Partial<Database['public']['Tables']['business_hours']['Insert']>
+        Relationships: []
+      }
+      sites: {
+        Row: {
+          id: string
+          tenant_id: string
+          name: string
+          address: string | null
+          city: string | null
+          is_headquarters: boolean
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['sites']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['sites']['Insert']>
         Relationships: []
       }
       tenant_holidays: {

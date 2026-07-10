@@ -177,6 +177,9 @@ export function SlaPage() {
                     {p.category && (
                       <span className="ml-1.5 text-[9px] font-bold bg-brand-tint text-brand-dim rounded-full px-1.5 py-0.5">{p.category}</span>
                     )}
+                    {p.site && (
+                      <span className="ml-1.5 text-[9px] font-bold bg-p2-tint text-p2 rounded-full px-1.5 py-0.5">📍 {p.site.name}</span>
+                    )}
                   </td>
                   <td className="px-3.5 py-3"><PriorityBadge priority={p.priority} lang={lang} /></td>
                   <td className="px-3.5 py-3 text-[var(--text-sub)]">{p.response_time_minutes} {t({ tr: 'dk', en: 'min' })}</td>

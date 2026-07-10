@@ -11,6 +11,7 @@ export interface TenantUser {
   role: UserRole
   is_active: boolean
   department_id: string | null
+  site_id: string | null
   department: { name: string } | null
 }
 
@@ -28,11 +29,25 @@ export function useTenantUsers() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('id, full_name, email, role, is_active, department_id, department:department_id ( name )')
+        .select('id, full_name, email, role, is_active, department_id, site_id, department:department_id ( name )')
         .order('full_name')
       if (error) throw error
       return data as unknown as TenantUser[]
     },
+  })
+}
+
+/** Site ataması hassas bir alan değil (edge function/service_role
+ * gerektirmez) — mevcut user_profiles_admin_write RLS politikası
+ * tenant_admin'in doğrudan güncellemesine zaten izin veriyor. */
+export function useUpdateUserSite() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: { userId: string; siteId: string | null }) => {
+      const { error } = await supabase.from('user_profiles').update({ site_id: input.siteId }).eq('id', input.userId)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['admin-users'] }),
   })
 }
 

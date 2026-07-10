@@ -3,6 +3,7 @@ import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { useLang } from '@/contexts/LangContext'
 import { useCreateCi } from './useCmdb'
+import { useSites } from '@/pages/admin/useSites'
 import type { CiType } from '@/types/database'
 
 const TYPES: { key: CiType; label: { tr: string; en: string } }[] = [
@@ -18,6 +19,7 @@ const TYPES: { key: CiType; label: { tr: string; en: string } }[] = [
 export function NewCiModal({ onClose }: { onClose: () => void }) {
   const { t } = useLang()
   const createCi = useCreateCi()
+  const { data: sites } = useSites()
 
   const [name, setName] = useState('')
   const [ciType, setCiType] = useState<CiType>('laptop')
@@ -25,6 +27,7 @@ export function NewCiModal({ onClose }: { onClose: () => void }) {
   const [vendor, setVendor] = useState('')
   const [cost, setCost] = useState('')
   const [warrantyExpiry, setWarrantyExpiry] = useState('')
+  const [siteId, setSiteId] = useState('')
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -36,6 +39,7 @@ export function NewCiModal({ onClose }: { onClose: () => void }) {
       vendor: vendor.trim(),
       cost: cost ? Number(cost) : null,
       warranty_expiry: warrantyExpiry || null,
+      site_id: siteId || null,
     })
     onClose()
   }
@@ -133,6 +137,23 @@ export function NewCiModal({ onClose }: { onClose: () => void }) {
               onChange={(e) => setWarrantyExpiry(e.target.value)}
               className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2 text-[13px] outline-none focus:border-brand"
             />
+          </div>
+          <div>
+            <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">
+              {t({ tr: 'Site', en: 'Site' })}
+            </label>
+            <select
+              value={siteId}
+              onChange={(e) => setSiteId(e.target.value)}
+              className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2 text-[13px] outline-none focus:border-brand"
+            >
+              <option value="">{t({ tr: 'Yok', en: 'None' })}</option>
+              {sites?.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
       </form>

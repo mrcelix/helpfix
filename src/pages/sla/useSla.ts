@@ -8,6 +8,7 @@ export interface SlaPolicy {
   name: string
   priority: Priority
   category: string | null
+  site: { name: string } | null
   response_time_minutes: number
   resolution_time_minutes: number
   escalation_warning_percent: number
@@ -35,7 +36,7 @@ export function usePolicies() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('sla_policies')
-        .select('id, name, priority, category, response_time_minutes, resolution_time_minutes, escalation_warning_percent, business_hours_only, tier, is_active')
+        .select('id, name, priority, category, site:site_id ( name ), response_time_minutes, resolution_time_minutes, escalation_warning_percent, business_hours_only, tier, is_active')
         .order('priority')
       if (error) throw error
       return data as SlaPolicy[]
@@ -51,6 +52,7 @@ export function useCreatePolicy() {
       name: string
       priority: Priority
       category: string | null
+      site_id?: string | null
       response_time_minutes: number
       resolution_time_minutes: number
       businessHoursOnly: boolean
@@ -62,6 +64,7 @@ export function useCreatePolicy() {
         name: input.name,
         priority: input.priority,
         category: input.category,
+        site_id: input.site_id ?? null,
         response_time_minutes: input.response_time_minutes,
         resolution_time_minutes: input.resolution_time_minutes,
         escalation_warning_percent: 80,
@@ -222,35 +225,45 @@ export interface BusinessHourRow {
   end_time: string
 }
 
-export function useBusinessHours() {
+export function useBusinessHours(siteId: string | null) {
   const { profile } = useAuth()
   return useQuery({
-    queryKey: ['business-hours', profile?.tenantId],
+    queryKey: ['business-hours', profile?.tenantId, siteId],
     enabled: !!profile,
     queryFn: async () => {
-      const { data, error } = await supabase.from('business_hours').select('id, day_of_week, start_time, end_time').order('day_of_week')
+      let q = supabase.from('business_hours').select('id, day_of_week, start_time, end_time').order('day_of_week')
+      q = siteId ? q.eq('site_id', siteId) : q.is('site_id', null)
+      const { data, error } = await q
       if (error) throw error
       return data as BusinessHourRow[]
     },
   })
 }
 
-/** Bir gün için mesai penceresini oluşturur/günceller; end_time'ı
- * start_time'a eşit ya da öncesine ayarlamak o günü "kapalı" yapar
- * (satırı siler). */
+/** Bir gün için mesai penceresini oluşturur/günceller. NOT: business_hours
+ * artık site_id'yi de içeren bir expression (coalesce) tabanlı benzersiz
+ * index kullanıyor — PostgREST'in .upsert(onConflict:) sütun listesi
+ * eşleştirmesi expression index'lerle çalışmadığı için burada güvenli bir
+ * "önce sil, sonra ekle" deseni kullanılıyor. */
 export function useSetBusinessDay() {
   const qc = useQueryClient()
   const { profile } = useAuth()
   return useMutation({
-    mutationFn: async (input: { dayOfWeek: number; startTime: string; endTime: string }) => {
+    mutationFn: async (input: { dayOfWeek: number; startTime: string; endTime: string; siteId: string | null }) => {
       if (!profile) throw new Error('Profil yüklenmedi')
-      const { error } = await supabase
-        .from('business_hours')
-        .upsert(
-          { tenant_id: profile.tenantId, day_of_week: input.dayOfWeek, start_time: input.startTime, end_time: input.endTime },
-          { onConflict: 'tenant_id,day_of_week' }
-        )
-      if (error) throw error
+      let del = supabase.from('business_hours').delete().eq('tenant_id', profile.tenantId).eq('day_of_week', input.dayOfWeek)
+      del = input.siteId ? del.eq('site_id', input.siteId) : del.is('site_id', null)
+      const { error: deleteError } = await del
+      if (deleteError) throw deleteError
+
+      const { error: insertError } = await supabase.from('business_hours').insert({
+        tenant_id: profile.tenantId,
+        day_of_week: input.dayOfWeek,
+        start_time: input.startTime,
+        end_time: input.endTime,
+        site_id: input.siteId,
+      })
+      if (insertError) throw insertError
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['business-hours'] }),
   })
@@ -262,9 +275,11 @@ export function useCloseBusinessDay() {
   const qc = useQueryClient()
   const { profile } = useAuth()
   return useMutation({
-    mutationFn: async (dayOfWeek: number) => {
+    mutationFn: async (input: { dayOfWeek: number; siteId: string | null }) => {
       if (!profile) throw new Error('Profil yüklenmedi')
-      const { error } = await supabase.from('business_hours').delete().eq('tenant_id', profile.tenantId).eq('day_of_week', dayOfWeek)
+      let q = supabase.from('business_hours').delete().eq('tenant_id', profile.tenantId).eq('day_of_week', input.dayOfWeek)
+      q = input.siteId ? q.eq('site_id', input.siteId) : q.is('site_id', null)
+      const { error } = await q
       if (error) throw error
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['business-hours'] }),
