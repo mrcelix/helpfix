@@ -141,6 +141,7 @@ export interface Database {
           email_message_id: string | null
           custom_fields: Record<string, string>
           site_id: string | null
+          business_service_id: string | null
           created_at: string
           updated_at: string
           resolved_at: string | null
@@ -148,7 +149,7 @@ export interface Database {
         }
         Insert: Omit<
           Database['public']['Tables']['incidents']['Row'],
-          'id' | 'ref' | 'created_at' | 'updated_at' | 'custom_fields' | 'site_id'
+          'id' | 'ref' | 'created_at' | 'updated_at' | 'custom_fields' | 'site_id' | 'business_service_id'
         > & {
           id?: string
           ref?: string
@@ -156,6 +157,7 @@ export interface Database {
           updated_at?: string
           custom_fields?: Record<string, string>
           site_id?: string | null
+          business_service_id?: string | null
         }
         Update: Partial<Database['public']['Tables']['incidents']['Insert']>
         Relationships: []
@@ -266,18 +268,20 @@ export interface Database {
           known_error_workaround: string | null
           owner_id: string | null
           ci_id: string | null
+          business_service_id: string | null
           created_at: string
           updated_at: string
           resolved_at: string | null
         }
         Insert: Omit<
           Database['public']['Tables']['problems']['Row'],
-          'id' | 'ref' | 'created_at' | 'updated_at'
+          'id' | 'ref' | 'created_at' | 'updated_at' | 'business_service_id'
         > & {
           id?: string
           ref?: string
           created_at?: string
           updated_at?: string
+          business_service_id?: string | null
         }
         Update: Partial<Database['public']['Tables']['problems']['Insert']>
         Relationships: []
@@ -329,17 +333,19 @@ export interface Database {
           actual_end: string | null
           rollback_plan: string | null
           ci_id: string | null
+          business_service_id: string | null
           pir_outcome: PirOutcome | null
           pir_notes: string | null
           created_at: string
           updated_at: string
           closed_at: string | null
         }
-        Insert: Omit<Database['public']['Tables']['changes']['Row'], 'id' | 'ref' | 'created_at' | 'updated_at'> & {
+        Insert: Omit<Database['public']['Tables']['changes']['Row'], 'id' | 'ref' | 'created_at' | 'updated_at' | 'business_service_id'> & {
           id?: string
           ref?: string
           created_at?: string
           updated_at?: string
+          business_service_id?: string | null
         }
         Update: Partial<Database['public']['Tables']['changes']['Insert']>
         Relationships: []
@@ -768,6 +774,30 @@ export interface Database {
         }
         Insert: Partial<Database['public']['Tables']['ai_quota']['Row']> & { tenant_id: string }
         Update: Partial<Database['public']['Tables']['ai_quota']['Insert']>
+        Relationships: []
+      }
+      business_services: {
+        Row: {
+          id: string
+          tenant_id: string
+          name: string
+          description: string | null
+          criticality: 'critical' | 'high' | 'medium' | 'low'
+          owner_id: string | null
+          is_active: boolean
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['business_services']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['business_services']['Insert']>
+        Relationships: []
+      }
+      business_service_cis: {
+        Row: { business_service_id: string; ci_id: string }
+        Insert: { business_service_id: string; ci_id: string }
+        Update: Partial<{ business_service_id: string; ci_id: string }>
         Relationships: []
       }
       device_status_events: {
@@ -1398,6 +1428,21 @@ export interface Database {
       capture_store_score_snapshots: {
         Args: { p_tenant_id: string }
         Returns: number
+      }
+      get_business_service_health: {
+        Args: { p_tenant_id: string }
+        Returns: {
+          service_id: string
+          service_name: string
+          criticality: 'critical' | 'high' | 'medium' | 'low'
+          owner_name: string | null
+          open_incidents: number
+          critical_open_incidents: number
+          has_active_major_incident: boolean
+          linked_ci_count: number
+          online_ci_pct: number
+          health_status: string
+        }[]
       }
       get_store_health_scores: {
         Args: { p_tenant_id: string; p_week_start?: string }

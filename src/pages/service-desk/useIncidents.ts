@@ -247,6 +247,7 @@ export function useCreateIncident() {
       priority: Priority
       category: string | null
       customFields?: Record<string, string>
+      businessServiceId?: string | null
     }) => {
       if (!profile) throw new Error('Profil yüklenmedi')
       const { data, error } = await supabase
@@ -272,6 +273,7 @@ export function useCreateIncident() {
           major_incident_declared_at: null,
           email_message_id: null,
           custom_fields: input.customFields ?? {},
+          business_service_id: input.businessServiceId ?? null,
         })
         .select('id, ref')
         .single()

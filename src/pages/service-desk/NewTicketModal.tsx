@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button'
 import { VoiceInputButton } from '@/components/ui/VoiceInputButton'
 import { useLang } from '@/contexts/LangContext'
 import { useCreateIncident, useDistinctCategories, useTicketCategoryFields } from './useIncidents'
+import { useBusinessServicesList } from '@/pages/cmdb/useBusinessServices'
 import { DynamicFieldsRenderer } from '@/components/ui/DynamicFields'
 import { useSuggestTriage, type TriageSuggestion } from './useAiAssist'
 import { useSuggestedArticles } from '@/pages/knowledge-base/useKnowledgeBase'
@@ -58,6 +59,8 @@ export function NewTicketModal({ onClose }: { onClose: () => void }) {
   // Faz BE — seçilen kategoriye özel dinamik alanlar
   const { data: dynamicFields } = useTicketCategoryFields(selectedCategory?.key ?? null)
   const [customFieldValues, setCustomFieldValues] = useState<Record<string, string>>({})
+  const [businessServiceId, setBusinessServiceId] = useState('')
+  const { data: services } = useBusinessServicesList()
 
   const finalCategory =
     categoryOverride ?? (selectedCategory ? resolveCategoryLabel(selectedCategory, selectedSubcategory, lang) : '')
@@ -120,6 +123,7 @@ export function NewTicketModal({ onClose }: { onClose: () => void }) {
       priority,
       category: finalCategory.trim() || null,
       customFields: Object.keys(customFieldValues).length ? customFieldValues : undefined,
+      businessServiceId: businessServiceId || null,
     })
     onClose()
   }
@@ -392,6 +396,32 @@ export function NewTicketModal({ onClose }: { onClose: () => void }) {
               ))}
             </div>
           </div>
+
+          {!!services?.length && (
+            <div>
+              <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">
+                {t({ tr: 'Etkilenen Hizmet (opsiyonel)', en: 'Impacted Service (optional)' })}
+              </label>
+              <select
+                value={businessServiceId}
+                onChange={(e) => setBusinessServiceId(e.target.value)}
+                className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-[13px]"
+              >
+                <option value="">{t({ tr: 'Belirtilmedi', en: 'Not specified' })}</option>
+                {services.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+              <p className="text-[10.5px] text-[var(--text-faint)] mt-1.5">
+                {t({
+                  tr: 'Bu talebin hangi iş hizmetini (örn. E-posta, POS) etkilediğini belirtmek, ekibin etki analizini hızlandırır.',
+                  en: 'Specifying which business service (e.g. Email, POS) this ticket impacts speeds up the team\'s impact analysis.',
+                })}
+              </p>
+            </div>
+          )}
 
           {!!dynamicFields?.length && (
             <div className="space-y-3.5 pt-1 border-t border-[var(--border)] mt-1">

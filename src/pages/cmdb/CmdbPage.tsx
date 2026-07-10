@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useOpenParam } from '@/hooks/useOpenParam'
-import { Plus, List, Share2, Download, ShieldCheck } from 'lucide-react'
+import { Plus, List, Share2, Download, ShieldCheck, Layers } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import { Button } from '@/components/ui/Button'
 import { useConfigurationItems, useDuplicateCis, type CiSavedView } from './useCmdb'
@@ -9,6 +9,8 @@ import { NewCiModal } from './NewCiModal'
 import { ServiceMap } from './ServiceMap'
 import { SoftwareLicensesTab } from './SoftwareLicensesTab'
 import { NewSoftwareLicenseModal } from './NewSoftwareLicenseModal'
+import { BusinessServicesTab } from './BusinessServicesTab'
+import { NewBusinessServiceModal } from './NewBusinessServiceModal'
 
 const SAVED_VIEWS: { key: CiSavedView; label: { tr: string; en: string } }[] = [
   { key: 'all', label: { tr: 'Tümü', en: 'All' } },
@@ -43,7 +45,8 @@ function isWarrantySoon(dateStr: string | null) {
 export function CmdbPage() {
   const { lang, t } = useLang()
   const [view, setView] = useState<CiSavedView>('all')
-  const [moduleTab, setModuleTab] = useState<'assets' | 'licenses'>('assets')
+  const [moduleTab, setModuleTab] = useState<'assets' | 'licenses' | 'services'>('assets')
+  const [showNewServiceModal, setShowNewServiceModal] = useState(false)
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const openId = useOpenParam()
@@ -119,10 +122,15 @@ export function CmdbPage() {
               <Plus className="w-[15px] h-[15px]" />
               {t({ tr: 'Yeni Varlık', en: 'New Asset' })}
             </Button>
-          ) : (
+          ) : moduleTab === 'licenses' ? (
             <Button onClick={() => setShowNewLicenseModal(true)}>
               <Plus className="w-[15px] h-[15px]" />
               {t({ tr: 'Yeni Lisans', en: 'New License' })}
+            </Button>
+          ) : (
+            <Button onClick={() => setShowNewServiceModal(true)}>
+              <Plus className="w-[15px] h-[15px]" />
+              {t({ tr: 'Yeni Hizmet', en: 'New Service' })}
             </Button>
           )}
         </div>
@@ -136,6 +144,13 @@ export function CmdbPage() {
           {t({ tr: 'Varlıklar', en: 'Assets' })}
         </button>
         <button
+          onClick={() => setModuleTab('services')}
+          className={`shrink-0 whitespace-nowrap flex items-center gap-1.5 px-1 py-2.5 text-[13.5px] font-semibold mr-5 border-b-2 ${moduleTab === 'services' ? 'border-brand text-brand-dim' : 'border-transparent text-[var(--text-faint)]'}`}
+        >
+          <Layers className="w-3.5 h-3.5" />
+          {t({ tr: 'İş Hizmetleri', en: 'Business Services' })}
+        </button>
+        <button
           onClick={() => setModuleTab('licenses')}
           className={`shrink-0 whitespace-nowrap flex items-center gap-1.5 px-1 py-2.5 text-[13.5px] font-semibold mr-5 border-b-2 ${moduleTab === 'licenses' ? 'border-brand text-brand-dim' : 'border-transparent text-[var(--text-faint)]'}`}
         >
@@ -144,6 +159,7 @@ export function CmdbPage() {
         </button>
       </div>
 
+      {moduleTab === 'services' && <BusinessServicesTab />}
       {moduleTab === 'licenses' && <SoftwareLicensesTab />}
 
       {moduleTab === 'assets' && (
@@ -265,6 +281,7 @@ export function CmdbPage() {
       {selectedId && <CiDrawer id={selectedId} onClose={() => setSelectedId(null)} />}
       {showNewModal && <NewCiModal onClose={() => setShowNewModal(false)} />}
       {showNewLicenseModal && <NewSoftwareLicenseModal onClose={() => setShowNewLicenseModal(false)} />}
+      {showNewServiceModal && <NewBusinessServiceModal onClose={() => setShowNewServiceModal(false)} />}
     </div>
   )
 }

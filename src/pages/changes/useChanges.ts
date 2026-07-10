@@ -142,6 +142,7 @@ export function useCreateChange() {
       risk_score: number
       category: string | null
       rollbackPlan?: string | null
+      businessServiceId?: string | null
     }) => {
       if (!profile) throw new Error('Profil yüklenmedi')
       const { data, error } = await supabase
@@ -162,6 +163,7 @@ export function useCreateChange() {
           actual_end: null,
           rollback_plan: input.rollbackPlan ?? null,
           ci_id: null,
+          business_service_id: input.businessServiceId ?? null,
           pir_outcome: null,
           pir_notes: null,
           closed_at: null,

@@ -3,6 +3,7 @@ import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { useLang } from '@/contexts/LangContext'
 import { useCreateChange, useChangeTemplates } from './useChanges'
+import { useBusinessServicesList } from '@/pages/cmdb/useBusinessServices'
 import type { ChangeType } from '@/types/database'
 
 const TYPES: { key: ChangeType; label: { tr: string; en: string }; defaultRisk: number }[] = [
@@ -28,6 +29,8 @@ export function NewChangeModal({ onClose }: { onClose: () => void }) {
   const [riskScore, setRiskScore] = useState(35)
   const [category, setCategory] = useState('')
   const [rollbackPlan, setRollbackPlan] = useState('')
+  const [businessServiceId, setBusinessServiceId] = useState('')
+  const { data: services } = useBusinessServicesList()
 
   function applyTemplate(templateId: string) {
     const tpl = templates?.find((t) => t.id === templateId)
@@ -55,6 +58,7 @@ export function NewChangeModal({ onClose }: { onClose: () => void }) {
       risk_score: riskScore,
       category: category.trim() || null,
       rollbackPlan: rollbackPlan.trim() || null,
+      businessServiceId: businessServiceId || null,
     })
     onClose()
   }
@@ -168,6 +172,25 @@ export function NewChangeModal({ onClose }: { onClose: () => void }) {
             className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2 text-[13px] outline-none focus:border-brand"
           />
         </div>
+        {!!services?.length && (
+          <div>
+            <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">
+              {t({ tr: 'Etkilenen Hizmet (opsiyonel)', en: 'Impacted Service (optional)' })}
+            </label>
+            <select
+              value={businessServiceId}
+              onChange={(e) => setBusinessServiceId(e.target.value)}
+              className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-2.5 py-2 text-[13px]"
+            >
+              <option value="">{t({ tr: 'Belirtilmedi', en: 'Not specified' })}</option>
+              {services.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
         <div>
           <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">
             {t({ tr: 'Geri Alma Planı', en: 'Rollback Plan' })}
