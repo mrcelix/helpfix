@@ -65,6 +65,29 @@ export function CiDrawer({ id, onClose }: { id: string; onClose: () => void }) {
             </div>
           </div>
 
+          <div>
+            <label className="block text-[10.5px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">
+              {t({ tr: 'Mağaza Sağlığı Kategorisi', en: 'Store Health Category' })}
+            </label>
+            <select
+              value={ci.store_health_category ?? ''}
+              onChange={(e) => updateCi.mutate({ store_health_category: (e.target.value || null) as 'esl' | 'kiosk_pos' | 'network' | 'other' | null })}
+              className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-2.5 py-2 text-[12.5px]"
+            >
+              <option value="">{t({ tr: 'Yok (skorlamaya dahil değil)', en: 'None (not part of scoring)' })}</option>
+              <option value="esl">{t({ tr: 'ESL (Elektronik Raf Etiketi)', en: 'ESL (Electronic Shelf Label)' })}</option>
+              <option value="kiosk_pos">{t({ tr: 'Kiosk & Mobil Kasa', en: 'Kiosk & Mobile POS' })}</option>
+              <option value="network">{t({ tr: 'Network', en: 'Network' })}</option>
+              <option value="other">{t({ tr: 'Diğer', en: 'Other' })}</option>
+            </select>
+            <p className="text-[10.5px] text-[var(--text-faint)] mt-1">
+              {t({
+                tr: 'Bu cihaz bir mağazaya bağlıysa, kategoriye göre Mağaza Performansı > Sağlık Skoru\'na dahil edilir.',
+                en: "If this device is linked to a store, it's included in Store Performance > Health Score based on this category.",
+              })}
+            </p>
+          </div>
+
           <div className="grid grid-cols-2 gap-3 text-[12.5px]">
             <Field label={t({ tr: 'Seri No', en: 'Serial Number' })} value={ci.serial_number ?? '—'} mono />
             <Field label={t({ tr: 'Tedarikçi', en: 'Vendor' })} value={ci.vendor ?? '—'} />

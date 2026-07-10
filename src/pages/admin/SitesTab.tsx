@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { Plus, Trash2, Building2 } from 'lucide-react'
+import { Plus, Trash2, Building2, Plug, Copy, Check, RefreshCw } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import { Button } from '@/components/ui/Button'
-import { useSites, useCreateSite, useDeleteSite } from './useSites'
+import { useSites, useCreateSite, useDeleteSite, useRegenerateSiteToken } from './useSites'
 import { useAssignableUsers } from '@/pages/oncall/useOnCall'
 
 export function SitesTab() {
@@ -10,7 +10,9 @@ export function SitesTab() {
   const { data: sites, isLoading } = useSites()
   const createSite = useCreateSite()
   const deleteSite = useDeleteSite()
+  const regenerateToken = useRegenerateSiteToken()
   const { data: users } = useAssignableUsers()
+  const [expandedIntegration, setExpandedIntegration] = useState<string | null>(null)
 
   const [showForm, setShowForm] = useState(false)
   const [name, setName] = useState('')
@@ -132,28 +134,79 @@ export function SitesTab() {
 
       <div className="flex flex-col gap-2">
         {sites?.map((s) => (
-          <div key={s.id} className="flex items-center gap-3 bg-[var(--panel)] border border-[var(--border)] rounded-lg px-4 py-3">
-            <Building2 className="w-4 h-4 text-brand-dim shrink-0" />
-            <div className="flex-1 min-w-0">
-              <div className="text-[13px] font-semibold flex items-center gap-1.5">
-                {s.name}
-                {s.is_headquarters && <span className="text-[9px] font-bold bg-brand-tint text-brand-dim rounded-full px-1.5 py-0.5">HQ</span>}
+          <div key={s.id}>
+            <div className="flex items-center gap-3 bg-[var(--panel)] border border-[var(--border)] rounded-lg px-4 py-3">
+              <Building2 className="w-4 h-4 text-brand-dim shrink-0" />
+              <div className="flex-1 min-w-0">
+                <div className="text-[13px] font-semibold flex items-center gap-1.5">
+                  {s.name}
+                  {s.is_headquarters && <span className="text-[9px] font-bold bg-brand-tint text-brand-dim rounded-full px-1.5 py-0.5">HQ</span>}
+                </div>
+                {(s.city || s.address) && <div className="text-[11.5px] text-[var(--text-faint)]">{[s.city, s.address].filter(Boolean).join(' · ')}</div>}
+                <div className="text-[10.5px] text-[var(--text-faint)] mt-0.5 flex items-center gap-2">
+                  {s.parent_site_id && (
+                    <span>
+                      {t({ tr: 'Bölge:', en: 'Region:' })} {sites?.find((p) => p.id === s.parent_site_id)?.name ?? '—'}
+                    </span>
+                  )}
+                  {s.manager && <span>{t({ tr: 'Yönetici:', en: 'Manager:' })} {s.manager.full_name}</span>}
+                </div>
               </div>
-              {(s.city || s.address) && <div className="text-[11.5px] text-[var(--text-faint)]">{[s.city, s.address].filter(Boolean).join(' · ')}</div>}
-              <div className="text-[10.5px] text-[var(--text-faint)] mt-0.5 flex items-center gap-2">
-                {s.parent_site_id && (
-                  <span>
-                    {t({ tr: 'Bölge:', en: 'Region:' })} {sites?.find((p) => p.id === s.parent_site_id)?.name ?? '—'}
-                  </span>
-                )}
-                {s.manager && <span>{t({ tr: 'Yönetici:', en: 'Manager:' })} {s.manager.full_name}</span>}
-              </div>
+              <button
+                onClick={() => setExpandedIntegration(expandedIntegration === s.id ? null : s.id)}
+                title={t({ tr: 'Entegrasyon', en: 'Integration' })}
+                className="p-1.5 rounded-md text-[var(--text-faint)] hover:text-brand-dim hover:bg-[var(--panel-2)] shrink-0"
+              >
+                <Plug className="w-3.5 h-3.5" />
+              </button>
+              <button onClick={() => handleDelete(s.id)} className="text-[var(--text-faint)] hover:text-p1 shrink-0">
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
             </div>
-            <button onClick={() => handleDelete(s.id)} className="text-[var(--text-faint)] hover:text-p1 shrink-0">
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
+            {expandedIntegration === s.id && (
+              <SiteIntegrationPanel token={s.integration_token} onRegenerate={() => regenerateToken.mutate(s.id)} isRegenerating={regenerateToken.isPending} />
+            )}
           </div>
         ))}
+      </div>
+    </div>
+  )
+}
+
+function SiteIntegrationPanel({ token, onRegenerate, isRegenerating }: { token: string; onRegenerate: () => void; isRegenerating: boolean }) {
+  const { t } = useLang()
+  const [copied, setCopied] = useState<'token' | 'url' | null>(null)
+  const webhookUrl = `https://[PROJE-REF].supabase.co/functions/v1/store-health-integration?token=${token}`
+
+  function copy(text: string, which: 'token' | 'url') {
+    navigator.clipboard.writeText(text)
+    setCopied(which)
+    setTimeout(() => setCopied(null), 2000)
+  }
+
+  return (
+    <div className="bg-[var(--panel-2)] border border-[var(--border)] border-t-0 rounded-b-lg px-4 py-3 -mt-2 pt-4">
+      <p className="text-[11px] text-[var(--text-faint)] mb-2.5">
+        {t({
+          tr: 'Bu mağazanın ESL/Kiosk/Network izleme sistemi, aşağıdaki webhook URL\'sine cihaz durumu ve operasyonel olay (geç açılma vb.) gönderebilir. [PROJE-REF] kısmını kendi Supabase proje referansınızla değiştirin.',
+          en: "This store's ESL/Kiosk/Network monitoring system can push device status and operational events (e.g. late opening) to the webhook URL below. Replace [PROJE-REF] with your own Supabase project reference.",
+        })}
+      </p>
+      <div className="flex items-center gap-2 bg-[var(--panel)] border border-[var(--border)] rounded-lg px-3 py-2 mb-2">
+        <code className="flex-1 text-[11px] font-mono truncate">{webhookUrl}</code>
+        <button onClick={() => copy(webhookUrl, 'url')} className="text-brand-dim shrink-0">
+          {copied === 'url' ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+        </button>
+      </div>
+      <div className="flex items-center gap-2">
+        <button onClick={() => copy(token, 'token')} className="flex items-center gap-1 text-[10.5px] font-bold text-[var(--text-faint)] hover:text-brand-dim">
+          {copied === 'token' ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+          {t({ tr: 'Token\'ı Kopyala', en: 'Copy Token' })}
+        </button>
+        <button onClick={onRegenerate} disabled={isRegenerating} className="flex items-center gap-1 text-[10.5px] font-bold text-p2 hover:text-p1 disabled:opacity-40">
+          <RefreshCw className="w-3 h-3" />
+          {t({ tr: 'Token\'ı Yenile (eskisini geçersiz kılar)', en: 'Regenerate Token (invalidates old one)' })}
+        </button>
       </div>
     </div>
   )

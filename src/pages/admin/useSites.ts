@@ -10,6 +10,7 @@ export interface Site {
   is_headquarters: boolean
   parent_site_id: string | null
   manager_id: string | null
+  integration_token: string
   manager: { full_name: string } | null
 }
 
@@ -21,7 +22,7 @@ export function useSites() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('sites')
-        .select('id, name, address, city, is_headquarters, parent_site_id, manager_id, manager:manager_id ( full_name )')
+        .select('id, name, address, city, is_headquarters, parent_site_id, manager_id, integration_token, manager:manager_id ( full_name )')
         .order('name')
       if (error) throw error
       return data as unknown as Site[]
@@ -55,6 +56,19 @@ export function useDeleteSite() {
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from('sites').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['sites'] }),
+  })
+}
+
+/** Bir sitenin entegrasyon token'ını yeniler — token sızmışsa/değişmesi
+ * gerekiyorsa eski token'ı geçersiz kılar. */
+export function useRegenerateSiteToken() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (siteId: string) => {
+      const { error } = await supabase.from('sites').update({ integration_token: crypto.randomUUID() }).eq('id', siteId)
       if (error) throw error
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['sites'] }),

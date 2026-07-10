@@ -147,3 +147,79 @@ export function useToggleDeviceOnline() {
     },
   })
 }
+
+// ------------------------------------------------------------------
+// Faz BN — MAĞAZA IT SAĞLIĞI SKORU (A/B/C, 4 sütun: ESL/Kiosk/Network/Yardım Masası)
+// ------------------------------------------------------------------
+export interface StoreHealthScore {
+  site_id: string
+  site_name: string
+  week_start: string
+  esl_score: number
+  kiosk_score: number
+  network_score: number
+  helpdesk_score: number
+  composite_score: number
+  letter_grade: 'A' | 'B' | 'C'
+  esl_offline_pct: number
+  kiosk_uptime_pct: number
+  network_downtime_minutes: number
+  helpdesk_call_count: number
+  helpdesk_sla_breach_count: number
+}
+
+export function currentWeekStart(): string {
+  const d = new Date()
+  const monday = new Date(d)
+  monday.setDate(d.getDate() - ((d.getDay() + 6) % 7))
+  return monday.toISOString().slice(0, 10)
+}
+
+export function useStoreHealthScores(weekStart: string) {
+  const { profile } = useAuth()
+  return useQuery({
+    queryKey: ['store-health-scores', profile?.tenantId, weekStart],
+    enabled: !!profile,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_store_health_scores', { p_tenant_id: profile!.tenantId, p_week_start: weekStart })
+      if (error) throw error
+      return data as StoreHealthScore[]
+    },
+  })
+}
+
+export function useGenerateWeeklyScores() {
+  const qc = useQueryClient()
+  const { profile } = useAuth()
+  return useMutation({
+    mutationFn: async (weekStart?: string) => {
+      if (!profile) throw new Error('Profil yüklenmedi')
+      const { data, error } = await supabase.rpc('generate_weekly_store_health_scores', { p_tenant_id: profile.tenantId, p_week_start: weekStart })
+      if (error) throw error
+      return data as number
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['store-health-scores'] }),
+  })
+}
+
+export type OperationalEventType = 'late_opening' | 'recurring_fault' | 'other'
+
+export function useCreateOperationalEvent() {
+  const qc = useQueryClient()
+  const { profile } = useAuth()
+  return useMutation({
+    mutationFn: async (input: { siteId: string; eventType: OperationalEventType; note: string }) => {
+      if (!profile) throw new Error('Profil yüklenmedi')
+      const { error } = await supabase.from('store_operational_events').insert({
+        tenant_id: profile.tenantId,
+        site_id: input.siteId,
+        event_type: input.eventType,
+        note: input.note || null,
+        source: 'manual',
+        created_by: profile.id,
+      })
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['store-health-scores'] }),
+  })
+}

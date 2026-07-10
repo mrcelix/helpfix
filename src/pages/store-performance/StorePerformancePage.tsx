@@ -5,10 +5,11 @@ import { useLang } from '@/contexts/LangContext'
 import { Button } from '@/components/ui/Button'
 import { useStoreScorecard, useCaptureSnapshot, useStoreScoreHistory, scoreLevel, type StoreScorecard } from './useStorePerformance'
 import { StoreDetailDrawer } from './StoreDetailDrawer'
+import { HealthScoreTab } from './HealthScoreTab'
 
 export function StorePerformancePage() {
   const { t } = useLang()
-  const [pageTab, setPageTab] = useState<'dashboard' | 'history'>('dashboard')
+  const [pageTab, setPageTab] = useState<'dashboard' | 'health-score' | 'history'>('dashboard')
   const [selectedStore, setSelectedStore] = useState<StoreScorecard | null>(null)
   const [sortBy, setSortBy] = useState<'score' | 'name'>('score')
 
@@ -68,12 +69,20 @@ export function StorePerformancePage() {
           {t({ tr: 'Dashboard', en: 'Dashboard' })}
         </button>
         <button
+          onClick={() => setPageTab('health-score')}
+          className={`shrink-0 whitespace-nowrap px-1 py-2.5 text-[13.5px] font-semibold mr-5 border-b-2 ${pageTab === 'health-score' ? 'border-brand text-brand-dim' : 'border-transparent text-[var(--text-faint)]'}`}
+        >
+          {t({ tr: 'Sağlık Skoru (A/B/C)', en: 'Health Score (A/B/C)' })}
+        </button>
+        <button
           onClick={() => setPageTab('history')}
           className={`shrink-0 whitespace-nowrap px-1 py-2.5 text-[13.5px] font-semibold mr-5 border-b-2 ${pageTab === 'history' ? 'border-brand text-brand-dim' : 'border-transparent text-[var(--text-faint)]'}`}
         >
           {t({ tr: 'Geçmiş', en: 'History' })}
         </button>
       </div>
+
+      {pageTab === 'health-score' && <HealthScoreTab />}
 
       {pageTab === 'dashboard' && (
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">

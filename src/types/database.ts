@@ -613,12 +613,13 @@ export interface Database {
           notes: string | null
           is_online: boolean
           last_seen_at: string
+          store_health_category: 'esl' | 'kiosk_pos' | 'network' | 'other' | null
           created_at: string
           updated_at: string
         }
         Insert: Omit<
           Database['public']['Tables']['configuration_items']['Row'],
-          'id' | 'tag' | 'created_at' | 'updated_at' | 'site_id' | 'is_online' | 'last_seen_at'
+          'id' | 'tag' | 'created_at' | 'updated_at' | 'site_id' | 'is_online' | 'last_seen_at' | 'store_health_category'
         > & {
           id?: string
           tag?: string
@@ -627,6 +628,7 @@ export interface Database {
           site_id?: string | null
           is_online?: boolean
           last_seen_at?: string
+          store_health_category?: 'esl' | 'kiosk_pos' | 'network' | 'other' | null
         }
         Update: Partial<Database['public']['Tables']['configuration_items']['Insert']>
         Relationships: []
@@ -730,13 +732,15 @@ export interface Database {
           is_headquarters: boolean
           parent_site_id: string | null
           manager_id: string | null
+          integration_token: string
           created_at: string
         }
-        Insert: Omit<Database['public']['Tables']['sites']['Row'], 'id' | 'created_at' | 'parent_site_id' | 'manager_id'> & {
+        Insert: Omit<Database['public']['Tables']['sites']['Row'], 'id' | 'created_at' | 'parent_site_id' | 'manager_id' | 'integration_token'> & {
           id?: string
           created_at?: string
           parent_site_id?: string | null
           manager_id?: string | null
+          integration_token?: string
         }
         Update: Partial<Database['public']['Tables']['sites']['Insert']>
         Relationships: []
@@ -764,6 +768,67 @@ export interface Database {
         }
         Insert: Partial<Database['public']['Tables']['ai_quota']['Row']> & { tenant_id: string }
         Update: Partial<Database['public']['Tables']['ai_quota']['Insert']>
+        Relationships: []
+      }
+      device_status_events: {
+        Row: {
+          id: string
+          tenant_id: string
+          ci_id: string
+          is_online: boolean
+          occurred_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['device_status_events']['Row'], 'id' | 'occurred_at'> & {
+          id?: string
+          occurred_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['device_status_events']['Insert']>
+        Relationships: []
+      }
+      store_operational_events: {
+        Row: {
+          id: string
+          tenant_id: string
+          site_id: string
+          event_type: 'late_opening' | 'recurring_fault' | 'other'
+          occurred_at: string
+          note: string | null
+          source: string
+          created_by: string | null
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['store_operational_events']['Row'], 'id' | 'created_at' | 'occurred_at'> & {
+          id?: string
+          created_at?: string
+          occurred_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['store_operational_events']['Insert']>
+        Relationships: []
+      }
+      store_health_scores: {
+        Row: {
+          id: string
+          tenant_id: string
+          site_id: string
+          week_start: string
+          esl_score: number
+          kiosk_score: number
+          network_score: number
+          helpdesk_score: number
+          composite_score: number
+          letter_grade: string
+          esl_offline_pct: number
+          kiosk_uptime_pct: number
+          network_downtime_minutes: number
+          helpdesk_call_count: number
+          helpdesk_sla_breach_count: number
+          computed_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['store_health_scores']['Row'], 'id' | 'computed_at'> & {
+          id?: string
+          computed_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['store_health_scores']['Insert']>
         Relationships: []
       }
       store_score_snapshots: {
@@ -1332,6 +1397,29 @@ export interface Database {
       }
       capture_store_score_snapshots: {
         Args: { p_tenant_id: string }
+        Returns: number
+      }
+      get_store_health_scores: {
+        Args: { p_tenant_id: string; p_week_start?: string }
+        Returns: {
+          site_id: string
+          site_name: string
+          week_start: string
+          esl_score: number
+          kiosk_score: number
+          network_score: number
+          helpdesk_score: number
+          composite_score: number
+          letter_grade: string
+          esl_offline_pct: number
+          kiosk_uptime_pct: number
+          network_downtime_minutes: number
+          helpdesk_call_count: number
+          helpdesk_sla_breach_count: number
+        }[]
+      }
+      generate_weekly_store_health_scores: {
+        Args: { p_tenant_id: string; p_week_start?: string }
         Returns: number
       }
       get_technician_csat_leaderboard: {
