@@ -440,6 +440,98 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['service_requests']['Insert']>
         Relationships: []
       }
+      vendors: {
+        Row: {
+          id: string
+          tenant_id: string
+          name: string
+          contact_name: string | null
+          contact_email: string | null
+          contact_phone: string | null
+          notes: string | null
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['vendors']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['vendors']['Insert']>
+        Relationships: []
+      }
+      contracts: {
+        Row: {
+          id: string
+          tenant_id: string
+          ref: string
+          vendor_id: string | null
+          name: string
+          contract_type: 'service' | 'license' | 'maintenance' | 'lease' | 'other'
+          start_date: string
+          end_date: string
+          cost: number | null
+          currency: string
+          auto_renew: boolean
+          renewal_reminder_days: number
+          notes: string | null
+          owner_id: string | null
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['contracts']['Row'], 'id' | 'ref' | 'created_at'> & {
+          id?: string
+          ref?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['contracts']['Insert']>
+        Relationships: []
+      }
+      contract_assets: {
+        Row: { contract_id: string; ci_id: string }
+        Insert: { contract_id: string; ci_id: string }
+        Update: Partial<{ contract_id: string; ci_id: string }>
+        Relationships: []
+      }
+      purchase_orders: {
+        Row: {
+          id: string
+          tenant_id: string
+          ref: string
+          vendor_id: string | null
+          title: string
+          status: 'draft' | 'pending_approval' | 'approved' | 'ordered' | 'received' | 'cancelled'
+          total_cost: number
+          currency: string
+          requested_by: string
+          approved_by: string | null
+          service_request_id: string | null
+          expected_delivery_date: string | null
+          ordered_at: string | null
+          received_at: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['purchase_orders']['Row'], 'id' | 'ref' | 'created_at' | 'updated_at'> & {
+          id?: string
+          ref?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['purchase_orders']['Insert']>
+        Relationships: []
+      }
+      purchase_order_items: {
+        Row: {
+          id: string
+          po_id: string
+          description: string
+          quantity: number
+          unit_cost: number
+          ci_id: string | null
+        }
+        Insert: Omit<Database['public']['Tables']['purchase_order_items']['Row'], 'id'> & { id?: string }
+        Update: Partial<Database['public']['Tables']['purchase_order_items']['Insert']>
+        Relationships: []
+      }
       request_approvals: {
         Row: {
           id: string

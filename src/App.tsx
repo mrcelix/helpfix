@@ -29,6 +29,7 @@ const AnalyticsPage = lazy(() => import('@/pages/analytics/AnalyticsPage').then(
 const MonitoringPage = lazy(() => import('@/pages/monitoring/MonitoringPage').then((m) => ({ default: m.MonitoringPage })))
 const OnCallPage = lazy(() => import('@/pages/oncall/OnCallPage').then((m) => ({ default: m.OnCallPage })))
 const AutomationPage = lazy(() => import('@/pages/automation/AutomationPage').then((m) => ({ default: m.AutomationPage })))
+const PurchasingPage = lazy(() => import('@/pages/purchasing/PurchasingPage').then((m) => ({ default: m.PurchasingPage })))
 const AdminPage = lazy(() => import('@/pages/admin/AdminPage').then((m) => ({ default: m.AdminPage })))
 const EmployeeHomePage = lazy(() => import('@/pages/employee-center/EmployeeHomePage').then((m) => ({ default: m.EmployeeHomePage })))
 const MyTicketsPage = lazy(() => import('@/pages/employee-center/MyTicketsPage').then((m) => ({ default: m.MyTicketsPage })))
@@ -47,6 +48,7 @@ const MODULE_PAGES: Record<string, ComponentType> = {
   monitoring: MonitoringPage,
   'on-call': OnCallPage,
   automation: AutomationPage,
+  purchasing: PurchasingPage,
 }
 
 function RouteLoadingFallback() {

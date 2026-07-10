@@ -11,6 +11,7 @@ import {
   Radar,
   PhoneCall,
   Sparkles,
+  ShoppingCart,
 } from 'lucide-react'
 import type { ComponentType } from 'react'
 
@@ -38,4 +39,5 @@ export const NAV_MODULES: NavModule[] = [
   { code: 'monitoring', path: '/monitoring', icon: Radar, name: { tr: 'Olay/İzleme', en: 'Monitoring' } },
   { code: 'on-call', path: '/on-call', icon: PhoneCall, name: { tr: 'On-Call', en: 'On-Call' } },
   { code: 'automation', path: '/automation', icon: Sparkles, name: { tr: 'AI Otomasyon', en: 'AI Automation' }, badge: 'beta' },
+  { code: 'purchasing', path: '/purchasing', icon: ShoppingCart, name: { tr: 'Sözleşme & Satın Alma', en: 'Contracts & Purchasing' } },
 ]
