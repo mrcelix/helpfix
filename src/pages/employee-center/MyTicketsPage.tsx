@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Plus } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import { Button } from '@/components/ui/Button'
@@ -6,6 +6,7 @@ import { StatusBadge, PriorityBadge } from '@/components/ui/Badge'
 import { useMyRequests } from '@/pages/service-desk/useIncidents'
 import { TicketDrawer } from '@/pages/service-desk/TicketDrawer'
 import { NewTicketModal } from '@/pages/service-desk/NewTicketModal'
+import { useOpenParam } from '@/hooks/useOpenParam'
 
 function slaState(slaDueAt: string | null): 'ok' | 'warning' | 'breached' {
   if (!slaDueAt) return 'ok'
@@ -30,6 +31,10 @@ export function MyTicketsPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [showNewModal, setShowNewModal] = useState(false)
   const { data: requests, isLoading } = useMyRequests()
+  const openId = useOpenParam()
+  useEffect(() => {
+    if (openId) setSelectedId(openId)
+  }, [openId])
 
   return (
     <div>

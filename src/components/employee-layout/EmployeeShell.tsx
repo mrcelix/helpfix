@@ -4,6 +4,7 @@ import { useLang } from '@/contexts/LangContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { Topbar } from '@/components/layout/Topbar'
 import { CommandPalette } from '@/components/command-palette/CommandPalette'
+import { ChatWidget } from '@/pages/employee-center/ChatWidget'
 import { cn } from '@/lib/utils'
 
 const EMPLOYEE_NAV = [
@@ -106,6 +107,7 @@ export function EmployeeShell() {
       </nav>
 
       <CommandPalette />
+      <ChatWidget />
     </div>
   )
 }

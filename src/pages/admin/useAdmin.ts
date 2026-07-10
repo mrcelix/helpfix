@@ -331,6 +331,7 @@ const ACTION_LABEL: Record<string, { tr: string; en: string }> = {
   'suggest-triage': { tr: 'Triyaj Önerisi', en: 'Triage Suggestion' },
   summarize: { tr: 'Özetleme', en: 'Summarize' },
   'draft-reply': { tr: 'Yanıt Taslağı', en: 'Draft Reply' },
+  chat_message: { tr: 'AI Sohbet Asistanı', en: 'AI Chat Assistant' },
 }
 
 export function getActionLabel(action: string, lang: 'tr' | 'en'): string {

@@ -758,6 +758,40 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['ai_quota']['Insert']>
         Relationships: []
       }
+      chat_conversations: {
+        Row: {
+          id: string
+          tenant_id: string
+          user_id: string
+          title: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['chat_conversations']['Row'], 'id' | 'created_at' | 'updated_at'> & {
+          id?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['chat_conversations']['Insert']>
+        Relationships: []
+      }
+      chat_messages: {
+        Row: {
+          id: string
+          conversation_id: string
+          role: 'user' | 'assistant'
+          content: string
+          created_incident_id: string | null
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['chat_messages']['Row'], 'id' | 'created_at' | 'created_incident_id'> & {
+          id?: string
+          created_at?: string
+          created_incident_id?: string | null
+        }
+        Update: Partial<Database['public']['Tables']['chat_messages']['Insert']>
+        Relationships: []
+      }
       ai_usage_log: {
         Row: {
           id: string
