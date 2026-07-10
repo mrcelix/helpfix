@@ -153,6 +153,7 @@ export function useCreateProblem() {
       priority: Priority
       category: string | null
       incidentIds?: string[]
+      businessServiceId?: string | null
     }) => {
       if (!profile) throw new Error('Profil yüklenmedi')
       const { data, error } = await supabase
@@ -169,6 +170,7 @@ export function useCreateProblem() {
           known_error_workaround: null,
           owner_id: profile.id,
           ci_id: null,
+          business_service_id: input.businessServiceId ?? null,
           resolved_at: null,
         })
         .select('id, ref')

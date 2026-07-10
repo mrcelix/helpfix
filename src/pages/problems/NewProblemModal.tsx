@@ -3,6 +3,7 @@ import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { useLang } from '@/contexts/LangContext'
 import { useCreateProblem, type ClusterCandidate } from './useProblems'
+import { useBusinessServicesList } from '@/pages/cmdb/useBusinessServices'
 import { priorityLabel } from '@/lib/priority'
 import type { Priority } from '@/types/database'
 
@@ -17,11 +18,13 @@ export function NewProblemModal({
 }) {
   const { lang, t } = useLang()
   const createProblem = useCreateProblem()
+  const { data: services } = useBusinessServicesList()
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [priority, setPriority] = useState<Priority>('P3')
   const [category, setCategory] = useState('')
+  const [businessServiceId, setBusinessServiceId] = useState('')
 
   useEffect(() => {
     if (prefillCluster) {
@@ -52,6 +55,7 @@ export function NewProblemModal({
       priority,
       category: category.trim() || null,
       incidentIds: prefillCluster?.sample_incident_ids,
+      businessServiceId: businessServiceId || null,
     })
     onClose()
   }
@@ -139,6 +143,25 @@ export function NewProblemModal({
             />
           </div>
         </div>
+        {!!services?.length && (
+          <div>
+            <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">
+              {t({ tr: 'Etkilenen Hizmet (opsiyonel)', en: 'Impacted Service (optional)' })}
+            </label>
+            <select
+              value={businessServiceId}
+              onChange={(e) => setBusinessServiceId(e.target.value)}
+              className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-2.5 py-2 text-[13px]"
+            >
+              <option value="">{t({ tr: 'Belirtilmedi', en: 'Not specified' })}</option>
+              {services.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
       </form>
     </Modal>
   )
