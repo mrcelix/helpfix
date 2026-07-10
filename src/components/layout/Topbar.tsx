@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Search, Sun, Moon, Bell, Check, Menu } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useLang } from '@/contexts/LangContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useNotifications, useMarkAsRead, useMarkAllAsRead, type Notification } from './useNotifications'
@@ -18,7 +18,7 @@ function openCommandPalette() {
   window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true, ctrlKey: true }))
 }
 
-export function Topbar({ crumb, onMenuClick }: { crumb: string; onMenuClick?: () => void }) {
+export function Topbar({ crumb, onMenuClick, homePath = '/service-desk' }: { crumb: string; onMenuClick?: () => void; homePath?: string }) {
   const { lang, setLang, t } = useLang()
   const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
@@ -48,7 +48,10 @@ export function Topbar({ crumb, onMenuClick }: { crumb: string; onMenuClick?: ()
       )}
 
       <div className="hidden sm:block text-xs text-[var(--text-faint)] shrink-0">
-        <span>HelpFix</span> / <b className="text-[var(--text)] font-semibold">{crumb}</b>
+        <Link to={homePath} className="hover:text-[var(--text-sub)] transition-colors">
+          HelpFix
+        </Link>{' '}
+        / <b className="text-[var(--text)] font-semibold">{crumb}</b>
       </div>
 
       <button

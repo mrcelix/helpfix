@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { NavLink, Outlet, useLocation, Link } from 'react-router-dom'
 import { Home, Ticket, LayoutGrid, BookOpen, Monitor } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import { useAuth } from '@/contexts/AuthContext'
@@ -28,7 +28,7 @@ export function EmployeeShell() {
     // sidebar + içerik grid'i.
     <div className="flex flex-col md:grid md:grid-cols-[248px_1fr] min-h-screen">
       <aside className="hidden md:flex w-[248px] shrink-0 h-screen sticky top-0 flex-col bg-[var(--panel)] border-r border-[var(--border)]">
-        <div className="flex items-center gap-2.5 px-5 pt-5 pb-4">
+        <Link to="/home" className="flex items-center gap-2.5 px-5 pt-5 pb-4 hover:opacity-80 transition-opacity">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand to-brand-dim flex items-center justify-center shrink-0">
             <svg viewBox="0 0 24 24" className="w-[18px] h-[18px]" fill="white">
               <path d="M12 2 L14.5 8.5 L21 9 L16 13.5 L17.5 20 L12 16.5 L6.5 20 L8 13.5 L3 9 L9.5 8.5 Z" />
@@ -38,7 +38,7 @@ export function EmployeeShell() {
             <div className="font-display font-bold text-[17px] tracking-tight leading-none">HelpFix</div>
             <div className="text-[11px] text-[var(--text-faint)] mt-0.5">{t({ tr: 'Çalışan Merkezi', en: 'Employee Center' })}</div>
           </div>
-        </div>
+        </Link>
 
         <nav className="flex-1 overflow-y-auto px-3 py-1">
           {EMPLOYEE_NAV.map((item) => {
@@ -75,7 +75,7 @@ export function EmployeeShell() {
       </aside>
 
       <div className="flex flex-col min-h-screen">
-        <Topbar crumb={crumb} />
+        <Topbar crumb={crumb} homePath="/home" />
         <main className="flex-1 px-4 py-5 md:px-6 md:py-6 pb-24 md:pb-6">
           <Outlet />
         </main>

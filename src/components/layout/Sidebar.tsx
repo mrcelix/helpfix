@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, Link } from 'react-router-dom'
 import { Settings, X } from 'lucide-react'
 import { NAV_MODULES } from './nav-modules'
 import { useLang } from '@/contexts/LangContext'
@@ -15,7 +15,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <>
-      <div className="flex items-center gap-2.5 px-5 pt-5 pb-4">
+      <Link to="/service-desk" onClick={onNavigate} className="flex items-center gap-2.5 px-5 pt-5 pb-4 hover:opacity-80 transition-opacity">
         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand to-brand-dim flex items-center justify-center shrink-0">
           <svg viewBox="0 0 24 24" className="w-[18px] h-[18px]" fill="white">
             <path d="M12 2 L14.5 8.5 L21 9 L16 13.5 L17.5 20 L12 16.5 L6.5 20 L8 13.5 L3 9 L9.5 8.5 Z" />
@@ -27,7 +27,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
             {t({ tr: 'Yönetim Paneli', en: 'Admin Panel' })}
           </div>
         </div>
-      </div>
+      </Link>
 
       <nav className="flex-1 overflow-y-auto px-3 py-1">
         {visibleModules.map((mod) => {
