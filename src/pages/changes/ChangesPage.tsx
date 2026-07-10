@@ -9,6 +9,7 @@ import { NewChangeModal } from './NewChangeModal'
 import { FreezeWindowsModal } from './FreezeWindowsModal'
 import { ChangeTemplatesModal } from './ChangeTemplatesModal'
 import { ChangeAnalytics } from './ChangeAnalytics'
+import { ChangeCalendarTab } from './ChangeCalendarTab'
 
 const SAVED_VIEWS: { key: ChangeSavedView; label: { tr: string; en: string } }[] = [
   { key: 'all', label: { tr: 'Tümü', en: 'All' } },
@@ -44,7 +45,7 @@ function riskColor(score: number) {
 export function ChangesPage() {
   const { lang, t } = useLang()
   const [view, setView] = useState<ChangeSavedView>('all')
-  const [pageTab, setPageTab] = useState<'changes' | 'analytics'>('changes')
+  const [pageTab, setPageTab] = useState<'changes' | 'calendar' | 'analytics'>('changes')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const openId = useOpenParam()
   useEffect(() => { if (openId) setSelectedId(openId) }, [openId])
@@ -116,6 +117,12 @@ export function ChangesPage() {
           {t({ tr: 'Değişiklikler', en: 'Changes' })}
         </button>
         <button
+          onClick={() => setPageTab('calendar')}
+          className={`px-1 py-2.5 text-[13.5px] font-semibold mr-5 border-b-2 ${pageTab === 'calendar' ? 'border-brand text-brand-dim' : 'border-transparent text-[var(--text-faint)]'}`}
+        >
+          {t({ tr: 'Takvim', en: 'Calendar' })}
+        </button>
+        <button
           onClick={() => setPageTab('analytics')}
           className={`px-1 py-2.5 text-[13.5px] font-semibold mr-5 border-b-2 ${pageTab === 'analytics' ? 'border-brand text-brand-dim' : 'border-transparent text-[var(--text-faint)]'}`}
         >
@@ -125,6 +132,8 @@ export function ChangesPage() {
 
       {pageTab === 'analytics' ? (
         <ChangeAnalytics />
+      ) : pageTab === 'calendar' ? (
+        <ChangeCalendarTab onOpenChange={(id) => setSelectedId(id)} />
       ) : (
       <>
       <div className="flex items-center gap-1.5 mb-3 flex-wrap">

@@ -271,6 +271,70 @@ export function useBlastRadius(ciId: string | null) {
   })
 }
 
+// ------------------------------------------------------------------
+// Faz BG — DEĞİŞİKLİK TAKVİMİ & ÇAKIŞMA TESPİTİ
+// ------------------------------------------------------------------
+export interface ScheduledChange {
+  id: string
+  ref: string
+  title: string
+  status: ChangeStatus
+  risk_score: number
+  scheduled_start: string
+  scheduled_end: string | null
+  ci_id: string | null
+  ci: { name: string; tag: string } | null
+}
+
+export interface ChangeConflict {
+  a: ScheduledChange
+  b: ScheduledChange
+}
+
+/** Planlanmış (scheduled_start dolu) tüm değişiklikleri getirir — takvim
+ * görünümü ve CI bazlı çakışma tespiti için. */
+export function useScheduledChanges() {
+  const { profile } = useAuth()
+  return useQuery({
+    queryKey: ['scheduled-changes', profile?.tenantId],
+    enabled: !!profile,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('changes')
+        .select('id, ref, title, status, risk_score, scheduled_start, scheduled_end, ci_id, ci:ci_id ( name, tag )')
+        .not('scheduled_start', 'is', null)
+        .not('status', 'in', '(completed,failed,closed)')
+        .order('scheduled_start')
+      if (error) throw error
+      return data as unknown as ScheduledChange[]
+    },
+  })
+}
+
+/** Aynı CI üzerinde zaman aralığı çakışan değişiklik çiftlerini bulur.
+ * CI bağlanmamış (ci_id null) değişiklikler çakışma taramasına girmez —
+ * hangi sisteme dokunduğu bilinmediği için karşılaştırılamaz. */
+export function findChangeConflicts(changes: ScheduledChange[]): ChangeConflict[] {
+  const conflicts: ChangeConflict[] = []
+  const withCi = changes.filter((c) => c.ci_id)
+
+  for (let i = 0; i < withCi.length; i++) {
+    for (let j = i + 1; j < withCi.length; j++) {
+      const a = withCi[i]
+      const b = withCi[j]
+      if (a.ci_id !== b.ci_id) continue
+
+      const aStart = new Date(a.scheduled_start).getTime()
+      const aEnd = new Date(a.scheduled_end ?? a.scheduled_start).getTime()
+      const bStart = new Date(b.scheduled_start).getTime()
+      const bEnd = new Date(b.scheduled_end ?? b.scheduled_start).getTime()
+
+      if (aStart < bEnd && bStart < aEnd) conflicts.push({ a, b })
+    }
+  }
+  return conflicts
+}
+
 export function useLinkChangeToCi(changeId: string) {
   const qc = useQueryClient()
   return useMutation({
