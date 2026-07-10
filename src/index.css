@@ -96,3 +96,19 @@ body {
   .text-sub { color: var(--text-sub); }
   .text-faint { color: var(--text-faint); }
 }
+
+/* Okunmamış bildirim varken zil ikonunun periyodik olarak salınması —
+   modern admin panellerindeki "yeni bildirim" dikkat çekme deseni. */
+@keyframes bell-ring {
+  0%, 82%, 100% { transform: rotate(0deg); }
+  84% { transform: rotate(-12deg); }
+  86% { transform: rotate(10deg); }
+  88% { transform: rotate(-8deg); }
+  90% { transform: rotate(6deg); }
+  92% { transform: rotate(-3deg); }
+  94% { transform: rotate(0deg); }
+}
+.animate-bell-ring {
+  animation: bell-ring 3.2s ease-in-out infinite;
+  transform-origin: top center;
+}

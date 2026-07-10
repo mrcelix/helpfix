@@ -92,12 +92,20 @@ export function Topbar({ crumb, onMenuClick, homePath = '/service-desk' }: { cru
         <div className="relative">
           <button
             onClick={() => setShowNotifications((s) => !s)}
-            className="relative w-[34px] h-[34px] shrink-0 rounded-lg border border-[var(--border)] bg-[var(--panel)] flex items-center justify-center text-[var(--text-sub)]"
+            className={cn(
+              'relative w-[34px] h-[34px] shrink-0 rounded-lg border flex items-center justify-center transition-colors',
+              unreadCount > 0
+                ? 'border-p1/40 bg-p1-tint text-p1'
+                : 'border-[var(--border)] bg-[var(--panel)] text-[var(--text-sub)]'
+            )}
             aria-label="Notifications"
           >
-            <Bell className="w-4 h-4" />
+            <Bell className={unreadCount > 0 ? 'w-4 h-4 animate-bell-ring' : 'w-4 h-4'} />
             {unreadCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 w-[7px] h-[7px] rounded-full bg-p1 border-[1.5px] border-[var(--bg)]" />
+              <span className="absolute top-1 right-1 flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-p1 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-p1 border-[1.5px] border-[var(--bg)]" />
+              </span>
             )}
           </button>
 

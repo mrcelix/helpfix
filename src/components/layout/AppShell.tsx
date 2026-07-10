@@ -5,11 +5,13 @@ import { Topbar } from './Topbar'
 import { useLang } from '@/contexts/LangContext'
 import { NAV_MODULES } from './nav-modules'
 import { CommandPalette } from '@/components/command-palette/CommandPalette'
+import { useSidebarCollapsed } from '@/hooks/useSidebarCollapsed'
 
 export function AppShell() {
   const location = useLocation()
   const { lang } = useLang()
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const [collapsed, setCollapsed] = useSidebarCollapsed()
 
   // useMatches() veri yönlendiricisi (createBrowserRouter) gerektirir;
   // biz <BrowserRouter> kullandığımız için mevcut path'i doğrudan
@@ -18,10 +20,10 @@ export function AppShell() {
   const crumb = activeModule?.name[lang] ?? ''
 
   return (
-    <div className="flex flex-col lg:grid lg:grid-cols-[248px_1fr] min-h-screen">
-      <Sidebar />
+    <div className={`flex flex-col lg:grid min-h-screen ${collapsed ? 'lg:grid-cols-[72px_1fr]' : 'lg:grid-cols-[248px_1fr]'}`}>
+      <Sidebar collapsed={collapsed} onToggleCollapse={() => setCollapsed((c) => !c)} />
       <MobileSidebarDrawer open={mobileNavOpen} onClose={() => setMobileNavOpen(false)} />
-      <div className="flex flex-col min-h-screen">
+      <div className="flex flex-col min-h-screen min-w-0">
         <Topbar crumb={crumb} onMenuClick={() => setMobileNavOpen(true)} />
         <main className="flex-1 px-4 py-5 lg:px-6 lg:py-6">
           <Outlet />

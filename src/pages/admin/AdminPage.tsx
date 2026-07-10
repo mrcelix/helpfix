@@ -7,6 +7,7 @@ import { AiUsageTab } from './AiUsageTab'
 import { EmailSettingsTab } from './EmailSettingsTab'
 import { TicketFieldsTab } from './TicketFieldsTab'
 import { SitesTab } from './SitesTab'
+import { OverviewTab } from './OverviewTab'
 import { NewUserModal } from './NewUserModal'
 import { EditUserModal } from './EditUserModal'
 import { ResetPasswordModal } from './ResetPasswordModal'
@@ -30,7 +31,7 @@ const ROLE_OPTIONS: UserRole[] = ['tenant_admin', 'manager', 'agent', 'requester
 
 export function AdminPage() {
   const { t } = useLang()
-  const [tab, setTab] = useState<'users' | 'departments' | 'modules' | 'catalog' | 'audit' | 'ai' | 'email' | 'ticket-fields' | 'sites'>('users')
+  const [tab, setTab] = useState<'overview' | 'users' | 'departments' | 'modules' | 'catalog' | 'audit' | 'ai' | 'email' | 'ticket-fields' | 'sites'>('overview')
 
   return (
     <div>
@@ -44,6 +45,9 @@ export function AdminPage() {
       </div>
 
       <div className="flex gap-1 border-b border-[var(--border)] mb-5 overflow-x-auto">
+        <TabButton active={tab === 'overview'} onClick={() => setTab('overview')}>
+          {t({ tr: 'Genel Bakış', en: 'Overview' })}
+        </TabButton>
         <TabButton active={tab === 'users'} onClick={() => setTab('users')}>
           {t({ tr: 'Kullanıcılar', en: 'Users' })}
         </TabButton>
@@ -73,6 +77,7 @@ export function AdminPage() {
         </TabButton>
       </div>
 
+      {tab === 'overview' && <OverviewTab onNavigateTab={(t) => setTab(t as typeof tab)} />}
       {tab === 'users' && <UsersTab />}
       {tab === 'departments' && <DepartmentsTab />}
       {tab === 'modules' && <ModulesTab />}

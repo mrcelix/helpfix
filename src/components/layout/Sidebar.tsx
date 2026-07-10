@@ -1,12 +1,12 @@
 import { NavLink, Link } from 'react-router-dom'
-import { Settings, X } from 'lucide-react'
+import { Settings, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { NAV_MODULES } from './nav-modules'
 import { useLang } from '@/contexts/LangContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { useFeatureFlags } from '@/pages/admin/useAdmin'
 import { cn } from '@/lib/utils'
 
-function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
+function SidebarContent({ onNavigate, collapsed = false }: { onNavigate?: () => void; collapsed?: boolean }) {
   const { lang, t } = useLang()
   const { profile } = useAuth()
   const { data: flags } = useFeatureFlags()
@@ -15,21 +15,27 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <>
-      <Link to="/service-desk" onClick={onNavigate} className="flex items-center gap-2.5 px-5 pt-5 pb-4 hover:opacity-80 transition-opacity">
+      <Link
+        to="/service-desk"
+        onClick={onNavigate}
+        className={cn('flex items-center gap-2.5 pt-5 pb-4 hover:opacity-80 transition-opacity', collapsed ? 'px-0 justify-center' : 'px-5')}
+      >
         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand to-brand-dim flex items-center justify-center shrink-0">
           <svg viewBox="0 0 24 24" className="w-[18px] h-[18px]" fill="white">
             <path d="M12 2 L14.5 8.5 L21 9 L16 13.5 L17.5 20 L12 16.5 L6.5 20 L8 13.5 L3 9 L9.5 8.5 Z" />
           </svg>
         </div>
-        <div>
-          <div className="font-display font-bold text-[17px] tracking-tight leading-none">HelpFix</div>
-          <div className="text-[11px] text-[var(--text-faint)] mt-0.5">
-            {t({ tr: 'Yönetim Paneli', en: 'Admin Panel' })}
+        {!collapsed && (
+          <div>
+            <div className="font-display font-bold text-[17px] tracking-tight leading-none">HelpFix</div>
+            <div className="text-[11px] text-[var(--text-faint)] mt-0.5">
+              {t({ tr: 'Yönetim Paneli', en: 'Admin Panel' })}
+            </div>
           </div>
-        </div>
+        )}
       </Link>
 
-      <nav className="flex-1 overflow-y-auto px-3 py-1">
+      <nav className={cn('flex-1 overflow-y-auto overflow-x-hidden py-1', collapsed ? 'px-2' : 'px-3')}>
         {visibleModules.map((mod) => {
           const Icon = mod.icon
           return (
@@ -37,9 +43,11 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
               key={mod.code}
               to={mod.path}
               onClick={onNavigate}
+              title={collapsed ? mod.name[lang] : undefined}
               className={({ isActive }) =>
                 cn(
-                  'flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13.5px] font-medium mb-0.5 transition-colors',
+                  'flex items-center gap-2.5 py-2 rounded-lg text-[13.5px] font-medium mb-0.5 transition-colors',
+                  collapsed ? 'px-2 justify-center' : 'px-2.5',
                   isActive
                     ? 'bg-brand text-white font-semibold'
                     : 'text-[var(--text-sub)] hover:bg-[var(--row-hover)] hover:text-[var(--text)]'
@@ -47,11 +55,15 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
               }
             >
               <Icon className="w-[17px] h-[17px] shrink-0" />
-              <span>{mod.name[lang]}</span>
-              {mod.badge === 'beta' && (
-                <span className="ml-auto text-[9px] font-mono font-bold bg-purple-tint text-purple rounded-full px-1.5 py-0.5">
-                  BETA
-                </span>
+              {!collapsed && (
+                <>
+                  <span>{mod.name[lang]}</span>
+                  {mod.badge === 'beta' && (
+                    <span className="ml-auto text-[9px] font-mono font-bold bg-purple-tint text-purple rounded-full px-1.5 py-0.5">
+                      BETA
+                    </span>
+                  )}
+                </>
               )}
             </NavLink>
           )
@@ -59,13 +71,15 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
         {profile?.role === 'tenant_admin' && (
           <>
-            <div className="h-px bg-[var(--border)] my-2 mx-1" />
+            <div className={cn('h-px bg-[var(--border)] my-2', collapsed ? 'mx-0.5' : 'mx-1')} />
             <NavLink
               to="/admin"
               onClick={onNavigate}
+              title={collapsed ? t({ tr: 'Yönetim Paneli', en: 'Admin Panel' }) : undefined}
               className={({ isActive }) =>
                 cn(
-                  'flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13.5px] font-medium mb-0.5 transition-colors',
+                  'flex items-center gap-2.5 py-2 rounded-lg text-[13.5px] font-medium mb-0.5 transition-colors',
+                  collapsed ? 'px-2 justify-center' : 'px-2.5',
                   isActive
                     ? 'bg-brand text-white font-semibold'
                     : 'text-[var(--text-sub)] hover:bg-[var(--row-hover)] hover:text-[var(--text)]'
@@ -73,32 +87,52 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
               }
             >
               <Settings className="w-[17px] h-[17px] shrink-0" />
-              <span>{t({ tr: 'Yönetim Paneli', en: 'Admin Panel' })}</span>
+              {!collapsed && <span>{t({ tr: 'Yönetim Paneli', en: 'Admin Panel' })}</span>}
             </NavLink>
           </>
         )}
       </nav>
 
-      <div className="border-t border-[var(--border)] p-3 flex items-center gap-2.5">
-        <div className="w-[30px] h-[30px] rounded-lg bg-brand text-white flex items-center justify-center text-xs font-bold shrink-0">
+      <div className={cn('border-t border-[var(--border)] p-3 flex items-center gap-2.5', collapsed && 'justify-center')}>
+        <div
+          title={collapsed ? profile?.fullName : undefined}
+          className="w-[30px] h-[30px] rounded-lg bg-brand text-white flex items-center justify-center text-xs font-bold shrink-0"
+        >
           {profile?.avatarInitials ?? profile?.fullName?.slice(0, 2).toUpperCase() ?? '—'}
         </div>
-        <div className="min-w-0">
-          <div className="text-[12.5px] font-semibold truncate">{profile?.fullName ?? '—'}</div>
-          <div className="text-[11px] text-[var(--text-faint)] truncate">
-            {profile ? t(ROLE_LABEL[profile.role]) : ''}
+        {!collapsed && (
+          <div className="min-w-0">
+            <div className="text-[12.5px] font-semibold truncate">{profile?.fullName ?? '—'}</div>
+            <div className="text-[11px] text-[var(--text-faint)] truncate">
+              {profile ? t(ROLE_LABEL[profile.role]) : ''}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </>
   )
 }
 
-/** Masaüstü/tablet (lg+): her zaman görünen sabit sidebar. */
-export function Sidebar() {
+/** Masaüstü/tablet (lg+): daraltılabilir sabit sidebar. Durum
+ * localStorage'da tutulur (bkz. useSidebarCollapsed), sayfa
+ * yenilense de hatırlanır — modern admin panellerindeki standart
+ * davranış. */
+export function Sidebar({ collapsed, onToggleCollapse }: { collapsed: boolean; onToggleCollapse: () => void }) {
   return (
-    <aside className="hidden lg:flex w-[248px] shrink-0 h-screen sticky top-0 flex-col bg-[var(--panel)] border-r border-[var(--border)]">
-      <SidebarContent />
+    <aside
+      className={cn(
+        'hidden lg:flex shrink-0 h-screen sticky top-0 flex-col bg-[var(--panel)] border-r border-[var(--border)] transition-[width] duration-200 relative',
+        collapsed ? 'w-[72px]' : 'w-[248px]'
+      )}
+    >
+      <SidebarContent collapsed={collapsed} />
+      <button
+        onClick={onToggleCollapse}
+        title={collapsed ? 'Genişlet' : 'Daralt'}
+        className="absolute top-[72px] -right-3 w-6 h-6 rounded-full bg-[var(--panel)] border border-[var(--border)] shadow-md flex items-center justify-center text-[var(--text-faint)] hover:text-brand-dim hover:border-brand/40 transition-colors z-10"
+      >
+        {collapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
+      </button>
     </aside>
   )
 }

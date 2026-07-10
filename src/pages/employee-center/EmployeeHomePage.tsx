@@ -73,19 +73,19 @@ export function EmployeeHomePage() {
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 mb-6">
-        <div className="bg-[var(--panel)] border border-[var(--border)] rounded-2xl p-4">
+        <div className="bg-[var(--panel)] border border-[var(--border)] rounded-2xl p-4 hover:border-brand/40 transition-colors">
           <div className="font-display text-2xl font-bold">{openCount}</div>
           <div className="text-[11px] text-[var(--text-faint)] mt-1">{t({ tr: 'Açık Talebim', en: 'Open Tickets' })}</div>
         </div>
-        <div className="bg-[var(--panel)] border border-[var(--border)] rounded-2xl p-4">
+        <div className="bg-[var(--panel)] border border-[var(--border)] rounded-2xl p-4 hover:border-ok/40 transition-colors">
           <div className="font-display text-2xl font-bold text-ok">{resolvedCount}</div>
           <div className="text-[11px] text-[var(--text-faint)] mt-1">{t({ tr: 'Çözülen Talebim', en: 'Resolved Tickets' })}</div>
         </div>
-        <div className="bg-[var(--panel)] border border-[var(--border)] rounded-2xl p-4">
+        <div className="bg-[var(--panel)] border border-[var(--border)] rounded-2xl p-4 hover:border-brand/40 transition-colors">
           <div className="font-display text-2xl font-bold">{myRequests?.length ?? 0}</div>
           <div className="text-[11px] text-[var(--text-faint)] mt-1">{t({ tr: 'Toplam Talep', en: 'Total Tickets' })}</div>
         </div>
-        <div className="bg-[var(--panel)] border border-[var(--border)] rounded-2xl p-4">
+        <div className="bg-[var(--panel)] border border-[var(--border)] rounded-2xl p-4 hover:border-brand/40 transition-colors">
           <div className="font-display text-2xl font-bold text-brand">
             {avgResolutionDays != null ? `${avgResolutionDays}${t({ tr: ' gün', en: 'd' })}` : '—'}
           </div>
@@ -175,9 +175,9 @@ function ActionCard({
   return (
     <button
       onClick={onClick}
-      className="text-left bg-[var(--panel)] border border-[var(--border)] rounded-2xl p-5 hover:border-brand transition-colors"
+      className="group text-left bg-[var(--panel)] border border-[var(--border)] rounded-2xl p-5 hover:border-brand hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all duration-150"
     >
-      <div className="w-10 h-10 rounded-xl bg-brand-tint flex items-center justify-center mb-3">
+      <div className="w-10 h-10 rounded-xl bg-brand-tint flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-150">
         <Icon className="w-5 h-5 text-brand-dim" />
       </div>
       <div className="font-bold text-[13.5px] mb-1">{title}</div>
