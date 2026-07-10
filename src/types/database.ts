@@ -440,6 +440,43 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['service_requests']['Insert']>
         Relationships: []
       }
+      software_licenses: {
+        Row: {
+          id: string
+          tenant_id: string
+          name: string
+          vendor_id: string | null
+          license_type: 'subscription' | 'perpetual' | 'oem' | 'open_source'
+          total_seats: number
+          cost_per_seat: number | null
+          currency: string
+          renewal_date: string | null
+          contract_id: string | null
+          notes: string | null
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['software_licenses']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['software_licenses']['Insert']>
+        Relationships: []
+      }
+      software_license_assignments: {
+        Row: {
+          id: string
+          license_id: string
+          user_id: string | null
+          ci_id: string | null
+          assigned_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['software_license_assignments']['Row'], 'id' | 'assigned_at'> & {
+          id?: string
+          assigned_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['software_license_assignments']['Insert']>
+        Relationships: []
+      }
       vendors: {
         Row: {
           id: string

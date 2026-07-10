@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useOpenParam } from '@/hooks/useOpenParam'
-import { Plus, List, Share2, Download } from 'lucide-react'
+import { Plus, List, Share2, Download, ShieldCheck } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import { Button } from '@/components/ui/Button'
 import { useConfigurationItems, useDuplicateCis, type CiSavedView } from './useCmdb'
 import { CiDrawer } from './CiDrawer'
 import { NewCiModal } from './NewCiModal'
 import { ServiceMap } from './ServiceMap'
+import { SoftwareLicensesTab } from './SoftwareLicensesTab'
+import { NewSoftwareLicenseModal } from './NewSoftwareLicenseModal'
 
 const SAVED_VIEWS: { key: CiSavedView; label: { tr: string; en: string } }[] = [
   { key: 'all', label: { tr: 'Tümü', en: 'All' } },
@@ -41,11 +43,13 @@ function isWarrantySoon(dateStr: string | null) {
 export function CmdbPage() {
   const { lang, t } = useLang()
   const [view, setView] = useState<CiSavedView>('all')
+  const [moduleTab, setModuleTab] = useState<'assets' | 'licenses'>('assets')
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const openId = useOpenParam()
   useEffect(() => { if (openId) setSelectedId(openId) }, [openId])
   const [showNewModal, setShowNewModal] = useState(false)
+  const [showNewLicenseModal, setShowNewLicenseModal] = useState(false)
 
   const { data: items, isLoading, error } = useConfigurationItems(view)
   const { data: duplicates } = useDuplicateCis()
@@ -94,27 +98,56 @@ export function CmdbPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <div className="flex border border-[var(--border)] rounded-lg overflow-hidden">
-            <button
-              onClick={() => setViewMode('list')}
-              className={`px-2.5 py-2 ${viewMode === 'list' ? 'bg-brand text-white' : 'bg-[var(--panel)] text-[var(--text-faint)]'}`}
-            >
-              <List className="w-[14px] h-[14px]" />
-            </button>
-            <button
-              onClick={() => setViewMode('map')}
-              className={`px-2.5 py-2 ${viewMode === 'map' ? 'bg-brand text-white' : 'bg-[var(--panel)] text-[var(--text-faint)]'}`}
-            >
-              <Share2 className="w-[14px] h-[14px]" />
-            </button>
-          </div>
-          <Button onClick={() => setShowNewModal(true)}>
-            <Plus className="w-[15px] h-[15px]" />
-            {t({ tr: 'Yeni Varlık', en: 'New Asset' })}
-          </Button>
+          {moduleTab === 'assets' && (
+            <div className="flex border border-[var(--border)] rounded-lg overflow-hidden">
+              <button
+                onClick={() => setViewMode('list')}
+                className={`px-2.5 py-2 ${viewMode === 'list' ? 'bg-brand text-white' : 'bg-[var(--panel)] text-[var(--text-faint)]'}`}
+              >
+                <List className="w-[14px] h-[14px]" />
+              </button>
+              <button
+                onClick={() => setViewMode('map')}
+                className={`px-2.5 py-2 ${viewMode === 'map' ? 'bg-brand text-white' : 'bg-[var(--panel)] text-[var(--text-faint)]'}`}
+              >
+                <Share2 className="w-[14px] h-[14px]" />
+              </button>
+            </div>
+          )}
+          {moduleTab === 'assets' ? (
+            <Button onClick={() => setShowNewModal(true)}>
+              <Plus className="w-[15px] h-[15px]" />
+              {t({ tr: 'Yeni Varlık', en: 'New Asset' })}
+            </Button>
+          ) : (
+            <Button onClick={() => setShowNewLicenseModal(true)}>
+              <Plus className="w-[15px] h-[15px]" />
+              {t({ tr: 'Yeni Lisans', en: 'New License' })}
+            </Button>
+          )}
         </div>
       </div>
 
+      <div className="flex gap-1 border-b border-[var(--border)] mb-4 overflow-x-auto">
+        <button
+          onClick={() => setModuleTab('assets')}
+          className={`shrink-0 whitespace-nowrap px-1 py-2.5 text-[13.5px] font-semibold mr-5 border-b-2 ${moduleTab === 'assets' ? 'border-brand text-brand-dim' : 'border-transparent text-[var(--text-faint)]'}`}
+        >
+          {t({ tr: 'Varlıklar', en: 'Assets' })}
+        </button>
+        <button
+          onClick={() => setModuleTab('licenses')}
+          className={`shrink-0 whitespace-nowrap flex items-center gap-1.5 px-1 py-2.5 text-[13.5px] font-semibold mr-5 border-b-2 ${moduleTab === 'licenses' ? 'border-brand text-brand-dim' : 'border-transparent text-[var(--text-faint)]'}`}
+        >
+          <ShieldCheck className="w-3.5 h-3.5" />
+          {t({ tr: 'Yazılım Lisansları', en: 'Software Licenses' })}
+        </button>
+      </div>
+
+      {moduleTab === 'licenses' && <SoftwareLicensesTab />}
+
+      {moduleTab === 'assets' && (
+      <>
       {!!duplicates?.length && (
         <div className="bg-p2-tint border border-p2/40 rounded-xl p-3.5 mb-4">
           <div className="text-[11px] font-bold text-p2 uppercase mb-1.5">
@@ -226,9 +259,12 @@ export function CmdbPage() {
       </div>
       </>
       )}
+      </>
+      )}
 
       {selectedId && <CiDrawer id={selectedId} onClose={() => setSelectedId(null)} />}
       {showNewModal && <NewCiModal onClose={() => setShowNewModal(false)} />}
+      {showNewLicenseModal && <NewSoftwareLicenseModal onClose={() => setShowNewLicenseModal(false)} />}
     </div>
   )
 }
