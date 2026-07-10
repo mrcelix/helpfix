@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Trash2 } from 'lucide-react'
+import { Trash2, Wifi, WifiOff } from 'lucide-react'
 import { Drawer } from '@/components/ui/Drawer'
 import { useLang } from '@/contexts/LangContext'
 import { useCiDetail, useLinkedRecords, useUpdateCi, useConfigurationItems, useCiRelationships, useCreateRelationship, useDeleteRelationship } from './useCmdb'
@@ -42,6 +42,27 @@ export function CiDrawer({ id, onClose }: { id: string; onClose: () => void }) {
                 </option>
               ))}
             </select>
+          </div>
+
+          <div>
+            <label className="block text-[10.5px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">
+              {t({ tr: 'Bağlantı Durumu', en: 'Connectivity' })}
+            </label>
+            <div className="flex items-center gap-2.5 bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2.5">
+              <button
+                onClick={() => updateCi.mutate({ is_online: !ci.is_online, last_seen_at: new Date().toISOString() })}
+                className={`w-9 h-5 rounded-full relative transition-colors shrink-0 ${ci.is_online ? 'bg-ok' : 'bg-p1'}`}
+              >
+                <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${ci.is_online ? 'left-[18px]' : 'left-0.5'}`} />
+              </button>
+              <span className="flex items-center gap-1.5 text-[12.5px] font-semibold">
+                {ci.is_online ? <Wifi className="w-3.5 h-3.5 text-ok" /> : <WifiOff className="w-3.5 h-3.5 text-p1" />}
+                {ci.is_online ? t({ tr: 'Online', en: 'Online' }) : t({ tr: 'Offline', en: 'Offline' })}
+              </span>
+              <span className="text-[10.5px] text-[var(--text-faint)] ml-auto">
+                {t({ tr: 'Son görülme:', en: 'Last seen:' })} {new Date(ci.last_seen_at).toLocaleString(lang === 'tr' ? 'tr-TR' : 'en-US')}
+              </span>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3 text-[12.5px]">

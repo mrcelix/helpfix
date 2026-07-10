@@ -611,18 +611,22 @@ export interface Database {
           purchase_date: string | null
           warranty_expiry: string | null
           notes: string | null
+          is_online: boolean
+          last_seen_at: string
           created_at: string
           updated_at: string
         }
         Insert: Omit<
           Database['public']['Tables']['configuration_items']['Row'],
-          'id' | 'tag' | 'created_at' | 'updated_at' | 'site_id'
+          'id' | 'tag' | 'created_at' | 'updated_at' | 'site_id' | 'is_online' | 'last_seen_at'
         > & {
           id?: string
           tag?: string
           created_at?: string
           updated_at?: string
           site_id?: string | null
+          is_online?: boolean
+          last_seen_at?: string
         }
         Update: Partial<Database['public']['Tables']['configuration_items']['Insert']>
         Relationships: []
@@ -724,11 +728,15 @@ export interface Database {
           address: string | null
           city: string | null
           is_headquarters: boolean
+          parent_site_id: string | null
+          manager_id: string | null
           created_at: string
         }
-        Insert: Omit<Database['public']['Tables']['sites']['Row'], 'id' | 'created_at'> & {
+        Insert: Omit<Database['public']['Tables']['sites']['Row'], 'id' | 'created_at' | 'parent_site_id' | 'manager_id'> & {
           id?: string
           created_at?: string
+          parent_site_id?: string | null
+          manager_id?: string | null
         }
         Update: Partial<Database['public']['Tables']['sites']['Insert']>
         Relationships: []
@@ -756,6 +764,26 @@ export interface Database {
         }
         Insert: Partial<Database['public']['Tables']['ai_quota']['Row']> & { tenant_id: string }
         Update: Partial<Database['public']['Tables']['ai_quota']['Insert']>
+        Relationships: []
+      }
+      store_score_snapshots: {
+        Row: {
+          id: string
+          tenant_id: string
+          site_id: string
+          snapshot_date: string
+          score: number
+          sla_compliant_pct: number
+          online_pct: number
+          open_incidents: number
+          critical_open_incidents: number
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['store_score_snapshots']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['store_score_snapshots']['Insert']>
         Relationships: []
       }
       custom_reports: {
@@ -1285,6 +1313,26 @@ export interface Database {
       search_kb_articles: {
         Args: { p_tenant_id: string; p_query: string; p_limit?: number }
         Returns: { id: string; title: string; slug: string; category: string | null; rank: number }[]
+      }
+      get_store_scorecard: {
+        Args: { p_tenant_id: string }
+        Returns: {
+          site_id: string
+          site_name: string
+          parent_site_id: string | null
+          is_headquarters: boolean
+          total_devices: number
+          online_devices: number
+          online_pct: number
+          open_incidents: number
+          critical_open_incidents: number
+          sla_compliant_pct: number
+          score: number
+        }[]
+      }
+      capture_store_score_snapshots: {
+        Args: { p_tenant_id: string }
+        Returns: number
       }
       get_technician_csat_leaderboard: {
         Args: { p_tenant_id: string }

@@ -19,6 +19,8 @@ export interface CiDetail extends CiListItem {
   cost: number | null
   purchase_date: string | null
   notes: string | null
+  is_online: boolean
+  last_seen_at: string
 }
 
 export type CiSavedView = 'all' | 'mine' | 'warranty_expiring' | 'unassigned'
@@ -60,7 +62,7 @@ export function useCiDetail(id: string | null) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('configuration_items')
-        .select(`${SELECT_LIST}, vendor, cost, purchase_date, notes`)
+        .select(`${SELECT_LIST}, vendor, cost, purchase_date, notes, is_online, last_seen_at`)
         .eq('id', id!)
         .single()
       if (error) throw error
@@ -136,7 +138,7 @@ export function useCreateCi() {
 export function useUpdateCi(id: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (patch: Partial<{ status: CiStatus; assigned_user_id: string | null; notes: string }>) => {
+    mutationFn: async (patch: Partial<{ status: CiStatus; assigned_user_id: string | null; notes: string; is_online: boolean; last_seen_at: string }>) => {
       const { error } = await supabase.from('configuration_items').update(patch).eq('id', id)
       if (error) throw error
     },

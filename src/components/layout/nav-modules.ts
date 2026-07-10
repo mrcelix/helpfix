@@ -12,6 +12,7 @@ import {
   PhoneCall,
   Sparkles,
   ShoppingCart,
+  Store,
 } from 'lucide-react'
 import type { ComponentType } from 'react'
 
@@ -40,4 +41,5 @@ export const NAV_MODULES: NavModule[] = [
   { code: 'on-call', path: '/on-call', icon: PhoneCall, name: { tr: 'On-Call', en: 'On-Call' } },
   { code: 'automation', path: '/automation', icon: Sparkles, name: { tr: 'AI Otomasyon', en: 'AI Automation' }, badge: 'beta' },
   { code: 'purchasing', path: '/purchasing', icon: ShoppingCart, name: { tr: 'Sözleşme & Satın Alma', en: 'Contracts & Purchasing' } },
+  { code: 'store-performance', path: '/store-performance', icon: Store, name: { tr: 'Mağaza Performansı', en: 'Store Performance' } },
 ]

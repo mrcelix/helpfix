@@ -8,6 +8,9 @@ export interface Site {
   address: string | null
   city: string | null
   is_headquarters: boolean
+  parent_site_id: string | null
+  manager_id: string | null
+  manager: { full_name: string } | null
 }
 
 export function useSites() {
@@ -16,9 +19,12 @@ export function useSites() {
     queryKey: ['sites', profile?.tenantId],
     enabled: !!profile,
     queryFn: async () => {
-      const { data, error } = await supabase.from('sites').select('id, name, address, city, is_headquarters').order('name')
+      const { data, error } = await supabase
+        .from('sites')
+        .select('id, name, address, city, is_headquarters, parent_site_id, manager_id, manager:manager_id ( full_name )')
+        .order('name')
       if (error) throw error
-      return data as Site[]
+      return data as unknown as Site[]
     },
   })
 }
@@ -27,7 +33,7 @@ export function useCreateSite() {
   const qc = useQueryClient()
   const { profile } = useAuth()
   return useMutation({
-    mutationFn: async (input: { name: string; address: string; city: string; isHeadquarters: boolean }) => {
+    mutationFn: async (input: { name: string; address: string; city: string; isHeadquarters: boolean; parentSiteId: string | null; managerId: string | null }) => {
       if (!profile) throw new Error('Profil yüklenmedi')
       const { error } = await supabase.from('sites').insert({
         tenant_id: profile.tenantId,
@@ -35,6 +41,8 @@ export function useCreateSite() {
         address: input.address || null,
         city: input.city || null,
         is_headquarters: input.isHeadquarters,
+        parent_site_id: input.parentSiteId,
+        manager_id: input.managerId,
       })
       if (error) throw error
     },
