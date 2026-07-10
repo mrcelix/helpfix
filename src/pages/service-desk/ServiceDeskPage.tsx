@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useOpenParam } from '@/hooks/useOpenParam'
-import { Plus, Download, List, Kanban, BookmarkPlus, X, MonitorPlay } from 'lucide-react'
+import { Plus, Download, List, Kanban, BookmarkPlus, X, MonitorPlay, CheckSquare, Square } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import { Button } from '@/components/ui/Button'
-import { PriorityBadge, StatusBadge } from '@/components/ui/Badge'
-import { useIncidents, useUpdateIncident, useMajorIncidents, type SavedView } from './useIncidents'
+import { PriorityBadge, StatusBadge, STATUS_LABEL } from '@/components/ui/Badge'
+import { priorityLabel } from '@/lib/priority'
+import { useIncidents, useUpdateIncident, useMajorIncidents, useBulkUpdateIncidents, type SavedView } from './useIncidents'
+import { useAssignableUsers } from '@/pages/oncall/useOnCall'
 import { TicketDrawer } from './TicketDrawer'
 import { NewTicketModal } from './NewTicketModal'
 import { ServiceDeskAnalytics } from './ServiceDeskAnalytics'
@@ -15,7 +17,9 @@ import {
   computeSlaMeter,
   type SavedFilterState,
 } from './useServiceDeskExtras'
-import type { TicketStatus, TicketChannel } from '@/types/database'
+import type { TicketStatus, TicketChannel, Priority } from '@/types/database'
+
+const STATUS_OPTIONS_BULK: TicketStatus[] = ['new', 'open', 'in_progress', 'on_hold', 'resolved', 'closed']
 
 const CHANNEL_LABEL: Record<TicketChannel, { tr: string; en: string }> = {
   portal: { tr: 'Portal', en: 'Portal' },
@@ -53,6 +57,31 @@ export function ServiceDeskPage() {
   const [pageTab, setPageTab] = useState<'tickets' | 'analytics'>('tickets')
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list')
   const [selectedId, setSelectedId] = useState<string | null>(null)
+
+  // Faz BC — Toplu İşlemler
+  const [bulkSelection, setBulkSelection] = useState<Set<string>>(new Set())
+  const bulkUpdate = useBulkUpdateIncidents()
+  const { data: assignableUsers } = useAssignableUsers()
+
+  function toggleBulkRow(id: string, e?: React.MouseEvent) {
+    e?.stopPropagation()
+    setBulkSelection((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  function toggleBulkAll() {
+    const visibleIds = incidents?.map((i) => i.id) ?? []
+    const allSelected = visibleIds.length > 0 && visibleIds.every((id) => bulkSelection.has(id))
+    setBulkSelection(allSelected ? new Set() : new Set(visibleIds))
+  }
+
+  function applyBulk(patch: Parameters<typeof bulkUpdate.mutate>[0]['patch']) {
+    bulkUpdate.mutate({ ids: Array.from(bulkSelection), patch }, { onSuccess: () => setBulkSelection(new Set()) })
+  }
   const openId = useOpenParam()
   useEffect(() => { if (openId) setSelectedId(openId) }, [openId])
   const [showNewModal, setShowNewModal] = useState(false)
@@ -320,11 +349,90 @@ export function ServiceDeskPage() {
         </div>
       ) : (
       <>
+      {bulkSelection.size > 0 && (
+        <div className="flex items-center flex-wrap gap-2 bg-brand-tint border border-brand/40 rounded-xl px-4 py-2.5 mb-3">
+          <span className="text-[12.5px] font-bold text-brand-dim mr-1">
+            {t({ tr: `${bulkSelection.size} seçili`, en: `${bulkSelection.size} selected` })}
+          </span>
+
+          <select
+            defaultValue=""
+            onChange={(e) => {
+              if (e.target.value) applyBulk({ status: e.target.value as TicketStatus })
+              e.target.value = ''
+            }}
+            className="text-[11.5px] font-semibold bg-[var(--panel)] border border-[var(--border)] rounded-md px-2 py-1.5"
+          >
+            <option value="" disabled>
+              {t({ tr: 'Durum Değiştir…', en: 'Change status…' })}
+            </option>
+            {STATUS_OPTIONS_BULK.map((s) => (
+              <option key={s} value={s}>
+                {STATUS_LABEL[s][lang]}
+              </option>
+            ))}
+          </select>
+
+          <select
+            defaultValue=""
+            onChange={(e) => {
+              if (e.target.value) applyBulk({ priority: e.target.value as Priority })
+              e.target.value = ''
+            }}
+            className="text-[11.5px] font-semibold bg-[var(--panel)] border border-[var(--border)] rounded-md px-2 py-1.5"
+          >
+            <option value="" disabled>
+              {t({ tr: 'Öncelik Değiştir…', en: 'Change priority…' })}
+            </option>
+            {(['P1', 'P2', 'P3', 'P4'] as Priority[]).map((p) => (
+              <option key={p} value={p}>
+                {priorityLabel(p, lang)}
+              </option>
+            ))}
+          </select>
+
+          <select
+            defaultValue=""
+            onChange={(e) => {
+              if (e.target.value) applyBulk({ assignee_id: e.target.value })
+              e.target.value = ''
+            }}
+            className="text-[11.5px] font-semibold bg-[var(--panel)] border border-[var(--border)] rounded-md px-2 py-1.5"
+          >
+            <option value="" disabled>
+              {t({ tr: 'Ata…', en: 'Assign…' })}
+            </option>
+            {assignableUsers?.map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.full_name}
+              </option>
+            ))}
+          </select>
+
+          <button
+            onClick={() => setBulkSelection(new Set())}
+            className="ml-auto flex items-center gap-1 text-[11.5px] font-bold text-[var(--text-faint)] hover:text-p1"
+          >
+            <X className="w-3.5 h-3.5" />
+            {t({ tr: 'Seçimi Temizle', en: 'Clear selection' })}
+          </button>
+        </div>
+      )}
+
       {/* Table */}
       <div className="border border-[var(--border)] rounded-[var(--radius-app)] overflow-x-auto bg-[var(--panel)]">
         <table className="w-full text-[12.5px] min-w-[820px]">
           <thead>
             <tr className="bg-[var(--panel-2)] border-b border-[var(--border)]">
+              <th className="w-9 px-3.5 py-2.5">
+                <button onClick={toggleBulkAll} className="flex items-center text-[var(--text-faint)] hover:text-brand-dim">
+                  {incidents?.length && incidents.every((i) => bulkSelection.has(i.id)) ? (
+                    <CheckSquare className="w-4 h-4 text-brand-dim" />
+                  ) : (
+                    <Square className="w-4 h-4" />
+                  )}
+                </button>
+              </th>
               <Th>{t({ tr: 'Ref', en: 'Ref' })}</Th>
               <Th>{t({ tr: 'Başlık', en: 'Title' })}</Th>
               <Th>{t({ tr: 'Öncelik', en: 'Priority' })}</Th>
@@ -338,21 +446,21 @@ export function ServiceDeskPage() {
           <tbody>
             {isLoading && (
               <tr>
-                <td colSpan={8} className="text-center py-10 text-[var(--text-faint)]">
+                <td colSpan={9} className="text-center py-10 text-[var(--text-faint)]">
                   {t({ tr: 'Yükleniyor…', en: 'Loading…' })}
                 </td>
               </tr>
             )}
             {error && (
               <tr>
-                <td colSpan={8} className="text-center py-10 text-p1">
+                <td colSpan={9} className="text-center py-10 text-p1">
                   {t({ tr: 'Bir hata oluştu. Supabase bağlantınızı kontrol edin.', en: 'Something went wrong. Check your Supabase connection.' })}
                 </td>
               </tr>
             )}
             {!isLoading && !error && incidents?.length === 0 && (
               <tr>
-                <td colSpan={8} className="text-center py-14 text-[var(--text-faint)]">
+                <td colSpan={9} className="text-center py-14 text-[var(--text-faint)]">
                   {t({ tr: 'Bu görünümde kayıt yok.', en: 'Nothing in this view.' })}
                 </td>
               </tr>
@@ -361,8 +469,18 @@ export function ServiceDeskPage() {
               <tr
                 key={i.id}
                 onClick={() => setSelectedId(i.id)}
-                className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--row-hover)] cursor-pointer"
+                className={
+                  'border-b border-[var(--border)] last:border-0 hover:bg-[var(--row-hover)] cursor-pointer ' +
+                  (bulkSelection.has(i.id) ? 'bg-brand-tint/40' : '')
+                }
               >
+                <td className="px-3.5 py-3" onClick={(e) => toggleBulkRow(i.id, e)}>
+                  {bulkSelection.has(i.id) ? (
+                    <CheckSquare className="w-4 h-4 text-brand-dim" />
+                  ) : (
+                    <Square className="w-4 h-4 text-[var(--text-faint)]" />
+                  )}
+                </td>
                 <td className="px-3.5 py-3 font-mono text-[var(--text-faint)]">{i.ref}</td>
                 <td className="px-3.5 py-3 font-semibold">{i.title}</td>
                 <td className="px-3.5 py-3">

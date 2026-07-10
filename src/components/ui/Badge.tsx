@@ -22,7 +22,7 @@ export function PriorityBadge({ priority, lang = 'tr' }: { priority: Priority; l
   )
 }
 
-const STATUS_LABEL: Record<TicketStatus, { tr: string; en: string }> = {
+export const STATUS_LABEL: Record<TicketStatus, { tr: string; en: string }> = {
   new: { tr: 'Yeni', en: 'New' },
   open: { tr: 'Açık', en: 'Open' },
   in_progress: { tr: 'İşlemde', en: 'In Progress' },

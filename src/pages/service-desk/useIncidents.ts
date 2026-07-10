@@ -353,6 +353,35 @@ export function useMergeIncident() {
 }
 
 // ------------------------------------------------------------------
+// Faz BC — TOPLU İŞLEMLER
+// Not: incidents UPDATE trigger'ı (log_incident_changes, 0042
+// migration) status/priority/assignee/category değişimini otomatik
+// olarak her satır için timeline'a yazar — toplu güncelleme de dahil,
+// ekstra kod gerekmez.
+// ------------------------------------------------------------------
+export interface BulkUpdatePatch {
+  status?: TicketStatus
+  priority?: Priority
+  assignee_id?: string | null
+  category?: string
+}
+
+export function useBulkUpdateIncidents() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: { ids: string[]; patch: BulkUpdatePatch }) => {
+      if (!input.ids.length) return
+      const { error } = await supabase.from('incidents').update(input.patch).in('id', input.ids)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['incidents'] })
+      qc.invalidateQueries({ queryKey: ['incident'] })
+    },
+  })
+}
+
+// ------------------------------------------------------------------
 // BÜYÜK OLAY (MAJOR INCIDENT) WAR ROOM
 // ------------------------------------------------------------------
 export interface MajorIncident {

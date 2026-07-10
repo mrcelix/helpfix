@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Send, Star, Eye, Zap, BookmarkPlus, Trash2, Sparkles, Loader2 } from 'lucide-react'
 import { Drawer } from '@/components/ui/Drawer'
-import { PriorityBadge, StatusBadge } from '@/components/ui/Badge'
+import { PriorityBadge, StatusBadge, STATUS_LABEL } from '@/components/ui/Badge'
+import { priorityLabel } from '@/lib/priority'
 import { useLang } from '@/contexts/LangContext'
 import { useAuth } from '@/contexts/AuthContext'
 import {
@@ -13,6 +14,7 @@ import {
   useDuplicateCandidates,
   useMergeIncident,
   useToggleMajorIncident,
+  type IncidentTimelineEvent,
 } from './useIncidents'
 import { WarRoomPanel } from './WarRoomPanel'
 import { LinkedIncidentsSection } from './LinkedIncidentsSection'
@@ -23,7 +25,7 @@ import {
   useDeleteCannedResponse,
 } from './useServiceDeskExtras'
 import { useSummarizeTicket, useDraftReply } from './useAiAssist'
-import type { TicketStatus } from '@/types/database'
+import type { TicketStatus, Priority } from '@/types/database'
 
 const STATUS_OPTIONS: TicketStatus[] = ['new', 'open', 'in_progress', 'on_hold', 'resolved', 'closed']
 
@@ -259,12 +261,12 @@ export function TicketDrawer({ id, onClose }: { id: string; onClose: () => void 
             </div>
             <ul className="space-y-2 mb-4">
               {timeline?.map((ev) => (
-                <li key={ev.id} className="text-[11.5px] text-[var(--text-faint)] flex justify-between">
-                  <span>
+                <li key={ev.id} className="text-[11.5px] text-[var(--text-faint)] flex justify-between gap-2">
+                  <span className="min-w-0">
                     {ev.actor?.full_name ? `${ev.actor.full_name} — ` : ''}
-                    {ev.event_type}
+                    {formatTimelineEvent(ev, t)}
                   </span>
-                  <span>{new Date(ev.created_at).toLocaleTimeString(lang === 'tr' ? 'tr-TR' : 'en-US')}</span>
+                  <span className="shrink-0">{new Date(ev.created_at).toLocaleTimeString(lang === 'tr' ? 'tr-TR' : 'en-US')}</span>
                 </li>
               ))}
               {!timeline?.length && (
@@ -440,4 +442,32 @@ function CsatSurvey({ existingScore, onSubmit }: { existingScore: number | null;
       </div>
     </div>
   )
+}
+
+function formatTimelineEvent(ev: IncidentTimelineEvent, t: (d: { tr: string; en: string }) => string): string {
+  const data = ev.event_data as Record<string, string | null> | null
+
+  switch (ev.event_type) {
+    case 'status_changed':
+      return t({
+        tr: `Durum değiştirildi: ${data?.from ? STATUS_LABEL[data.from as TicketStatus]?.tr ?? data.from : '—'} → ${data?.to ? STATUS_LABEL[data.to as TicketStatus]?.tr ?? data.to : '—'}`,
+        en: `Status changed: ${data?.from ? STATUS_LABEL[data.from as TicketStatus]?.en ?? data.from : '—'} → ${data?.to ? STATUS_LABEL[data.to as TicketStatus]?.en ?? data.to : '—'}`,
+      })
+    case 'priority_changed':
+      return t({
+        tr: `Öncelik değiştirildi: ${data?.from ? priorityLabel(data.from as Priority, 'tr') : '—'} → ${data?.to ? priorityLabel(data.to as Priority, 'tr') : '—'}`,
+        en: `Priority changed: ${data?.from ? priorityLabel(data.from as Priority, 'en') : '—'} → ${data?.to ? priorityLabel(data.to as Priority, 'en') : '—'}`,
+      })
+    case 'assignee_changed':
+      return t({
+        tr: data?.to ? 'Sahip değiştirildi' : 'Sahiplik kaldırıldı',
+        en: data?.to ? 'Assignee changed' : 'Assignee removed',
+      })
+    case 'category_changed':
+      return t({ tr: `Kategori değiştirildi: ${data?.to ?? '—'}`, en: `Category changed: ${data?.to ?? '—'}` })
+    case 'bulk_update':
+      return t({ tr: `Toplu işlem: ${data?.summary ?? ''}`, en: `Bulk update: ${data?.summary ?? ''}` })
+    default:
+      return ev.event_type
+  }
 }
