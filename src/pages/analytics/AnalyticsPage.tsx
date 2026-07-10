@@ -4,6 +4,7 @@ import { AreaChart, Area, BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tool
 import { useLang } from '@/contexts/LangContext'
 import { priorityLabel } from '@/lib/priority'
 import type { Priority } from '@/types/database'
+import { ReportBuilderTab } from './ReportBuilderTab'
 import {
   useWeeklyTrend,
   useSlaCompliance,
@@ -27,6 +28,7 @@ const WIDGET_LABEL: Record<WidgetType, { tr: string; en: string }> = {
 
 export function AnalyticsPage() {
   const { lang, t } = useLang()
+  const [pageTab, setPageTab] = useState<'dashboard' | 'custom-report'>('dashboard')
   const [editing, setEditing] = useState(false)
   const [draftOrder, setDraftOrder] = useState<WidgetType[] | null>(null)
 
@@ -182,18 +184,39 @@ export function AnalyticsPage() {
             {t({ tr: 'Tüm modüllerin gerçek zamanlı özeti — kendi dashboard\'ınızı özelleştirin', en: 'Real-time summary across all modules — customize your own dashboard' })}
           </p>
         </div>
-        {!editing ? (
-          <button onClick={startEditing} className="flex items-center gap-1.5 text-[12px] font-semibold px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--panel)] text-[var(--text-sub)] hover:border-brand hover:text-brand-dim">
-            <Settings className="w-[14px] h-[14px]" />
-            {t({ tr: 'Dashboard\'ı Özelleştir', en: 'Customize Dashboard' })}
-          </button>
-        ) : (
-          <button onClick={saveAndClose} className="flex items-center gap-1.5 text-[12px] font-bold px-3.5 py-2 rounded-lg bg-brand text-white">
-            <Check className="w-[14px] h-[14px]" />
-            {t({ tr: 'Kaydet', en: 'Save' })}
-          </button>
-        )}
+        {pageTab === 'dashboard' &&
+          (!editing ? (
+            <button onClick={startEditing} className="flex items-center gap-1.5 text-[12px] font-semibold px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--panel)] text-[var(--text-sub)] hover:border-brand hover:text-brand-dim">
+              <Settings className="w-[14px] h-[14px]" />
+              {t({ tr: "Dashboard'ı Özelleştir", en: 'Customize Dashboard' })}
+            </button>
+          ) : (
+            <button onClick={saveAndClose} className="flex items-center gap-1.5 text-[12px] font-bold px-3.5 py-2 rounded-lg bg-brand text-white">
+              <Check className="w-[14px] h-[14px]" />
+              {t({ tr: 'Kaydet', en: 'Save' })}
+            </button>
+          ))}
       </div>
+
+      <div className="flex gap-1 border-b border-[var(--border)] mb-5 overflow-x-auto">
+        <button
+          onClick={() => setPageTab('dashboard')}
+          className={`shrink-0 whitespace-nowrap px-1 py-2.5 text-[13.5px] font-semibold mr-5 border-b-2 ${pageTab === 'dashboard' ? 'border-brand text-brand-dim' : 'border-transparent text-[var(--text-faint)]'}`}
+        >
+          {t({ tr: 'Dashboard', en: 'Dashboard' })}
+        </button>
+        <button
+          onClick={() => setPageTab('custom-report')}
+          className={`shrink-0 whitespace-nowrap px-1 py-2.5 text-[13.5px] font-semibold mr-5 border-b-2 ${pageTab === 'custom-report' ? 'border-brand text-brand-dim' : 'border-transparent text-[var(--text-faint)]'}`}
+        >
+          {t({ tr: 'Özel Rapor', en: 'Custom Report' })}
+        </button>
+      </div>
+
+      {pageTab === 'custom-report' ? (
+        <ReportBuilderTab />
+      ) : (
+        <>
 
       {editing && (
         <div className="bg-purple-tint/40 border border-purple/40 rounded-xl p-3.5 mb-5">
@@ -227,6 +250,8 @@ export function AnalyticsPage() {
       )}
 
       <div className="grid grid-cols-4 gap-3.5">{activeOrder.map(renderWidget)}</div>
+        </>
+      )}
     </div>
   )
 }

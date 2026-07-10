@@ -758,6 +758,24 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['ai_quota']['Insert']>
         Relationships: []
       }
+      custom_reports: {
+        Row: {
+          id: string
+          tenant_id: string
+          created_by: string
+          name: string
+          data_source: 'incidents' | 'problems' | 'changes' | 'service_requests'
+          group_by: 'category' | 'priority' | 'status' | 'assignee' | 'week'
+          date_range_days: number
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['custom_reports']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['custom_reports']['Insert']>
+        Relationships: []
+      }
       chat_conversations: {
         Row: {
           id: string
