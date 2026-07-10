@@ -59,7 +59,7 @@ export type AlertSeverity = 'critical' | 'warning' | 'info'
 export type AlertStatus = 'firing' | 'acknowledged' | 'resolved'
 export type SwapStatus = 'pending' | 'approved' | 'rejected'
 export type AutomationTrigger = 'incident_created' | 'problem_created' | 'change_created'
-export type AutomationAction = 'assign_to_user' | 'set_priority'
+export type AutomationAction = 'assign_to_user' | 'set_priority' | 'assign_by_skill'
 export type FishboneCategory = 'people' | 'process' | 'technology' | 'environment'
 export type EscalationNotifyRole = 'agent' | 'manager' | 'tenant_admin'
 export type OncallNotifyMethod = 'push' | 'call' | 'team_lead'
@@ -767,6 +767,22 @@ export interface Database {
           created_at?: string
         }
         Update: Partial<Database['public']['Tables']['oncall_swap_requests']['Insert']>
+        Relationships: []
+      }
+      user_skills: {
+        Row: {
+          id: string
+          tenant_id: string
+          user_id: string
+          category_label: string
+          proficiency: number
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['user_skills']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['user_skills']['Insert']>
         Relationships: []
       }
       automation_rules: {

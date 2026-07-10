@@ -127,13 +127,20 @@ export function NewRuleModal({ onClose }: { onClose: () => void }) {
             </button>
             <button
               type="button"
+              onClick={() => setActionType('assign_by_skill')}
+              className={`flex-1 text-[11.5px] font-bold py-2 rounded-lg border ${actionType === 'assign_by_skill' ? 'bg-purple border-purple text-white' : 'bg-[var(--panel)] border-[var(--border)] text-[var(--text-sub)]'}`}
+            >
+              {t({ tr: 'Beceriye Göre Ata', en: 'Assign by Skill' })}
+            </button>
+            <button
+              type="button"
               onClick={() => setActionType('set_priority')}
               className={`flex-1 text-[11.5px] font-bold py-2 rounded-lg border ${actionType === 'set_priority' ? 'bg-purple border-purple text-white' : 'bg-[var(--panel)] border-[var(--border)] text-[var(--text-sub)]'}`}
             >
               {t({ tr: 'Öncelik Ayarla', en: 'Set Priority' })}
             </button>
           </div>
-          {actionType === 'assign_to_user' ? (
+          {actionType === 'assign_to_user' && (
             <select
               value={actionAssigneeId}
               onChange={(e) => setActionAssigneeId(e.target.value)}
@@ -146,7 +153,16 @@ export function NewRuleModal({ onClose }: { onClose: () => void }) {
                 </option>
               ))}
             </select>
-          ) : (
+          )}
+          {actionType === 'assign_by_skill' && (
+            <p className="text-[11px] text-[var(--text-sub)] leading-relaxed">
+              {t({
+                tr: 'Kaydın kategorisiyle eşleşen bir beceriye sahip, en az açık kaydı olan teknisyene otomatik atanır (eşitlikte en yüksek yetkinlik puanı kazanır). Teknisyen becerilerini Kullanıcı Yönetimi\'nden tanımlayabilirsiniz.',
+                en: 'Automatically assigns to the technician with a matching skill for the record\'s category who has the fewest open records (ties broken by highest proficiency). Manage technician skills from User Management.',
+              })}
+            </p>
+          )}
+          {actionType === 'set_priority' && (
             <select
               value={actionPriority}
               onChange={(e) => setActionPriority(e.target.value as Priority)}

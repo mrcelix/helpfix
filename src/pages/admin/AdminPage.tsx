@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Pencil, KeyRound, Trash2 } from 'lucide-react'
+import { Plus, Pencil, KeyRound, Trash2, Star } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import { NAV_MODULES } from '@/components/layout/nav-modules'
 import { AdminCatalogTab } from './AdminCatalogTab'
@@ -9,6 +9,7 @@ import { TicketFieldsTab } from './TicketFieldsTab'
 import { NewUserModal } from './NewUserModal'
 import { EditUserModal } from './EditUserModal'
 import { ResetPasswordModal } from './ResetPasswordModal'
+import { UserSkillsModal } from './UserSkillsModal'
 import { Button } from '@/components/ui/Button'
 import {
   useTenantUsers,
@@ -107,6 +108,7 @@ function UsersTab() {
   const [showNewUserModal, setShowNewUserModal] = useState(false)
   const [editingUser, setEditingUser] = useState<TenantUser | null>(null)
   const [resettingUser, setResettingUser] = useState<TenantUser | null>(null)
+  const [skillsForUser, setSkillsForUser] = useState<TenantUser | null>(null)
 
   function handleDelete(u: TenantUser) {
     const confirmed = window.confirm(
@@ -183,6 +185,13 @@ function UsersTab() {
                     <Pencil className="w-3.5 h-3.5" />
                   </button>
                   <button
+                    onClick={() => setSkillsForUser(u)}
+                    title={t({ tr: 'Beceriler', en: 'Skills' })}
+                    className="p-1.5 rounded-md text-[var(--text-faint)] hover:text-p2 hover:bg-[var(--panel-2)]"
+                  >
+                    <Star className="w-3.5 h-3.5" />
+                  </button>
+                  <button
                     onClick={() => setResettingUser(u)}
                     title={t({ tr: 'Şifreyi Yeniden Ata', en: 'Reset Password' })}
                     className="p-1.5 rounded-md text-[var(--text-faint)] hover:text-p2 hover:bg-[var(--panel-2)]"
@@ -206,6 +215,7 @@ function UsersTab() {
       {showNewUserModal && <NewUserModal onClose={() => setShowNewUserModal(false)} />}
       {editingUser && <EditUserModal user={editingUser} onClose={() => setEditingUser(null)} />}
       {resettingUser && <ResetPasswordModal user={resettingUser} onClose={() => setResettingUser(null)} />}
+      {skillsForUser && <UserSkillsModal user={skillsForUser} onClose={() => setSkillsForUser(null)} />}
     </div>
   )
 }

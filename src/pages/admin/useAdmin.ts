@@ -255,6 +255,56 @@ export function useTenantInboundEmail() {
 }
 
 // ------------------------------------------------------------------
+// Faz BF — TEKNİSYEN BECERİLERİ (Beceri Bazlı Otomatik Atama)
+// ------------------------------------------------------------------
+export interface UserSkill {
+  id: string
+  category_label: string
+  proficiency: number
+}
+
+export function useUserSkills(userId: string) {
+  return useQuery({
+    queryKey: ['user-skills', userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const { data, error } = await supabase.from('user_skills').select('id, category_label, proficiency').eq('user_id', userId)
+      if (error) throw error
+      return data as UserSkill[]
+    },
+  })
+}
+
+export function useSetUserSkill() {
+  const qc = useQueryClient()
+  const { profile } = useAuth()
+  return useMutation({
+    mutationFn: async (input: { userId: string; categoryLabel: string; proficiency: number }) => {
+      if (!profile) throw new Error('Profil yüklenmedi')
+      const { error } = await supabase
+        .from('user_skills')
+        .upsert(
+          { tenant_id: profile.tenantId, user_id: input.userId, category_label: input.categoryLabel, proficiency: input.proficiency },
+          { onConflict: 'tenant_id,user_id,category_label' }
+        )
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['user-skills'] }),
+  })
+}
+
+export function useRemoveUserSkill() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('user_skills').delete().eq('id', id)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['user-skills'] }),
+  })
+}
+
+// ------------------------------------------------------------------
 // AI KULLANIM KOTASI — Faz AT+1
 // ------------------------------------------------------------------
 export interface AiUsageBreakdown {
