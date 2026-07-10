@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Package } from 'lucide-react'
+import { Package, Check, X, ShieldCheck } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
+import { useAuth } from '@/contexts/AuthContext'
 import {
   useCategories,
   useCatalogItems,
@@ -8,9 +9,13 @@ import {
   useUpdateServiceRequest,
   useBundles,
   useRequestBundle,
+  useCurrentApprovalStages,
+  useDecideRequestApproval,
+  approverTypeLabel,
   type CatalogSavedView,
   type ServiceRequestItem,
   type CatalogItem,
+  type RequestApproverType,
 } from './useCatalog'
 import { RequestServiceModal } from './RequestServiceModal'
 
@@ -43,6 +48,11 @@ export function CatalogPage() {
   const requestBundle = useRequestBundle()
   const [bundleSuccess, setBundleSuccess] = useState<number | null>(null)
   const { data: requests, isLoading: requestsLoading } = useServiceRequests(view)
+
+  // Faz BD — bekleyen onaylı taleplerin GÜNCEL aşamasını tek sorguda çek
+  const pendingApprovalIds = requests?.filter((r) => r.status === 'pending_approval').map((r) => r.id) ?? []
+  const { data: currentStages } = useCurrentApprovalStages(pendingApprovalIds)
+  const stageByRequest = new Map((currentStages ?? []).map((s) => [s.request_id, s]))
 
   return (
     <div>
@@ -203,7 +213,7 @@ export function CatalogPage() {
                   </tr>
                 )}
                 {requests?.map((r) => (
-                  <RequestRow key={r.id} request={r} />
+                  <RequestRow key={r.id} request={r} currentStage={stageByRequest.get(r.id)} />
                 ))}
               </tbody>
             </table>
@@ -216,32 +226,64 @@ export function CatalogPage() {
   )
 }
 
-function RequestRow({ request }: { request: ServiceRequestItem }) {
+function RequestRow({
+  request,
+  currentStage,
+}: {
+  request: ServiceRequestItem
+  currentStage?: { id: string; stage: number; approver_type: RequestApproverType }
+}) {
   const { lang, t } = useLang()
+  const { profile } = useAuth()
   const updateRequest = useUpdateServiceRequest(request.id)
+  const decideApproval = useDecideRequestApproval(request.id)
+
+  // Bu aşamayı karar verebilecek biri mi? (RLS zaten server-side uyguluyor,
+  // burada sadece UI'ı gereksiz butonlarla kalabalıklaştırmamak için.)
+  const canDecideStage =
+    !!currentStage &&
+    !!profile &&
+    ((currentStage.approver_type === 'tenant_admin' && profile.role === 'tenant_admin') ||
+      (currentStage.approver_type === 'department_manager' && ['manager', 'tenant_admin'].includes(profile.role)) ||
+      currentStage.approver_type === 'specific_user') // spesifik kişi kontrolü RLS'te; burada iyimser göster
 
   return (
     <tr className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--row-hover)]">
       <td className="px-3.5 py-3 font-mono text-[var(--text-faint)]">{request.ref}</td>
       <td className="px-3.5 py-3 font-semibold">{request.catalog_item?.name ?? '—'}</td>
       <td className="px-3.5 py-3 text-[var(--text-sub)]">{request.requester?.full_name ?? '—'}</td>
-      <td className="px-3.5 py-3 text-[var(--text-sub)]">{STATUS_LABEL[request.status]?.[lang] ?? request.status}</td>
+      <td className="px-3.5 py-3 text-[var(--text-sub)]">
+        {STATUS_LABEL[request.status]?.[lang] ?? request.status}
+        {request.status === 'pending_approval' && currentStage && (
+          <span className="ml-1.5 inline-flex items-center gap-1 text-[10px] font-bold bg-p2-tint text-p2 rounded-full px-1.5 py-0.5">
+            <ShieldCheck className="w-2.5 h-2.5" />
+            {t({ tr: 'Aşama', en: 'Stage' })} {currentStage.stage}: {approverTypeLabel(currentStage.approver_type, lang)}
+          </span>
+        )}
+      </td>
       <td className="px-3.5 py-3">
-        {request.status === 'pending_approval' && (
+        {request.status === 'pending_approval' && canDecideStage && currentStage && (
           <div className="flex gap-1.5">
             <button
-              onClick={() => updateRequest.mutate({ status: 'approved' })}
-              className="text-[10.5px] font-bold px-2 py-1 rounded-md bg-ok text-white"
+              onClick={() => decideApproval.mutate({ approvalId: currentStage.id, stage: currentStage.stage, decision: 'approved' })}
+              className="flex items-center gap-1 text-[10.5px] font-bold px-2 py-1 rounded-md bg-ok text-white"
             >
+              <Check className="w-3 h-3" />
               {t({ tr: 'Onayla', en: 'Approve' })}
             </button>
             <button
-              onClick={() => updateRequest.mutate({ status: 'rejected' })}
-              className="text-[10.5px] font-bold px-2 py-1 rounded-md bg-[var(--panel-2)] border border-[var(--border)]"
+              onClick={() => decideApproval.mutate({ approvalId: currentStage.id, stage: currentStage.stage, decision: 'rejected' })}
+              className="flex items-center gap-1 text-[10.5px] font-bold px-2 py-1 rounded-md bg-[var(--panel-2)] border border-[var(--border)]"
             >
+              <X className="w-3 h-3" />
               {t({ tr: 'Reddet', en: 'Reject' })}
             </button>
           </div>
+        )}
+        {request.status === 'pending_approval' && !canDecideStage && (
+          <span className="text-[10.5px] text-[var(--text-faint)] italic">
+            {t({ tr: 'Başka bir onaylayıcı bekleniyor', en: 'Waiting on another approver' })}
+          </span>
         )}
         {request.status === 'approved' && (
           <button

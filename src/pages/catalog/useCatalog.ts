@@ -165,6 +165,140 @@ export function useUpdateServiceRequest(id: string) {
 }
 
 // ------------------------------------------------------------------
+// Faz BD — ÇOK KADEMELİ ONAY ZİNCİRİ
+// ------------------------------------------------------------------
+export type RequestApproverType = 'department_manager' | 'tenant_admin' | 'specific_user'
+
+export interface RequestApprovalChainStep {
+  type: RequestApproverType
+  approver_id?: string
+}
+
+export interface RequestApprovalStage {
+  id: string
+  stage: number
+  approver_type: RequestApproverType
+  status: 'pending' | 'approved' | 'rejected'
+  comment: string | null
+  decided_at: string | null
+  approver: { full_name: string } | null
+}
+
+const APPROVER_TYPE_LABEL: Record<RequestApproverType, { tr: string; en: string }> = {
+  department_manager: { tr: 'Departman Yöneticisi', en: 'Department Manager' },
+  tenant_admin: { tr: 'Tenant Admin', en: 'Tenant Admin' },
+  specific_user: { tr: 'Belirli Kişi', en: 'Specific Person' },
+}
+
+export function approverTypeLabel(type: RequestApproverType, lang: 'tr' | 'en'): string {
+  return APPROVER_TYPE_LABEL[type][lang]
+}
+
+export function useRequestApprovals(requestId: string | null) {
+  return useQuery({
+    queryKey: ['request-approvals', requestId],
+    enabled: !!requestId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('request_approvals')
+        .select('id, stage, approver_type, status, comment, decided_at, approver:approver_id ( full_name )')
+        .eq('request_id', requestId!)
+        .order('stage')
+      if (error) throw error
+      return data as unknown as RequestApprovalStage[]
+    },
+  })
+}
+
+/** Bekleyen onaylı taleplerde her birinin GÜNCEL (bekleyen) aşamasını
+ * tek sorguda getirir — liste görünümünde N+1 sorgu yapmamak için. */
+export function useCurrentApprovalStages(requestIds: string[]) {
+  return useQuery({
+    queryKey: ['current-approval-stages', requestIds.join(',')],
+    enabled: requestIds.length > 0,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('request_approvals')
+        .select('id, request_id, stage, approver_type')
+        .in('request_id', requestIds)
+        .eq('status', 'pending')
+      if (error) throw error
+      return data as { id: string; request_id: string; stage: number; approver_type: RequestApproverType }[]
+    },
+  })
+}
+
+/** Bir onay aşamasını onaylar/reddeder. Onaylanırsa ve zincirde sıradaki
+ * aşama varsa onu oluşturur; yoksa talebi 'approved' yapar. Reddedilirse
+ * talep hemen 'rejected' olur. (change_approvals ile aynı istemci taraflı
+ * orkestrasyon deseni.) */
+export function useDecideRequestApproval(requestId: string) {
+  const qc = useQueryClient()
+  const { profile } = useAuth()
+
+  return useMutation({
+    mutationFn: async (input: { approvalId: string; stage: number; decision: 'approved' | 'rejected'; comment?: string }) => {
+      const { error } = await supabase
+        .from('request_approvals')
+        .update({
+          status: input.decision,
+          approver_id: profile?.id,
+          comment: input.comment ?? null,
+          decided_at: new Date().toISOString(),
+        })
+        .eq('id', input.approvalId)
+      if (error) throw error
+
+      if (input.decision === 'rejected') {
+        await supabase
+          .from('service_requests')
+          .update({ status: 'rejected', approver_id: profile?.id, approval_comment: input.comment ?? null })
+          .eq('id', requestId)
+        return
+      }
+
+      const { data: request, error: reqError } = await supabase
+        .from('service_requests')
+        .select('catalog_item_id')
+        .eq('id', requestId)
+        .single()
+      if (reqError) throw reqError
+
+      const { data: item, error: itemError } = await supabase
+        .from('service_catalog_items')
+        .select('approval_chain')
+        .eq('id', request.catalog_item_id)
+        .single()
+      if (itemError) throw itemError
+
+      const chain = (item.approval_chain as unknown as RequestApprovalChainStep[]) ?? []
+      const nextStepIndex = input.stage // 0-indeksli dizide sıradaki eleman
+
+      if (chain.length > nextStepIndex) {
+        const next = chain[nextStepIndex]
+        const { error: insertError } = await supabase.from('request_approvals').insert({
+          request_id: requestId,
+          stage: input.stage + 1,
+          approver_type: next.type,
+          approver_id: next.type === 'specific_user' ? next.approver_id ?? null : null,
+        })
+        if (insertError) throw insertError
+      } else {
+        await supabase
+          .from('service_requests')
+          .update({ status: 'approved', approver_id: profile?.id, approval_comment: input.comment ?? null })
+          .eq('id', requestId)
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['service-requests'] })
+      qc.invalidateQueries({ queryKey: ['request-approvals', requestId] })
+      qc.invalidateQueries({ queryKey: ['current-approval-stages'] })
+    },
+  })
+}
+
+// ------------------------------------------------------------------
 // HİZMET PAKETLERİ (Bundles) — örn. "Yeni İşe Alım Paketi"
 // ------------------------------------------------------------------
 export interface ServiceBundle {
@@ -273,7 +407,7 @@ export function useAllCatalogItemsAdmin() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('service_catalog_items')
-        .select('id, name, category_id, is_active, requires_approval, estimated_cost, estimated_days, category:category_id ( name )')
+        .select('id, name, category_id, is_active, requires_approval, estimated_cost, estimated_days, approval_chain, category:category_id ( name )')
         .order('name')
       if (error) throw error
       return data as unknown as {
@@ -284,9 +418,21 @@ export function useAllCatalogItemsAdmin() {
         requires_approval: boolean
         estimated_cost: number | null
         estimated_days: number | null
+        approval_chain: RequestApprovalChainStep[]
         category: { name: string } | null
       }[]
     },
+  })
+}
+
+export function useUpdateCatalogItemApprovalChain() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: { id: string; chain: RequestApprovalChainStep[] }) => {
+      const { error } = await supabase.from('service_catalog_items').update({ approval_chain: input.chain }).eq('id', input.id)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['catalog-items-admin'] }),
   })
 }
 
@@ -315,6 +461,7 @@ export function useCreateCatalogItem() {
         approval_threshold: null,
         is_active: true,
         form_schema: null,
+        approval_chain: [],
       })
       if (error) throw error
     },

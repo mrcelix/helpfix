@@ -382,6 +382,7 @@ export interface Database {
           approval_threshold: number | null
           is_active: boolean
           form_schema: Record<string, unknown> | null
+          approval_chain: unknown
           created_at: string
         }
         Insert: Omit<Database['public']['Tables']['service_catalog_items']['Row'], 'id' | 'created_at'> & {
@@ -419,6 +420,28 @@ export interface Database {
           updated_at?: string
         }
         Update: Partial<Database['public']['Tables']['service_requests']['Insert']>
+        Relationships: []
+      }
+      request_approvals: {
+        Row: {
+          id: string
+          request_id: string
+          stage: number
+          approver_type: 'department_manager' | 'tenant_admin' | 'specific_user'
+          approver_id: string | null
+          status: 'pending' | 'approved' | 'rejected'
+          comment: string | null
+          decided_at: string | null
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['request_approvals']['Row'], 'id' | 'created_at' | 'status' | 'comment' | 'decided_at'> & {
+          id?: string
+          created_at?: string
+          status?: 'pending' | 'approved' | 'rejected'
+          comment?: string | null
+          decided_at?: string | null
+        }
+        Update: Partial<Database['public']['Tables']['request_approvals']['Insert']>
         Relationships: []
       }
       configuration_items: {
