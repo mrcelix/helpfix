@@ -136,6 +136,8 @@ export interface Database {
           sla_policy_id: string | null
           sla_due_at: string | null
           csat_score: number | null
+          email_message_id: string | null
+          custom_fields: Record<string, string>
           created_at: string
           updated_at: string
           resolved_at: string | null
@@ -143,14 +145,30 @@ export interface Database {
         }
         Insert: Omit<
           Database['public']['Tables']['incidents']['Row'],
-          'id' | 'ref' | 'created_at' | 'updated_at'
+          'id' | 'ref' | 'created_at' | 'updated_at' | 'custom_fields'
         > & {
           id?: string
           ref?: string
           created_at?: string
           updated_at?: string
+          custom_fields?: Record<string, string>
         }
         Update: Partial<Database['public']['Tables']['incidents']['Insert']>
+        Relationships: []
+      }
+      ticket_category_fields: {
+        Row: {
+          id: string
+          tenant_id: string
+          category_key: string
+          field_schema: unknown
+          updated_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['ticket_category_fields']['Row'], 'id' | 'updated_at'> & {
+          id?: string
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['ticket_category_fields']['Insert']>
         Relationships: []
       }
       incident_comments: {

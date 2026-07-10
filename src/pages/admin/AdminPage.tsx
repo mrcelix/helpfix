@@ -5,6 +5,7 @@ import { NAV_MODULES } from '@/components/layout/nav-modules'
 import { AdminCatalogTab } from './AdminCatalogTab'
 import { AiUsageTab } from './AiUsageTab'
 import { EmailSettingsTab } from './EmailSettingsTab'
+import { TicketFieldsTab } from './TicketFieldsTab'
 import { NewUserModal } from './NewUserModal'
 import { EditUserModal } from './EditUserModal'
 import { ResetPasswordModal } from './ResetPasswordModal'
@@ -27,7 +28,7 @@ const ROLE_OPTIONS: UserRole[] = ['tenant_admin', 'manager', 'agent', 'requester
 
 export function AdminPage() {
   const { t } = useLang()
-  const [tab, setTab] = useState<'users' | 'departments' | 'modules' | 'catalog' | 'audit' | 'ai' | 'email'>('users')
+  const [tab, setTab] = useState<'users' | 'departments' | 'modules' | 'catalog' | 'audit' | 'ai' | 'email' | 'ticket-fields'>('users')
 
   return (
     <div>
@@ -62,6 +63,9 @@ export function AdminPage() {
         <TabButton active={tab === 'email'} onClick={() => setTab('email')}>
           {t({ tr: 'E-posta Ayarları', en: 'Email Settings' })}
         </TabButton>
+        <TabButton active={tab === 'ticket-fields'} onClick={() => setTab('ticket-fields')}>
+          {t({ tr: 'Talep Alanları', en: 'Ticket Fields' })}
+        </TabButton>
       </div>
 
       {tab === 'users' && <UsersTab />}
@@ -71,6 +75,7 @@ export function AdminPage() {
       {tab === 'audit' && <AuditLogTab />}
       {tab === 'ai' && <AiUsageTab />}
       {tab === 'email' && <EmailSettingsTab />}
+      {tab === 'ticket-fields' && <TicketFieldsTab />}
     </div>
   )
 

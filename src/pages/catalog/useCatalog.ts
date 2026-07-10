@@ -2,20 +2,15 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import type { RequestStatus } from '@/types/database'
+import type { FormFieldSchema } from '@/components/ui/DynamicFields'
+
+export type { FormFieldSchema }
 
 export interface CatalogCategory {
   id: string
   name: string
   icon: string | null
   sort_order: number
-}
-
-export interface FormFieldSchema {
-  key: string
-  label: string
-  type: 'select' | 'text'
-  options?: string[]
-  showIf?: { field: string; equals: string }
 }
 
 export interface CatalogItem {
@@ -407,7 +402,7 @@ export function useAllCatalogItemsAdmin() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('service_catalog_items')
-        .select('id, name, category_id, is_active, requires_approval, estimated_cost, estimated_days, approval_chain, category:category_id ( name )')
+        .select('id, name, category_id, is_active, requires_approval, estimated_cost, estimated_days, approval_chain, form_schema, category:category_id ( name )')
         .order('name')
       if (error) throw error
       return data as unknown as {
@@ -419,6 +414,7 @@ export function useAllCatalogItemsAdmin() {
         estimated_cost: number | null
         estimated_days: number | null
         approval_chain: RequestApprovalChainStep[]
+        form_schema: { fields: FormFieldSchema[] } | null
         category: { name: string } | null
       }[]
     },
@@ -433,6 +429,23 @@ export function useUpdateCatalogItemApprovalChain() {
       if (error) throw error
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['catalog-items-admin'] }),
+  })
+}
+
+export function useUpdateCatalogItemFormSchema() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: { id: string; fields: FormFieldSchema[] }) => {
+      const { error } = await supabase
+        .from('service_catalog_items')
+        .update({ form_schema: input.fields.length ? { fields: input.fields } : null })
+        .eq('id', input.id)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['catalog-items-admin'] })
+      qc.invalidateQueries({ queryKey: ['catalog-items'] })
+    },
   })
 }
 

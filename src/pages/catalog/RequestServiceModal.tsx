@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
+import { DynamicFieldsRenderer } from '@/components/ui/DynamicFields'
 import { useLang } from '@/contexts/LangContext'
 import { useCreateServiceRequest } from './useCatalog'
 import type { FormFieldSchema } from './useCatalog'
@@ -19,11 +20,6 @@ export function RequestServiceModal({
   const [done, setDone] = useState(false)
 
   const fields = item.formSchema?.fields ?? []
-
-  function isVisible(field: FormFieldSchema): boolean {
-    if (!field.showIf) return true
-    return formValues[field.showIf.field] === field.showIf.equals
-  }
 
   async function handleSubmit() {
     await createRequest.mutateAsync({
@@ -77,33 +73,11 @@ export function RequestServiceModal({
         {/* Koşullu form mantığı: bir alanın görünürlüğü başka bir alanın
             değerine bağlı olabilir (örn. Cihaz Tipi="Laptop" ise RAM
             Tercihi alanı görünür). */}
-        {fields.filter(isVisible).map((field) => (
-          <div key={field.key}>
-            <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">
-              {field.label}
-            </label>
-            {field.type === 'select' ? (
-              <select
-                value={formValues[field.key] ?? ''}
-                onChange={(e) => setFormValues((v) => ({ ...v, [field.key]: e.target.value }))}
-                className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-[13px]"
-              >
-                <option value="">{t({ tr: 'Seçin…', en: 'Select…' })}</option>
-                {field.options?.map((opt) => (
-                  <option key={opt} value={opt}>
-                    {opt}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <input
-                value={formValues[field.key] ?? ''}
-                onChange={(e) => setFormValues((v) => ({ ...v, [field.key]: e.target.value }))}
-                className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-[13px]"
-              />
-            )}
-          </div>
-        ))}
+        <DynamicFieldsRenderer
+          fields={fields}
+          values={formValues}
+          onChange={(key, value) => setFormValues((v) => ({ ...v, [key]: value }))}
+        />
 
         <div>
           <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">

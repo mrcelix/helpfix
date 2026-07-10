@@ -111,6 +111,8 @@ export function useCreateIncidentFromAlert() {
           closed_at: null,
           is_major_incident: false,
           major_incident_declared_at: null,
+          email_message_id: null,
+          custom_fields: {},
         })
         .select('id')
         .single()

@@ -174,6 +174,17 @@ export function TicketDrawer({ id, onClose }: { id: string; onClose: () => void 
             </p>
           )}
 
+          {incident.custom_fields && Object.keys(incident.custom_fields).length > 0 && (
+            <div className="grid grid-cols-2 gap-2.5 bg-[var(--panel-2)] border border-[var(--border)] rounded-lg p-3">
+              {Object.entries(incident.custom_fields).map(([key, value]) => (
+                <div key={key}>
+                  <div className="text-[9.5px] font-bold text-[var(--text-faint)] uppercase tracking-wide">{key}</div>
+                  <div className="text-[12px] font-semibold">{value || '—'}</div>
+                </div>
+              ))}
+            </div>
+          )}
+
           {canManage && (
             <div>
               <button

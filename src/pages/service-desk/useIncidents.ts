@@ -29,6 +29,7 @@ export interface IncidentDetail extends IncidentListItem {
   closed_at: string | null
   is_major_incident: boolean
   major_incident_declared_at: string | null
+  custom_fields: Record<string, string>
 }
 
 export interface IncidentComment {
@@ -121,7 +122,7 @@ export function useIncidentDetail(id: string | null) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('incidents')
-        .select(`${SELECT_LIST}, description, csat_score, resolved_at, closed_at, is_major_incident, major_incident_declared_at`)
+        .select(`${SELECT_LIST}, description, csat_score, resolved_at, closed_at, is_major_incident, major_incident_declared_at, custom_fields`)
         .eq('id', id!)
         .single()
       if (error) throw error
@@ -178,6 +179,61 @@ export function useDistinctCategories() {
 }
 
 // ------------------------------------------------------------------
+// Faz BE — Servis Masası'nda kategoriye özel dinamik alanlar
+// ------------------------------------------------------------------
+export function useTicketCategoryFields(categoryKey: string | null) {
+  const { profile } = useAuth()
+  return useQuery({
+    queryKey: ['ticket-category-fields', profile?.tenantId, categoryKey],
+    enabled: !!profile && !!categoryKey,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('ticket_category_fields')
+        .select('field_schema')
+        .eq('category_key', categoryKey!)
+        .maybeSingle()
+      if (error) throw error
+      return (data?.field_schema as unknown as { key: string; label: string; type: 'select' | 'text'; options?: string[] }[]) ?? []
+    },
+  })
+}
+
+/** Admin panelinde TÜM kategorilerin alan şemasını tek seferde getirir. */
+export function useAllTicketCategoryFields() {
+  const { profile } = useAuth()
+  return useQuery({
+    queryKey: ['all-ticket-category-fields', profile?.tenantId],
+    enabled: !!profile,
+    queryFn: async () => {
+      const { data, error } = await supabase.from('ticket_category_fields').select('category_key, field_schema')
+      if (error) throw error
+      return data as { category_key: string; field_schema: unknown }[]
+    },
+  })
+}
+
+export function useSetTicketCategoryFields() {
+  const qc = useQueryClient()
+  const { profile } = useAuth()
+  return useMutation({
+    mutationFn: async (input: { categoryKey: string; fields: unknown[] }) => {
+      if (!profile) throw new Error('Profil yüklenmedi')
+      const { error } = await supabase
+        .from('ticket_category_fields')
+        .upsert(
+          { tenant_id: profile.tenantId, category_key: input.categoryKey, field_schema: input.fields, updated_at: new Date().toISOString() },
+          { onConflict: 'tenant_id,category_key' }
+        )
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['ticket-category-fields'] })
+      qc.invalidateQueries({ queryKey: ['all-ticket-category-fields'] })
+    },
+  })
+}
+
+// ------------------------------------------------------------------
 // MUTATIONS
 // ------------------------------------------------------------------
 export function useCreateIncident() {
@@ -190,6 +246,7 @@ export function useCreateIncident() {
       description: string
       priority: Priority
       category: string | null
+      customFields?: Record<string, string>
     }) => {
       if (!profile) throw new Error('Profil yüklenmedi')
       const { data, error } = await supabase
@@ -213,6 +270,8 @@ export function useCreateIncident() {
           closed_at: null,
           is_major_incident: false,
           major_incident_declared_at: null,
+          email_message_id: null,
+          custom_fields: input.customFields ?? {},
         })
         .select('id, ref')
         .single()

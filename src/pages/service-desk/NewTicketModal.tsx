@@ -4,7 +4,8 @@ import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { VoiceInputButton } from '@/components/ui/VoiceInputButton'
 import { useLang } from '@/contexts/LangContext'
-import { useCreateIncident, useDistinctCategories } from './useIncidents'
+import { useCreateIncident, useDistinctCategories, useTicketCategoryFields } from './useIncidents'
+import { DynamicFieldsRenderer } from '@/components/ui/DynamicFields'
 import { useSuggestTriage, type TriageSuggestion } from './useAiAssist'
 import { useSuggestedArticles } from '@/pages/knowledge-base/useKnowledgeBase'
 import { TICKET_CATEGORIES, resolveCategoryLabel, type TicketCategory, type TicketSubcategory } from './ticket-categories'
@@ -54,6 +55,10 @@ export function NewTicketModal({ onClose }: { onClose: () => void }) {
   }, [title, description])
   const { data: suggestedArticles } = useSuggestedArticles(kbQuery)
 
+  // Faz BE — seçilen kategoriye özel dinamik alanlar
+  const { data: dynamicFields } = useTicketCategoryFields(selectedCategory?.key ?? null)
+  const [customFieldValues, setCustomFieldValues] = useState<Record<string, string>>({})
+
   const finalCategory =
     categoryOverride ?? (selectedCategory ? resolveCategoryLabel(selectedCategory, selectedSubcategory, lang) : '')
 
@@ -61,6 +66,7 @@ export function NewTicketModal({ onClose }: { onClose: () => void }) {
     setSelectedCategory(cat)
     setSelectedSubcategory(null)
     setCategoryOverride(null)
+    setCustomFieldValues({})
     setStep(cat.subcategories.length ? 'subcategory' : 'details')
   }
 
@@ -75,6 +81,7 @@ export function NewTicketModal({ onClose }: { onClose: () => void }) {
     setSelectedSubcategory(sub)
     setCategoryOverride(null)
     setCategorySearch('')
+    setCustomFieldValues({})
     setStep('details')
   }
 
@@ -112,6 +119,7 @@ export function NewTicketModal({ onClose }: { onClose: () => void }) {
       description: description.trim(),
       priority,
       category: finalCategory.trim() || null,
+      customFields: Object.keys(customFieldValues).length ? customFieldValues : undefined,
     })
     onClose()
   }
@@ -384,6 +392,19 @@ export function NewTicketModal({ onClose }: { onClose: () => void }) {
               ))}
             </div>
           </div>
+
+          {!!dynamicFields?.length && (
+            <div className="space-y-3.5 pt-1 border-t border-[var(--border)] mt-1">
+              <p className="text-[10.5px] font-bold text-[var(--text-faint)] uppercase tracking-wide pt-3">
+                {t({ tr: 'Kategoriye Özel Bilgiler', en: 'Category-Specific Details' })}
+              </p>
+              <DynamicFieldsRenderer
+                fields={dynamicFields}
+                values={customFieldValues}
+                onChange={(key, value) => setCustomFieldValues((v) => ({ ...v, [key]: value }))}
+              />
+            </div>
+          )}
         </form>
       )}
     </Modal>
