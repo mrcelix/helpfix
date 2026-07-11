@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useOpenParam } from '@/hooks/useOpenParam'
-import { Plus, List, Share2, Download, ShieldCheck, Layers } from 'lucide-react'
+import { Plus, List, Share2, Download, ShieldCheck, Layers, Package } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import { Button } from '@/components/ui/Button'
 import { useConfigurationItems, useDuplicateCis, type CiSavedView } from './useCmdb'
@@ -11,6 +11,8 @@ import { SoftwareLicensesTab } from './SoftwareLicensesTab'
 import { NewSoftwareLicenseModal } from './NewSoftwareLicenseModal'
 import { BusinessServicesTab } from './BusinessServicesTab'
 import { NewBusinessServiceModal } from './NewBusinessServiceModal'
+import { ConsumablesTab } from './ConsumablesTab'
+import { NewConsumableModal } from './NewConsumableModal'
 
 const SAVED_VIEWS: { key: CiSavedView; label: { tr: string; en: string } }[] = [
   { key: 'all', label: { tr: 'Tümü', en: 'All' } },
@@ -45,7 +47,8 @@ function isWarrantySoon(dateStr: string | null) {
 export function CmdbPage() {
   const { lang, t } = useLang()
   const [view, setView] = useState<CiSavedView>('all')
-  const [moduleTab, setModuleTab] = useState<'assets' | 'licenses' | 'services'>('assets')
+  const [moduleTab, setModuleTab] = useState<'assets' | 'licenses' | 'services' | 'consumables'>('assets')
+  const [showNewConsumableModal, setShowNewConsumableModal] = useState(false)
   const [showNewServiceModal, setShowNewServiceModal] = useState(false)
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list')
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -127,6 +130,11 @@ export function CmdbPage() {
               <Plus className="w-[15px] h-[15px]" />
               {t({ tr: 'Yeni Lisans', en: 'New License' })}
             </Button>
+          ) : moduleTab === 'consumables' ? (
+            <Button onClick={() => setShowNewConsumableModal(true)}>
+              <Plus className="w-[15px] h-[15px]" />
+              {t({ tr: 'Yeni Kalem', en: 'New Item' })}
+            </Button>
           ) : (
             <Button onClick={() => setShowNewServiceModal(true)}>
               <Plus className="w-[15px] h-[15px]" />
@@ -157,10 +165,18 @@ export function CmdbPage() {
           <ShieldCheck className="w-3.5 h-3.5" />
           {t({ tr: 'Yazılım Lisansları', en: 'Software Licenses' })}
         </button>
+        <button
+          onClick={() => setModuleTab('consumables')}
+          className={`shrink-0 whitespace-nowrap flex items-center gap-1.5 px-1 py-2.5 text-[13.5px] font-semibold mr-5 border-b-2 ${moduleTab === 'consumables' ? 'border-brand text-brand-dim' : 'border-transparent text-[var(--text-faint)]'}`}
+        >
+          <Package className="w-3.5 h-3.5" />
+          {t({ tr: 'Sarf Malzemeleri', en: 'Consumables' })}
+        </button>
       </div>
 
       {moduleTab === 'services' && <BusinessServicesTab />}
       {moduleTab === 'licenses' && <SoftwareLicensesTab />}
+      {moduleTab === 'consumables' && <ConsumablesTab />}
 
       {moduleTab === 'assets' && (
       <>
@@ -282,6 +298,7 @@ export function CmdbPage() {
       {showNewModal && <NewCiModal onClose={() => setShowNewModal(false)} />}
       {showNewLicenseModal && <NewSoftwareLicenseModal onClose={() => setShowNewLicenseModal(false)} />}
       {showNewServiceModal && <NewBusinessServiceModal onClose={() => setShowNewServiceModal(false)} />}
+      {showNewConsumableModal && <NewConsumableModal onClose={() => setShowNewConsumableModal(false)} />}
     </div>
   )
 }

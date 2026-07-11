@@ -1,8 +1,11 @@
 import { useState } from 'react'
-import { Trash2, Wifi, WifiOff } from 'lucide-react'
+import { Trash2, Wifi, WifiOff, UserCheck, UserX, QrCode, History, Settings2 } from 'lucide-react'
 import { Drawer } from '@/components/ui/Drawer'
 import { useLang } from '@/contexts/LangContext'
 import { useCiDetail, useLinkedRecords, useUpdateCi, useConfigurationItems, useCiRelationships, useCreateRelationship, useDeleteRelationship } from './useCmdb'
+import { useCiCheckoutHistory, useCheckoutCi, useCheckinCi, useCiTypeFields, useSetCiTypeFields } from './useAssetOps'
+import { useAssignableUsers } from '@/pages/oncall/useOnCall'
+import { DynamicFieldsRenderer, FieldSchemaEditor } from '@/components/ui/DynamicFields'
 import type { CiStatus } from '@/types/database'
 
 const STATUS_OPTIONS: CiStatus[] = ['active', 'in_repair', 'retired', 'unmanaged']
@@ -19,7 +22,31 @@ export function CiDrawer({ id, onClose }: { id: string; onClose: () => void }) {
   const [targetCiId, setTargetCiId] = useState('')
   const [relType, setRelType] = useState<'depends_on' | 'hosted_on' | 'connected_to'>('depends_on')
 
+  const { data: checkoutHistory } = useCiCheckoutHistory(id)
+  const { data: users } = useAssignableUsers()
+  const checkoutCi = useCheckoutCi()
+  const checkinCi = useCheckinCi()
+  const [checkoutUserId, setCheckoutUserId] = useState('')
+  const [showQr, setShowQr] = useState(false)
+  const [editingFields, setEditingFields] = useState(false)
+
+  const { data: typeFields } = useCiTypeFields(ci?.ci_type ?? null)
+  const setTypeFields = useSetCiTypeFields()
+
+  const openCheckout = checkoutHistory?.find((h) => !h.checked_in_at)
+
   const totalLinked = (linked?.incidents.length ?? 0) + (linked?.problems.length ?? 0) + (linked?.changes.length ?? 0)
+
+  function handleCheckout() {
+    if (!checkoutUserId) return
+    checkoutCi.mutate({ ciId: id, userId: checkoutUserId })
+    setCheckoutUserId('')
+  }
+
+  function handleCheckin() {
+    if (!openCheckout) return
+    checkinCi.mutate({ ciId: id, openHistoryId: openCheckout.id })
+  }
 
   return (
     <Drawer open onClose={onClose} title={ci?.name ?? '…'} subtitle={ci && <span className="font-mono">{ci.tag}</span>} widthClass="w-[460px]">
@@ -99,8 +126,104 @@ export function CiDrawer({ id, onClose }: { id: string; onClose: () => void }) {
               label={t({ tr: 'Garanti Bitiş', en: 'Warranty Expiry' })}
               value={ci.warranty_expiry ? new Date(ci.warranty_expiry).toLocaleDateString(lang === 'tr' ? 'tr-TR' : 'en-US') : '—'}
             />
-            <Field label={t({ tr: 'Zimmetli Kullanıcı', en: 'Assigned User' })} value={ci.assigned_user?.full_name ?? '—'} />
           </div>
+
+          <div>
+            <label className="block text-[10.5px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">
+              {t({ tr: 'Zimmet (Checkout/Checkin)', en: 'Checkout/Checkin' })}
+            </label>
+            {openCheckout ? (
+              <div className="bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-[12.5px] font-semibold">
+                    <UserCheck className="w-3.5 h-3.5 text-brand-dim" />
+                    {openCheckout.checked_out_to?.full_name ?? '—'}
+                  </span>
+                  <button
+                    onClick={handleCheckin}
+                    disabled={checkinCi.isPending}
+                    className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-md bg-[var(--panel)] border border-[var(--border)] hover:border-p1 hover:text-p1 disabled:opacity-40"
+                  >
+                    <UserX className="w-3.5 h-3.5" />
+                    {t({ tr: 'Geri Al', en: 'Check In' })}
+                  </button>
+                </div>
+                <div className="text-[10.5px] text-[var(--text-faint)] mt-1">
+                  {t({ tr: 'Teslim tarihi:', en: 'Checked out:' })} {new Date(openCheckout.checked_out_at).toLocaleDateString(lang === 'tr' ? 'tr-TR' : 'en-US')}
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5">
+                <select
+                  value={checkoutUserId}
+                  onChange={(e) => setCheckoutUserId(e.target.value)}
+                  className="flex-1 bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-2.5 py-2 text-[12.5px]"
+                >
+                  <option value="">{t({ tr: 'Kişi seçin…', en: 'Select person…' })}</option>
+                  {users?.map((u) => (
+                    <option key={u.id} value={u.id}>
+                      {u.full_name}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={handleCheckout}
+                  disabled={!checkoutUserId || checkoutCi.isPending}
+                  className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-2 rounded-lg bg-brand text-white disabled:opacity-40 shrink-0"
+                >
+                  <UserCheck className="w-3.5 h-3.5" />
+                  {t({ tr: 'Teslim Et', en: 'Check Out' })}
+                </button>
+              </div>
+            )}
+            {!!checkoutHistory?.length && (
+              <details className="mt-2">
+                <summary className="text-[10.5px] font-bold text-[var(--text-faint)] cursor-pointer flex items-center gap-1">
+                  <History className="w-3 h-3" />
+                  {t({ tr: 'Zimmet Geçmişi', en: 'Checkout History' })} ({checkoutHistory.length})
+                </summary>
+                <div className="mt-1.5 space-y-1">
+                  {checkoutHistory.map((h) => (
+                    <div key={h.id} className="text-[11px] text-[var(--text-sub)] bg-[var(--panel-2)] rounded-md px-2.5 py-1.5">
+                      <b>{h.checked_out_to?.full_name ?? '—'}</b> —{' '}
+                      {new Date(h.checked_out_at).toLocaleDateString(lang === 'tr' ? 'tr-TR' : 'en-US')}
+                      {h.checked_in_at ? ` → ${new Date(h.checked_in_at).toLocaleDateString(lang === 'tr' ? 'tr-TR' : 'en-US')}` : ` (${t({ tr: 'devam ediyor', en: 'ongoing' })})`}
+                    </div>
+                  ))}
+                </div>
+              </details>
+            )}
+          </div>
+
+          {(!!typeFields?.length || editingFields) && (
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-[10.5px] font-bold text-[var(--text-faint)] uppercase tracking-wide">
+                  {t({ tr: 'Özel Alanlar', en: 'Custom Fields' })} ({ci.ci_type})
+                </label>
+                <button onClick={() => setEditingFields((e) => !e)} className="text-[var(--text-faint)] hover:text-brand-dim">
+                  <Settings2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              {editingFields ? (
+                <CiTypeFieldsEditor ciType={ci.ci_type} initialFields={typeFields ?? []} onSave={(f) => setTypeFields.mutate({ ciType: ci.ci_type, fields: f })} isPending={setTypeFields.isPending} />
+              ) : (
+                <div className="space-y-3">
+                  <DynamicFieldsRenderer
+                    fields={typeFields ?? []}
+                    values={ci.custom_fields}
+                    onChange={(key, value) => updateCi.mutate({ custom_fields: { ...ci.custom_fields, [key]: value } })}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+          {!typeFields?.length && !editingFields && (
+            <button onClick={() => setEditingFields(true)} className="flex items-center gap-1 text-[10.5px] font-bold text-brand-dim">
+              <Settings2 className="w-3 h-3" />
+              {t({ tr: `Bu tip için özel alan tanımla (${ci.ci_type})`, en: `Define custom fields for this type (${ci.ci_type})` })}
+            </button>
+          )}
 
           {ci.notes && (
             <div>
@@ -110,6 +233,31 @@ export function CiDrawer({ id, onClose }: { id: string; onClose: () => void }) {
               <p className="text-[12.5px] text-[var(--text-sub)]">{ci.notes}</p>
             </div>
           )}
+
+          <div>
+            <button onClick={() => setShowQr((s) => !s)} className="flex items-center gap-1.5 text-[10.5px] font-bold text-[var(--text-faint)] hover:text-brand-dim uppercase tracking-wide">
+              <QrCode className="w-3.5 h-3.5" />
+              {t({ tr: 'QR Kod / Etiket', en: 'QR Code / Label' })}
+            </button>
+            {showQr && (
+              <div className="mt-2 flex items-center gap-3 bg-[var(--panel-2)] border border-[var(--border)] rounded-lg p-3">
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(`${window.location.origin}/cmdb?open=${id}`)}`}
+                  alt="QR"
+                  width={100}
+                  height={100}
+                  className="rounded-md bg-white p-1"
+                />
+                <div className="text-[11.5px]">
+                  <div className="font-mono font-bold">{ci.tag}</div>
+                  <div className="text-[var(--text-faint)] mt-0.5">{ci.name}</div>
+                  <p className="text-[10.5px] text-[var(--text-faint)] mt-1.5">
+                    {t({ tr: 'Fiziksel etikette kullanılabilir — okutunca doğrudan bu kayda açılır.', en: 'Usable for physical labeling — scanning opens directly to this record.' })}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
 
           <div>
             <div className="text-[10.5px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-2.5">
@@ -213,6 +361,40 @@ function LinkRow({ refCode, title, tag, tagColor }: { refCode: string; title: st
       <span className={`font-mono font-bold text-[10.5px] ${tagColor}`}>{tag}</span>
       <span className="font-mono text-[var(--text-faint)]">{refCode}</span>
       <span className="truncate flex-1">{title}</span>
+    </div>
+  )
+}
+
+function CiTypeFieldsEditor({
+  ciType,
+  initialFields,
+  onSave,
+  isPending,
+}: {
+  ciType: string
+  initialFields: import('@/components/ui/DynamicFields').FormFieldSchema[]
+  onSave: (fields: import('@/components/ui/DynamicFields').FormFieldSchema[]) => void
+  isPending: boolean
+}) {
+  const { t } = useLang()
+  const [fields, setFields] = useState(initialFields)
+
+  return (
+    <div>
+      <p className="text-[10.5px] text-[var(--text-faint)] mb-2">
+        {t({
+          tr: `Bu alanlar "${ciType}" tipindeki TÜM varlıklarda görünür.`,
+          en: `These fields apply to ALL assets of type "${ciType}".`,
+        })}
+      </p>
+      <FieldSchemaEditor fields={fields} onChange={setFields} />
+      <button
+        onClick={() => onSave(fields)}
+        disabled={isPending}
+        className="mt-2.5 text-[11px] font-bold px-3 py-1.5 rounded-md bg-brand text-white disabled:opacity-40"
+      >
+        {isPending ? t({ tr: 'Kaydediliyor…', en: 'Saving…' }) : t({ tr: 'Kaydet', en: 'Save' })}
+      </button>
     </div>
   )
 }

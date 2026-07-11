@@ -620,12 +620,14 @@ export interface Database {
           is_online: boolean
           last_seen_at: string
           store_health_category: 'esl' | 'kiosk_pos' | 'network' | 'other' | null
+          model_id: string | null
+          custom_fields: Record<string, string>
           created_at: string
           updated_at: string
         }
         Insert: Omit<
           Database['public']['Tables']['configuration_items']['Row'],
-          'id' | 'tag' | 'created_at' | 'updated_at' | 'site_id' | 'is_online' | 'last_seen_at' | 'store_health_category'
+          'id' | 'tag' | 'created_at' | 'updated_at' | 'site_id' | 'is_online' | 'last_seen_at' | 'store_health_category' | 'model_id' | 'custom_fields'
         > & {
           id?: string
           tag?: string
@@ -635,8 +637,104 @@ export interface Database {
           is_online?: boolean
           last_seen_at?: string
           store_health_category?: 'esl' | 'kiosk_pos' | 'network' | 'other' | null
+          model_id?: string | null
+          custom_fields?: Record<string, string>
         }
         Update: Partial<Database['public']['Tables']['configuration_items']['Insert']>
+        Relationships: []
+      }
+      asset_models: {
+        Row: {
+          id: string
+          tenant_id: string
+          name: string
+          manufacturer: string | null
+          ci_type: CiType
+          notes: string | null
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['asset_models']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['asset_models']['Insert']>
+        Relationships: []
+      }
+      ci_type_fields: {
+        Row: {
+          id: string
+          tenant_id: string
+          ci_type: CiType
+          field_schema: unknown
+          updated_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['ci_type_fields']['Row'], 'id' | 'updated_at'> & {
+          id?: string
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['ci_type_fields']['Insert']>
+        Relationships: []
+      }
+      ci_checkout_history: {
+        Row: {
+          id: string
+          tenant_id: string
+          ci_id: string
+          checked_out_to: string | null
+          checked_out_by: string | null
+          checked_out_at: string
+          checked_in_at: string | null
+          checked_in_by: string | null
+          notes: string | null
+        }
+        Insert: Omit<Database['public']['Tables']['ci_checkout_history']['Row'], 'id' | 'checked_out_at' | 'checked_in_at' | 'checked_in_by'> & {
+          id?: string
+          checked_out_at?: string
+          checked_in_at?: string | null
+          checked_in_by?: string | null
+        }
+        Update: Partial<Database['public']['Tables']['ci_checkout_history']['Insert']>
+        Relationships: []
+      }
+      consumable_items: {
+        Row: {
+          id: string
+          tenant_id: string
+          name: string
+          category: string | null
+          is_returnable: boolean
+          total_quantity: number
+          low_stock_threshold: number
+          unit_cost: number | null
+          vendor_id: string | null
+          site_id: string | null
+          notes: string | null
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['consumable_items']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['consumable_items']['Insert']>
+        Relationships: []
+      }
+      consumable_checkouts: {
+        Row: {
+          id: string
+          tenant_id: string
+          consumable_id: string
+          user_id: string | null
+          quantity: number
+          checked_out_by: string | null
+          checked_out_at: string
+          checked_in_at: string | null
+        }
+        Insert: Omit<Database['public']['Tables']['consumable_checkouts']['Row'], 'id' | 'checked_out_at' | 'checked_in_at'> & {
+          id?: string
+          checked_out_at?: string
+          checked_in_at?: string | null
+        }
+        Update: Partial<Database['public']['Tables']['consumable_checkouts']['Insert']>
         Relationships: []
       }
       ci_relationships: {
