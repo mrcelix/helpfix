@@ -1,11 +1,11 @@
 import { useState, useEffect, type FormEvent } from 'react'
-import { Sparkles, Loader2, ChevronLeft, Check, Pencil, Search, BookOpen, ExternalLink } from 'lucide-react'
+import { Sparkles, Loader2, ChevronLeft, Check, Pencil, Search, BookOpen, ExternalLink, AlertTriangle } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { VoiceInputButton } from '@/components/ui/VoiceInputButton'
 import { useLang } from '@/contexts/LangContext'
 import { useCreateIncident, useDistinctCategories, useTicketCategoryFields } from './useIncidents'
-import { useBusinessServicesList } from '@/pages/cmdb/useBusinessServices'
+import { useBusinessServicesList, useBusinessServiceHealth } from '@/pages/cmdb/useBusinessServices'
 import { DynamicFieldsRenderer } from '@/components/ui/DynamicFields'
 import { useSuggestTriage, type TriageSuggestion } from './useAiAssist'
 import { useSuggestedArticles } from '@/pages/knowledge-base/useKnowledgeBase'
@@ -61,6 +61,8 @@ export function NewTicketModal({ onClose }: { onClose: () => void }) {
   const [customFieldValues, setCustomFieldValues] = useState<Record<string, string>>({})
   const [businessServiceId, setBusinessServiceId] = useState('')
   const { data: services } = useBusinessServicesList()
+  const { data: serviceHealth } = useBusinessServiceHealth()
+  const selectedServiceHealth = serviceHealth?.find((s) => s.service_id === businessServiceId)
 
   const finalCategory =
     categoryOverride ?? (selectedCategory ? resolveCategoryLabel(selectedCategory, selectedSubcategory, lang) : '')
@@ -420,6 +422,22 @@ export function NewTicketModal({ onClose }: { onClose: () => void }) {
                   en: 'Specifying which business service (e.g. Email, POS) this ticket impacts speeds up the team\'s impact analysis.',
                 })}
               </p>
+              {selectedServiceHealth && selectedServiceHealth.health_status !== 'operational' && (
+                <div className="flex items-start gap-2 mt-2 bg-p2-tint border border-p2/40 rounded-lg px-3 py-2.5">
+                  <AlertTriangle className="w-3.5 h-3.5 text-p2 shrink-0 mt-0.5" />
+                  <p className="text-[11.5px] text-p2 font-medium">
+                    {selectedServiceHealth.health_status === 'outage'
+                      ? t({
+                          tr: `Bu hizmette zaten kesinti var — ${selectedServiceHealth.open_incidents} açık kayıt bulunuyor. Aynı sorun olabilir, talebiniz otomatik olarak ilişkilendirilecek şekilde işaretlenecek.`,
+                          en: `This service is already experiencing an outage — ${selectedServiceHealth.open_incidents} open record(s). This may be the same issue.`,
+                        })
+                      : t({
+                          tr: `Bu hizmette şu anda ${selectedServiceHealth.open_incidents} açık kayıt var. Sorununuz bunlardan biriyle ilgili olabilir.`,
+                          en: `This service currently has ${selectedServiceHealth.open_incidents} open record(s). Your issue may be related.`,
+                        })}
+                  </p>
+                </div>
+              )}
             </div>
           )}
 

@@ -55,8 +55,16 @@ export function useChanges(view: ChangeSavedView) {
         query = query.not('scheduled_start', 'is', null).in('status', ['approved', 'scheduled'])
       } else if (view === 'high_risk') {
         query = query.gte('risk_score', 60)
+      } else if (view === 'my_approvals') {
+        // Bekleyen onay satırı olan değişiklikleri bul (önceden bu filtre
+        // hiç uygulanmıyordu — sekme yanıltıcı şekilde TÜM değişiklikleri
+        // gösteriyordu, bkz. Faz BQ düzeltmesi).
+        const { data: pending, error: pendingError } = await supabase.from('change_approvals').select('change_id').eq('status', 'pending')
+        if (pendingError) throw pendingError
+        const ids = Array.from(new Set((pending ?? []).map((r) => r.change_id)))
+        if (!ids.length) return []
+        query = query.in('id', ids)
       }
-      // 'my_approvals' istemci tarafında filtrelenir (aşağıdaki hook'a bakın)
 
       const { data, error } = await query
       if (error) throw error
