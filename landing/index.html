@@ -167,11 +167,13 @@
   @keyframes floaty{0%,100%{transform:translateY(0);} 50%{transform:translateY(-10px);}}
 
   /* ---------- trust strip ---------- */
-  .trust{padding:34px 0; border-top:1px solid var(--ink-border); border-bottom:1px solid var(--ink-border);}
-  .trust-inner{display:flex; align-items:center; justify-content:space-between; gap:24px; flex-wrap:wrap;}
+  .trust{padding:34px 0; border-top:1px solid var(--ink-border); border-bottom:1px solid var(--ink-border); overflow:hidden;}
   .trust-label{font-size:12.5px; color:var(--text-3); font-weight:600; letter-spacing:.02em; text-transform:uppercase; white-space:nowrap;}
-  .trust-chips{display:flex; gap:12px; flex-wrap:wrap;}
-  .chip{font-size:13px; color:var(--text-2); background:var(--ink-800); border:1px solid var(--ink-border); padding:8px 16px; border-radius:999px; font-weight:500;}
+  .marquee{position:relative; -webkit-mask-image:linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); mask-image:linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);}
+  .marquee-track{display:flex; gap:12px; width:max-content; animation:marquee 32s linear infinite;}
+  .marquee:hover .marquee-track{animation-play-state:paused;}
+  @keyframes marquee{from{transform:translateX(0);} to{transform:translateX(-50%);}}
+  .chip{font-size:13px; color:var(--text-2); background:var(--ink-800); border:1px solid var(--ink-border); padding:8px 16px; border-radius:999px; font-weight:500; white-space:nowrap; flex-shrink:0;}
 
   /* ---------- stats ---------- */
   .stats{padding:80px 0;}
@@ -190,6 +192,14 @@
   /* ---------- modules ---------- */
   .modules{padding:40px 0 100px;}
   .cat-group{margin-bottom:44px;}
+  .cat-group.hidden{display:none;}
+  .mod-filters{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:40px;}
+  .mod-filter{
+    padding:9px 18px; border-radius:999px; border:1px solid var(--ink-border); background:var(--ink-800);
+    color:var(--text-2); font-size:13px; font-weight:600; cursor:pointer; transition:all .18s ease;
+  }
+  .mod-filter:hover{border-color:var(--brand); color:var(--text-1);}
+  .mod-filter.active{background:var(--brand); border-color:var(--brand); color:var(--on-brand);}
   .cat-group:last-child{margin-bottom:0;}
   .cat-label{font-size:12.5px; font-weight:700; color:var(--text-3); text-transform:uppercase; letter-spacing:.05em; margin-bottom:18px; display:flex; align-items:center; gap:10px;}
   .cat-label::after{content:''; height:1px; flex:1; background:var(--ink-border);}
@@ -266,8 +276,28 @@
   .cmp-card.bad .ico{color:var(--text-3);}
   .cmp-card.good .ico{color:var(--brand);}
 
+  /* ---------- audience ---------- */
+  .audience{padding:90px 0 20px;}
+  .aud-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:20px;}
+  .aud-card{background:var(--ink-800); border:1px solid var(--ink-border); border-radius:16px; padding:28px; transition:all .2s ease;}
+  .aud-card:hover{border-color:var(--brand); transform:translateY(-4px);}
+  .aud-ic{width:42px; height:42px; border-radius:11px; background:var(--brand-tint); display:flex; align-items:center; justify-content:center; margin-bottom:18px;}
+  .aud-ic svg{width:21px; height:21px; stroke:var(--brand-dim);}
+  .aud-card h4{font-family:'Space Grotesk'; font-size:16.5px; margin-bottom:10px;}
+  .aud-card p{font-size:13.5px; color:var(--text-2); line-height:1.65; margin-bottom:18px;}
+  .aud-link{font-size:13px; font-weight:600; color:var(--brand);}
+  .aud-link:hover{color:var(--brand-dim); text-decoration:underline;}
+
   /* ---------- pricing ---------- */
   .pricing{padding:60px 0 100px;}
+  .billing-toggle{display:flex; align-items:center; justify-content:center; gap:14px; margin-bottom:44px;}
+  .bt-label{font-size:14px; font-weight:600; color:var(--text-1); transition:color .2s ease;}
+  .bt-label.muted{color:var(--text-3);}
+  .bt-save{font-size:11px; font-weight:700; color:var(--brand); background:var(--brand-tint); padding:2px 8px; border-radius:999px; margin-left:6px;}
+  .bt-switch{width:46px; height:26px; border-radius:999px; background:var(--ink-border); border:none; position:relative; cursor:pointer; flex-shrink:0; padding:0;}
+  .bt-switch .bt-knob{position:absolute; top:3px; left:3px; width:20px; height:20px; border-radius:50%; background:var(--text-1); transition:transform .22s cubic-bezier(.4,0,.2,1);}
+  .bt-switch[aria-checked="true"]{background:var(--brand);}
+  .bt-switch[aria-checked="true"] .bt-knob{transform:translateX(20px); background:var(--on-brand);}
   .price-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:20px; align-items:stretch;}
   .price-card{background:var(--ink-800); border:1px solid var(--ink-border); border-radius:18px; padding:32px; display:flex; flex-direction:column;}
   .price-card.hi{border-color:var(--brand); background:linear-gradient(165deg, rgba(23,176,167,.08), var(--ink-800)); position:relative;}
@@ -331,6 +361,7 @@
     .dd-grid.rev .dd-copy, .dd-grid .dd-copy{order:1;}
     .dd-grid.rev .dd-visual, .dd-grid .dd-visual{order:2;}
     .store-row{grid-template-columns:1fr;}
+    .aud-grid{grid-template-columns:1fr;}
     .cmp-grid{grid-template-columns:1fr;}
     .price-grid{grid-template-columns:1fr;}
     .foot-grid{grid-template-columns:1fr 1fr;}
@@ -435,15 +466,30 @@
 
   <!-- TRUST STRIP -->
   <section class="trust">
-    <div class="wrap trust-inner">
+    <div class="wrap" style="margin-bottom:14px;">
       <span class="trust-label">Şu sektörlerde çalışıyor</span>
-      <div class="trust-chips">
+    </div>
+    <div class="marquee">
+      <div class="marquee-track">
         <span class="chip">Perakende Zincirleri</span>
         <span class="chip">Üretim</span>
         <span class="chip">Lojistik</span>
         <span class="chip">Finans & Sigorta</span>
         <span class="chip">Sağlık</span>
         <span class="chip">Holding & Grup Şirketleri</span>
+        <span class="chip">Enerji & Altyapı</span>
+        <span class="chip">Kamu Kurumları</span>
+        <span class="chip">E-ticaret</span>
+        <!-- kesintisiz döngü için tekrar -->
+        <span class="chip">Perakende Zincirleri</span>
+        <span class="chip">Üretim</span>
+        <span class="chip">Lojistik</span>
+        <span class="chip">Finans & Sigorta</span>
+        <span class="chip">Sağlık</span>
+        <span class="chip">Holding & Grup Şirketleri</span>
+        <span class="chip">Enerji & Altyapı</span>
+        <span class="chip">Kamu Kurumları</span>
+        <span class="chip">E-ticaret</span>
       </div>
     </div>
   </section>
@@ -452,8 +498,8 @@
   <section class="stats">
     <div class="wrap">
       <div class="stats-grid">
-        <div class="stat reveal"><div class="num">14</div><div class="lbl">Birbirine bağlı modül</div></div>
-        <div class="stat reveal"><div class="num">%99.9</div><div class="lbl">Platform erişilebilirliği</div></div>
+        <div class="stat reveal"><div class="num"><span class="count-up" data-target="14" data-decimals="0">0</span></div><div class="lbl">Birbirine bağlı modül</div></div>
+        <div class="stat reveal"><div class="num">%<span class="count-up" data-target="99.9" data-decimals="1">0</span></div><div class="lbl">Platform erişilebilirliği</div></div>
         <div class="stat reveal"><div class="num">&lt;2dk</div><div class="lbl">Ortalama AI yanıt süresi</div></div>
         <div class="stat reveal"><div class="num">ITIL 4</div><div class="lbl">Uyumlu süreç mimarisi</div></div>
       </div>
@@ -469,7 +515,15 @@
         <p>Ayrı ayrı satın alıp birbirine bağlamaya çalıştığınız araçların hepsi burada — ve hepsi aynı veriyi paylaşıyor.</p>
       </div>
 
-      <div class="cat-group reveal">
+      <div class="mod-filters reveal">
+        <button class="mod-filter active" data-filter="all">Tümü</button>
+        <button class="mod-filter" data-filter="core">Çekirdek ITSM</button>
+        <button class="mod-filter" data-filter="asset">Varlık & Envanter</button>
+        <button class="mod-filter" data-filter="auto">Akıllı Otomasyon</button>
+        <button class="mod-filter" data-filter="bi">İş Zekası</button>
+      </div>
+
+      <div class="cat-group reveal" data-cat="core">
         <div class="cat-label">Çekirdek ITSM</div>
         <div class="mod-grid">
           <div class="mod-card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 2a5 5 0 00-5 5v3a5 5 0 0010 0V7a5 5 0 00-5-5zM8 21h8M12 17v4"/></svg></div><h4>Servis Masası</h4><p>Çok kanallı talep yönetimi, AI destekli triyaj ve SLA takibi.</p></div>
@@ -479,7 +533,7 @@
         </div>
       </div>
 
-      <div class="cat-group reveal">
+      <div class="cat-group reveal" data-cat="asset">
         <div class="cat-label">Varlık & Envanter</div>
         <div class="mod-grid">
           <div class="mod-card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg></div><h4>Varlık & CMDB</h4><p>Checkout/checkin, iş hizmeti haritalama, QR etiketleme.</p></div>
@@ -489,7 +543,7 @@
         </div>
       </div>
 
-      <div class="cat-group reveal">
+      <div class="cat-group reveal" data-cat="auto">
         <div class="cat-label">Akıllı Otomasyon</div>
         <div class="mod-grid">
           <div class="mod-card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg></div><h4>AI Otomasyon</h4><p>Beceri bazlı otomatik atama, akıllı yönlendirme kuralları.</p></div>
@@ -499,7 +553,7 @@
         </div>
       </div>
 
-      <div class="cat-group reveal">
+      <div class="cat-group reveal" data-cat="bi">
         <div class="cat-label">İş Zekası</div>
         <div class="mod-grid">
           <div class="mod-card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M3 3v18h18M7 16l4-4 3 3 5-6"/></svg></div><h4>Raporlama & Analitik</h4><p>Sürükle-bırak özel rapor oluşturucu, canlı dashboard.</p></div>
@@ -607,6 +661,36 @@
   </section>
 
   <!-- PRICING -->
+  <!-- AUDIENCE / KİMLER İÇİN -->
+  <section class="audience">
+    <div class="wrap">
+      <div class="sec-head center reveal" style="margin-left:auto;margin-right:auto;">
+        <span class="kicker">Kimler İçin</span>
+        <h2>Ekibinizdeki herkese göre farklı bir kazanım.</h2>
+      </div>
+      <div class="aud-grid">
+        <div class="aud-card reveal">
+          <div class="aud-ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M3 3v18h18M7 16l4-4 3 3 5-6"/></svg></div>
+          <h4>BT Yöneticisi için</h4>
+          <p>Bütçenizi büyütmeden operasyonu büyütün. Tek platform, tek fatura — dağınık araçları birleştirip lisans maliyetlerinizi ve entegrasyon yükünüzü azaltın.</p>
+          <a class="aud-link" href="#pricing">Fiyatlandırmayı gör →</a>
+        </div>
+        <div class="aud-card reveal">
+          <div class="aud-ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 2a5 5 0 00-5 5v3a5 5 0 0010 0V7a5 5 0 00-5-5zM8 21h8M12 17v4"/></svg></div>
+          <h4>Teknisyen için</h4>
+          <p>Talep almaktan, sorunu çözmeye odaklanın. AI destekli triyaj rutin işleri otomatik halleder, beceri bazlı atama doğru işi doğru kişiye yönlendirir.</p>
+          <a class="aud-link" href="#ai">AI özelliklerini gör →</a>
+        </div>
+        <div class="aud-card reveal">
+          <div class="aud-ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M3 21h18M5 21V7l8-4 8 4v14M9 9h1M9 13h1M9 17h1M14 9h1M14 13h1M14 17h1"/></svg></div>
+          <h4>Mağaza Operasyonu için</h4>
+          <p>Hangi şubenin dikkat istediğini Excel'de aramayın. Her mağaza için otomatik hesaplanan, tek harfli bir BT sağlık notu — A, B ya da C.</p>
+          <a class="aud-link" href="#stores">Mağaza Sağlığını gör →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section class="pricing" id="pricing">
     <div class="wrap">
       <div class="sec-head center reveal" style="margin-left:auto;margin-right:auto;">
@@ -614,12 +698,21 @@
         <h2>Ekip büyüklüğünüze göre, şeffaf fiyatlandırma.</h2>
         <p>Tüm planlar 14 günlük ücretsiz deneme içerir, kredi kartı gerekmez.</p>
       </div>
+
+      <div class="billing-toggle reveal">
+        <span class="bt-label" id="btMonthly">Aylık</span>
+        <button class="bt-switch" id="billingSwitch" role="switch" aria-checked="false" aria-label="Yıllık faturalama">
+          <span class="bt-knob"></span>
+        </button>
+        <span class="bt-label muted" id="btAnnual">Yıllık <span class="bt-save">2 ay hediye</span></span>
+      </div>
+
       <div class="price-grid">
         <div class="price-card reveal">
           <div class="price-name">Başlangıç</div>
           <div class="price-desc">Küçük ekipler ve tek lokasyon için</div>
-          <div class="price-amt"><span class="num">₺2.490</span><span class="per">/ ay</span></div>
-          <div class="price-note">5 teknisyene kadar, aylık faturalama</div>
+          <div class="price-amt"><span class="num price-num" data-monthly="2.490" data-annual="2.075">₺2.490</span><span class="per">/ ay</span></div>
+          <div class="price-note billing-note">5 teknisyene kadar, aylık faturalama</div>
           <ul class="price-feats">
             <li><span class="tick">✓</span>Servis Masası, CMDB, Bilgi Yönetimi</li>
             <li><span class="tick">✓</span>Servis Kataloğu ve onay akışları</li>
@@ -632,8 +725,8 @@
           <span class="badge-pop">En çok tercih edilen</span>
           <div class="price-name">Profesyonel</div>
           <div class="price-desc">Büyüyen ekipler ve çoklu şube için</div>
-          <div class="price-amt"><span class="num">₺5.990</span><span class="per">/ ay</span></div>
-          <div class="price-note">20 teknisyene kadar, aylık faturalama</div>
+          <div class="price-amt"><span class="num price-num" data-monthly="5.990" data-annual="4.990">₺5.990</span><span class="per">/ ay</span></div>
+          <div class="price-note billing-note">20 teknisyene kadar, aylık faturalama</div>
           <ul class="price-feats">
             <li><span class="tick">✓</span>Başlangıç'taki her şey, artı:</li>
             <li><span class="tick">✓</span>Problem & Değişiklik Yönetimi</li>
@@ -774,6 +867,59 @@
     if (isLight) { root.removeAttribute('data-theme'); localStorage.setItem('helpfix-landing-theme', 'dark'); }
     else { root.setAttribute('data-theme', 'light'); localStorage.setItem('helpfix-landing-theme', 'light'); }
   });
+
+  // module category filter
+  document.querySelectorAll('.mod-filter').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.mod-filter').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      const filter = btn.dataset.filter;
+      document.querySelectorAll('.cat-group').forEach((group) => {
+        const show = filter === 'all' || group.dataset.cat === filter;
+        group.classList.toggle('hidden', !show);
+      });
+    });
+  });
+
+  // animated count-up numbers, triggers once when scrolled into view
+  const counters = document.querySelectorAll('.count-up');
+  const countIo = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      const el = entry.target;
+      const target = parseFloat(el.dataset.target);
+      const decimals = parseInt(el.dataset.decimals || '0', 10);
+      const duration = 1400;
+      const start = performance.now();
+      function tick(now) {
+        const p = Math.min((now - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - p, 3);
+        el.textContent = (target * eased).toFixed(decimals);
+        if (p < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+      countIo.unobserve(el);
+    });
+  }, { threshold: 0.6 });
+  counters.forEach((c) => countIo.observe(c));
+
+  // pricing billing toggle (aylık / yıllık)
+  const billingSwitch = document.getElementById('billingSwitch');
+  if (billingSwitch) {
+    billingSwitch.addEventListener('click', () => {
+      const wasAnnual = billingSwitch.getAttribute('aria-checked') === 'true';
+      const nowAnnual = !wasAnnual;
+      billingSwitch.setAttribute('aria-checked', String(nowAnnual));
+      document.getElementById('btMonthly').classList.toggle('muted', nowAnnual);
+      document.getElementById('btAnnual').classList.toggle('muted', !nowAnnual);
+      document.querySelectorAll('.price-num').forEach((el) => {
+        el.textContent = '₺' + (nowAnnual ? el.dataset.annual : el.dataset.monthly);
+      });
+      document.querySelectorAll('.billing-note').forEach((el) => {
+        el.textContent = el.textContent.replace(/aylık|yıllık/i, nowAnnual ? 'yıllık' : 'aylık');
+      });
+    });
+  }
 
   // reveal on scroll
   const els = document.querySelectorAll('.reveal');
