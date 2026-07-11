@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HelpFix — Türkiye'nin Bağlı ITSM Platformu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink-900:#0A0E15; --ink-800:#121926; --ink-750:#161F30; --ink-700:#1B2436; --ink-border:#293349;
+    --brand:#17B0A7; --brand-dim:#0E7D76; --brand-tint:#E4F7F5; --brand-glow: rgba(23,176,167,.35);
+    --gold:#F5A524; --gold-dim:#B97812; --gold-tint:#3A2C10;
+    --text-1:#F3F5F8; --text-2:#9AA5B8; --text-3:#5C6679;
+    --red:#EF4444; --blue:#4C6FFF; --green:#22C55E;
+    --on-brand:#04211F;
+    --pill-p1-bg:rgba(239,68,68,.15); --pill-p1-text:#FF8A8A;
+    --pill-p2-bg:rgba(245,165,36,.15); --pill-p2-text:var(--gold);
+    --pill-p3-bg:rgba(76,111,255,.15); --pill-p3-text:#8CA3FF;
+    --shadow-lg: 0 40px 90px -30px rgba(0,0,0,.65);
+    --radius:16px;
+  }
+  [data-theme="light"]{
+    --ink-900:#FFFFFF; --ink-800:#F3F8F4; --ink-750:#EBF4EC; --ink-700:#E3EFE4; --ink-border:#D7E5D9;
+    --brand:#16A34A; --brand-dim:#0F7C38; --brand-tint:#DCFCE7; --brand-glow: rgba(22,163,74,.20);
+    --gold:#B45309; --gold-dim:#92400E; --gold-tint:#FEF3C7;
+    --text-1:#0F1F15; --text-2:#4C5E51; --text-3:#7C8C80;
+    --red:#DC2626; --blue:#2563EB; --green:#16A34A;
+    --on-brand:#F5FFF8;
+    --pill-p1-bg:rgba(220,38,38,.1); --pill-p1-text:#B91C1C;
+    --pill-p2-bg:rgba(180,83,9,.12); --pill-p2-text:#92400E;
+    --pill-p3-bg:rgba(37,99,235,.1); --pill-p3-text:#1D4ED8;
+    --shadow-lg: 0 30px 70px -30px rgba(16,60,30,.18);
+  }
+  body{transition:background-color .3s ease, color .3s ease;}
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--ink-900); color:var(--text-1);
+    font-family:'Inter',ui-sans-serif,system-ui,sans-serif;
+    font-size:16px; line-height:1.6; -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  h1,h2,h3,h4{font-family:'Space Grotesk',ui-sans-serif,sans-serif; font-weight:700; letter-spacing:-0.02em; line-height:1.12;}
+  .mono{font-family:'IBM Plex Mono',ui-monospace,monospace;}
+  a{color:inherit; text-decoration:none;}
+  img,svg{display:block;}
+  .wrap{max-width:1180px; margin:0 auto; padding:0 32px;}
+  section{position:relative;}
+  ::selection{background:var(--brand); color:var(--on-brand);}
+
+  /* ---------- reveal-on-scroll ---------- */
+  .reveal{opacity:0; transform:translateY(22px); transition:opacity .7s cubic-bezier(.2,.7,.2,1), transform .7s cubic-bezier(.2,.7,.2,1);}
+  .reveal.in{opacity:1; transform:translateY(0);}
+
+  /* ---------- nav ---------- */
+  :root{ --nav-bg: rgba(10,14,21,.78); }
+  [data-theme="light"]{ --nav-bg: rgba(255,255,255,.82); }
+  header.nav{
+    position:sticky; top:0; z-index:100;
+    background:var(--nav-bg); backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--ink-border);
+  }
+  .nav-inner{max-width:1180px; margin:0 auto; padding:16px 32px; display:flex; align-items:center; justify-content:space-between; gap:24px;}
+  .logo{display:flex; align-items:center; gap:10px; font-family:'Space Grotesk'; font-weight:700; font-size:19px;}
+  .logo .mark{width:32px; height:32px; border-radius:9px; background:linear-gradient(135deg,var(--brand),var(--brand-dim)); display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .logo .mark svg{width:18px; height:18px;}
+  nav.links{display:flex; align-items:center; gap:32px; font-size:14.5px; font-weight:500; color:var(--text-2);}
+  nav.links a:hover{color:var(--text-1);}
+  .nav-cta{display:flex; align-items:center; gap:14px;}
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    padding:11px 22px; border-radius:10px; font-weight:600; font-size:14.5px; cursor:pointer;
+    border:1px solid transparent; transition:all .18s ease; white-space:nowrap;
+  }
+  .btn-primary{background:var(--brand); color:var(--on-brand);}
+  .btn-primary:hover{background:#20C7BD; transform:translateY(-1px); box-shadow:0 8px 24px var(--brand-glow);}
+  .btn-ghost{color:var(--text-1); border-color:var(--ink-border);}
+  .btn-ghost:hover{border-color:var(--text-2); background:var(--ink-800);}
+  .btn-lg{padding:15px 28px; font-size:15.5px; border-radius:12px;}
+  .link-login{font-size:14.5px; font-weight:500; color:var(--text-2);}
+  .link-login:hover{color:var(--text-1);}
+  .burger{display:none; width:36px; height:36px; border-radius:8px; border:1px solid var(--ink-border); align-items:center; justify-content:center; cursor:pointer;}
+  .theme-toggle{
+    width:36px; height:36px; border-radius:9px; border:1px solid var(--ink-border); background:var(--ink-800);
+    display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text-2); flex-shrink:0;
+    transition:border-color .18s ease, color .18s ease;
+  }
+  .theme-toggle:hover{border-color:var(--brand); color:var(--brand);}
+  .theme-toggle svg{width:16px; height:16px;}
+  .theme-toggle .ic-moon{display:none;}
+  [data-theme="light"] .theme-toggle .ic-sun{display:none;}
+  [data-theme="light"] .theme-toggle .ic-moon{display:block;}
+
+  /* ---------- hero ---------- */
+  .hero{padding:96px 0 60px; position:relative; overflow:hidden;}
+  .hero::before{
+    content:''; position:absolute; top:-260px; left:50%; transform:translateX(-50%);
+    width:900px; height:560px; border-radius:50%;
+    background:radial-gradient(closest-side, var(--brand-glow), transparent 70%);
+    filter:blur(10px); pointer-events:none;
+  }
+  .hero-grid{display:grid; grid-template-columns:1fr 1.05fr; gap:56px; align-items:center; position:relative;}
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px; padding:7px 14px; border-radius:999px;
+    background:var(--ink-800); border:1px solid var(--ink-border); font-size:12.5px; font-weight:600;
+    color:var(--brand); margin-bottom:22px; letter-spacing:.01em;
+  }
+  .eyebrow .dot{width:6px; height:6px; border-radius:50%; background:var(--brand); box-shadow:0 0 0 3px var(--brand-glow);}
+  h1.hero-h{font-size:52px; margin-bottom:20px;}
+  h1.hero-h .accent{color:var(--brand);}
+  .hero-sub{font-size:17.5px; color:var(--text-2); max-width:490px; margin-bottom:34px; line-height:1.65;}
+  .hero-actions{display:flex; align-items:center; gap:16px; margin-bottom:36px; flex-wrap:wrap;}
+  .hero-note{font-size:13px; color:var(--text-3);}
+  .hero-avatars{display:flex; align-items:center; gap:12px; margin-top:8px;}
+  .avatar-stack{display:flex;}
+  .avatar-stack span{
+    width:30px; height:30px; border-radius:50%; border:2px solid var(--ink-900);
+    display:flex; align-items:center; justify-content:center; font-size:10.5px; font-weight:700;
+    margin-left:-8px; color:var(--on-brand);
+  }
+  .avatar-stack span:first-child{margin-left:0;}
+
+  /* hero mockup */
+  .device{
+    background:var(--ink-800); border:1px solid var(--ink-border); border-radius:18px;
+    box-shadow:var(--shadow-lg), 0 0 0 1px rgba(255,255,255,.02);
+    overflow:hidden; transform:perspective(1400px) rotateY(-6deg) rotateX(2deg);
+  }
+  .device-bar{display:flex; align-items:center; gap:6px; padding:12px 16px; border-bottom:1px solid var(--ink-border); background:var(--ink-750);}
+  .device-bar span{width:9px; height:9px; border-radius:50%; background:var(--ink-border);}
+  .device-bar .url{margin-left:12px; font-size:11px; color:var(--text-3); background:var(--ink-900); padding:4px 12px; border-radius:6px; flex:1; max-width:220px;}
+  .device-body{padding:20px; display:grid; grid-template-columns:1fr 1fr; gap:14px;}
+  .kpi-card{background:var(--ink-750); border:1px solid var(--ink-border); border-radius:12px; padding:14px;}
+  .kpi-card .num{font-family:'IBM Plex Mono'; font-size:24px; font-weight:600;}
+  .kpi-card .lbl{font-size:11px; color:var(--text-3); margin-top:4px;}
+  .kpi-card.up .num{color:var(--brand);}
+  .kpi-card.warn .num{color:var(--gold);}
+  .device-list{grid-column:span 2; background:var(--ink-750); border:1px solid var(--ink-border); border-radius:12px; padding:14px;}
+  .device-list .row{display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--ink-border); font-size:12px;}
+  .device-list .row:last-child{border-bottom:none;}
+  .pill{font-size:9.5px; font-weight:700; padding:3px 8px; border-radius:999px; font-family:'IBM Plex Mono';}
+  .pill.p1{background:var(--pill-p1-bg); color:var(--pill-p1-text);}
+  .pill.p2{background:var(--pill-p2-bg); color:var(--pill-p2-text);}
+  .pill.p3{background:var(--pill-p3-bg); color:var(--pill-p3-text);}
+  .row-title{flex:1; color:var(--text-2);}
+  .row-ref{font-family:'IBM Plex Mono'; color:var(--text-3); font-size:10.5px;}
+  .chat-bubble{
+    grid-column:span 2; display:flex; gap:10px; align-items:flex-start; background:var(--ink-750);
+    border:1px solid var(--brand); border-radius:12px; padding:12px 14px; position:relative;
+  }
+  .chat-bubble .ai-dot{width:26px; height:26px; border-radius:8px; background:var(--brand); flex-shrink:0; display:flex; align-items:center; justify-content:center;}
+  .chat-bubble .ai-dot svg{width:14px; height:14px;}
+  .chat-bubble p{font-size:12px; color:var(--text-2); line-height:1.5;}
+  .chat-bubble .tag{position:absolute; top:-10px; right:14px; background:var(--brand); color:var(--on-brand); font-size:9.5px; font-weight:700; padding:2px 8px; border-radius:999px;}
+  .float-badge{
+    position:absolute; background:var(--ink-800); border:1px solid var(--ink-border); border-radius:12px;
+    padding:10px 14px; display:flex; align-items:center; gap:10px; box-shadow:var(--shadow-lg);
+    animation:floaty 4.5s ease-in-out infinite;
+  }
+  .float-badge.b1{top:6%; right:-6%;}
+  .float-badge.b2{bottom:8%; left:-8%; animation-delay:1.4s;}
+  .float-badge .grade{width:34px; height:34px; border-radius:50%; border:2px solid var(--brand); display:flex; align-items:center; justify-content:center; font-family:'Space Grotesk'; font-weight:700; color:var(--brand);}
+  .float-badge .ftxt{font-size:11.5px;}
+  .float-badge .ftxt b{display:block; font-size:12.5px;}
+  .float-badge .ftxt span{color:var(--text-3); font-size:10.5px;}
+  @keyframes floaty{0%,100%{transform:translateY(0);} 50%{transform:translateY(-10px);}}
+
+  /* ---------- trust strip ---------- */
+  .trust{padding:34px 0; border-top:1px solid var(--ink-border); border-bottom:1px solid var(--ink-border);}
+  .trust-inner{display:flex; align-items:center; justify-content:space-between; gap:24px; flex-wrap:wrap;}
+  .trust-label{font-size:12.5px; color:var(--text-3); font-weight:600; letter-spacing:.02em; text-transform:uppercase; white-space:nowrap;}
+  .trust-chips{display:flex; gap:12px; flex-wrap:wrap;}
+  .chip{font-size:13px; color:var(--text-2); background:var(--ink-800); border:1px solid var(--ink-border); padding:8px 16px; border-radius:999px; font-weight:500;}
+
+  /* ---------- stats ---------- */
+  .stats{padding:80px 0;}
+  .stats-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--ink-border); border:1px solid var(--ink-border); border-radius:var(--radius); overflow:hidden;}
+  .stat{background:var(--ink-900); padding:32px 26px;}
+  .stat .num{font-family:'IBM Plex Mono'; font-size:38px; font-weight:600; color:var(--brand);}
+  .stat .lbl{font-size:13.5px; color:var(--text-2); margin-top:8px;}
+
+  /* ---------- section heads ---------- */
+  .sec-head{max-width:640px; margin-bottom:52px;}
+  .sec-head.center{margin-left:auto; margin-right:auto; text-align:center;}
+  .kicker{font-size:12.5px; font-weight:700; color:var(--brand); text-transform:uppercase; letter-spacing:.06em; margin-bottom:14px; display:block;}
+  .sec-head h2{font-size:36px; margin-bottom:16px;}
+  .sec-head p{font-size:16px; color:var(--text-2); line-height:1.65;}
+
+  /* ---------- modules ---------- */
+  .modules{padding:40px 0 100px;}
+  .cat-group{margin-bottom:44px;}
+  .cat-group:last-child{margin-bottom:0;}
+  .cat-label{font-size:12.5px; font-weight:700; color:var(--text-3); text-transform:uppercase; letter-spacing:.05em; margin-bottom:18px; display:flex; align-items:center; gap:10px;}
+  .cat-label::after{content:''; height:1px; flex:1; background:var(--ink-border);}
+  .mod-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:14px;}
+  .mod-card{
+    background:var(--ink-800); border:1px solid var(--ink-border); border-radius:14px; padding:20px;
+    transition:all .18s ease; cursor:default;
+  }
+  .mod-card:hover{border-color:var(--brand); transform:translateY(-3px); background:var(--ink-750);}
+  .mod-card .ic{width:38px; height:38px; border-radius:10px; background:var(--brand-tint); display:flex; align-items:center; justify-content:center; margin-bottom:14px;}
+  .mod-card .ic svg{width:19px; height:19px; stroke:var(--brand-dim);}
+  .mod-card h4{font-family:'Inter'; font-size:14.5px; font-weight:600; margin-bottom:6px;}
+  .mod-card p{font-size:12.5px; color:var(--text-3); line-height:1.5;}
+
+  /* ---------- deep dive AI ---------- */
+  .deepdive{padding:100px 0;}
+  .dd-grid{display:grid; grid-template-columns:1fr 1fr; gap:64px; align-items:center;}
+  .dd-grid.rev{grid-template-columns:1fr 1fr;}
+  .dd-grid.rev .dd-copy{order:2;}
+  .dd-grid.rev .dd-visual{order:1;}
+  .dd-copy .kicker{margin-bottom:16px;}
+  .dd-copy h2{font-size:32px; margin-bottom:18px;}
+  .dd-copy p{font-size:15.5px; color:var(--text-2); line-height:1.7; margin-bottom:26px;}
+  .feat-list{display:flex; flex-direction:column; gap:14px;}
+  .feat-list li{display:flex; gap:12px; align-items:flex-start; font-size:14.5px; color:var(--text-2); list-style:none;}
+  .feat-list .tick{width:20px; height:20px; border-radius:6px; background:var(--brand-tint); display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px;}
+  .feat-list .tick svg{width:11px; height:11px; stroke:var(--brand-dim);}
+
+  .chatmock{background:var(--ink-800); border:1px solid var(--ink-border); border-radius:18px; padding:22px; box-shadow:var(--shadow-lg);}
+  .chatmock .head{display:flex; align-items:center; gap:10px; margin-bottom:18px; padding-bottom:16px; border-bottom:1px solid var(--ink-border);}
+  .chatmock .head .dotAi{width:30px; height:30px; border-radius:9px; background:linear-gradient(135deg,var(--brand),var(--brand-dim)); display:flex; align-items:center; justify-content:center;}
+  .chatmock .head .dotAi svg{width:15px; height:15px;}
+  .chatmock .head b{font-size:13.5px;}
+  .chatmock .head span{font-size:11.5px; color:var(--text-3); display:block;}
+  .bubble{max-width:82%; padding:11px 14px; border-radius:13px; font-size:13px; line-height:1.55; margin-bottom:12px;}
+  .bubble.user{background:var(--brand); color:var(--on-brand); margin-left:auto; border-bottom-right-radius:4px;}
+  .bubble.ai{background:var(--ink-750); border:1px solid var(--ink-border); color:var(--text-2); border-bottom-left-radius:4px;}
+  .bubble.ai .ticket-chip{margin-top:10px; display:flex; align-items:center; gap:8px; background:var(--ink-900); border:1px solid var(--brand); border-radius:9px; padding:8px 10px; font-size:11.5px; color:var(--text-1); font-weight:600;}
+
+  /* ---------- store health signature ---------- */
+  .signature{padding:100px 0; background:var(--ink-800); border-top:1px solid var(--ink-border); border-bottom:1px solid var(--ink-border); position:relative; overflow:hidden;}
+  .signature::before{content:''; position:absolute; top:-200px; right:-100px; width:600px; height:600px; border-radius:50%; background:radial-gradient(closest-side, rgba(245,165,36,.12), transparent 70%);}
+  .sig-head{max-width:680px; margin:0 auto 56px; text-align:center; position:relative;}
+  .sig-head .kicker{color:var(--gold); justify-content:center; display:inline-flex;}
+  .sig-head h2{font-size:34px; margin-bottom:16px;}
+  .sig-head p{font-size:16px; color:var(--text-2);}
+  .store-row{display:grid; grid-template-columns:repeat(3,1fr); gap:20px; position:relative;}
+  .store-card{background:var(--ink-750); border:1px solid var(--ink-border); border-radius:16px; padding:24px; transition:transform .2s ease;}
+  .store-card:hover{transform:translateY(-4px);}
+  .store-card .sc-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;}
+  .store-card .sc-name{font-family:'Space Grotesk'; font-weight:600; font-size:15px;}
+  .store-card .sc-city{font-size:11.5px; color:var(--text-3);}
+  .grade-badge{width:46px; height:46px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'Space Grotesk'; font-weight:700; font-size:19px; border:2.5px solid;}
+  .grade-badge.A{border-color:var(--brand); color:var(--brand); box-shadow:0 0 0 5px var(--brand-tint);}
+  .grade-badge.B{border-color:var(--gold); color:var(--gold); box-shadow:0 0 0 5px var(--gold-tint);}
+  .grade-badge.C{border-color:var(--red); color:var(--red); box-shadow:0 0 0 5px var(--pill-p1-bg);}
+  .pillar{display:flex; align-items:center; gap:10px; margin-bottom:10px; font-size:11.5px;}
+  .pillar .pname{width:92px; color:var(--text-3); flex-shrink:0;}
+  .pillar .pbar{flex:1; height:5px; border-radius:99px; background:var(--ink-900); overflow:hidden;}
+  .pillar .pbar span{display:block; height:100%; border-radius:99px;}
+  .pillar .pval{width:28px; text-align:right; font-family:'IBM Plex Mono'; color:var(--text-2); flex-shrink:0;}
+
+  /* ---------- comparison ---------- */
+  .compare{padding:100px 0;}
+  .cmp-grid{display:grid; grid-template-columns:1fr 1fr; gap:20px;}
+  .cmp-card{border-radius:16px; padding:32px; border:1px solid var(--ink-border);}
+  .cmp-card.bad{background:var(--ink-800);}
+  .cmp-card.good{background:linear-gradient(165deg, rgba(23,176,167,.1), var(--ink-800)); border-color:var(--brand);}
+  .cmp-card h3{font-size:19px; margin-bottom:20px;}
+  .cmp-card h3 span{font-size:12px; display:block; color:var(--text-3); font-weight:500; font-family:'Inter'; margin-top:4px;}
+  .cmp-list{display:flex; flex-direction:column; gap:14px;}
+  .cmp-list li{display:flex; gap:12px; font-size:14px; color:var(--text-2); list-style:none; align-items:flex-start;}
+  .cmp-list .ico{width:18px; height:18px; flex-shrink:0; margin-top:2px;}
+  .cmp-card.bad .ico{color:var(--text-3);}
+  .cmp-card.good .ico{color:var(--brand);}
+
+  /* ---------- pricing ---------- */
+  .pricing{padding:60px 0 100px;}
+  .price-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:20px; align-items:stretch;}
+  .price-card{background:var(--ink-800); border:1px solid var(--ink-border); border-radius:18px; padding:32px; display:flex; flex-direction:column;}
+  .price-card.hi{border-color:var(--brand); background:linear-gradient(165deg, rgba(23,176,167,.08), var(--ink-800)); position:relative;}
+  .price-card.hi .badge-pop{position:absolute; top:-13px; left:32px; background:var(--brand); color:var(--on-brand); font-size:11px; font-weight:700; padding:5px 12px; border-radius:999px;}
+  .price-name{font-family:'Space Grotesk'; font-size:19px; font-weight:600; margin-bottom:6px;}
+  .price-desc{font-size:13px; color:var(--text-3); margin-bottom:22px; min-height:36px;}
+  .price-amt{display:flex; align-items:baseline; gap:6px; margin-bottom:4px;}
+  .price-amt .num{font-family:'IBM Plex Mono'; font-size:38px; font-weight:600;}
+  .price-amt .per{font-size:13px; color:var(--text-3);}
+  .price-note{font-size:12px; color:var(--text-3); margin-bottom:26px;}
+  .price-feats{display:flex; flex-direction:column; gap:12px; margin-bottom:28px; flex:1;}
+  .price-feats li{display:flex; gap:10px; font-size:13.5px; color:var(--text-2); list-style:none; align-items:flex-start;}
+  .price-feats .tick{width:16px; height:16px; color:var(--brand); flex-shrink:0; margin-top:2px;}
+  .price-card .btn{width:100%;}
+
+  /* ---------- faq ---------- */
+  .faq{padding:40px 0 110px; max-width:800px; margin:0 auto;}
+  .faq-item{border-bottom:1px solid var(--ink-border);}
+  .faq-q{display:flex; align-items:center; justify-content:space-between; padding:22px 4px; cursor:pointer; font-size:15.5px; font-weight:600; gap:20px;}
+  .faq-q .plus{width:22px; height:22px; border-radius:50%; border:1px solid var(--ink-border); flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:transform .25s ease; position:relative;}
+  .faq-q .plus::before,.faq-q .plus::after{content:''; position:absolute; background:var(--text-2);}
+  .faq-q .plus::before{width:9px; height:1.4px;}
+  .faq-q .plus::after{width:1.4px; height:9px; transition:opacity .2s ease;}
+  .faq-item.open .plus{transform:rotate(45deg); border-color:var(--brand);}
+  .faq-a{max-height:0; overflow:hidden; transition:max-height .3s ease;}
+  .faq-a p{padding:0 4px 22px; font-size:14.5px; color:var(--text-2); line-height:1.7; max-width:680px;}
+
+  /* ---------- final cta ---------- */
+  .final-cta{padding:90px 0; text-align:center; position:relative;}
+  .final-box{
+    background:linear-gradient(135deg, var(--ink-800), var(--ink-750)); border:1px solid var(--ink-border);
+    border-radius:24px; padding:70px 40px; position:relative; overflow:hidden;
+  }
+  .final-box::before{content:''; position:absolute; bottom:-160px; left:50%; transform:translateX(-50%); width:700px; height:400px; border-radius:50%; background:radial-gradient(closest-side, var(--brand-glow), transparent 70%);}
+  .final-box h2{font-size:36px; margin-bottom:16px; position:relative;}
+  .final-box p{font-size:16px; color:var(--text-2); margin-bottom:32px; position:relative;}
+  .final-actions{display:flex; align-items:center; justify-content:center; gap:16px; position:relative; flex-wrap:wrap;}
+
+  /* ---------- footer ---------- */
+  footer{border-top:1px solid var(--ink-border); padding:60px 0 32px;}
+  .foot-grid{display:grid; grid-template-columns:1.4fr repeat(4,1fr); gap:32px; margin-bottom:48px;}
+  .foot-brand p{font-size:13.5px; color:var(--text-3); margin-top:14px; max-width:240px; line-height:1.6;}
+  .foot-col h5{font-size:12.5px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--text-3); margin-bottom:16px;}
+  .foot-col a{display:block; font-size:13.5px; color:var(--text-2); margin-bottom:11px;}
+  .foot-col a:hover{color:var(--text-1);}
+  .foot-bottom{display:flex; align-items:center; justify-content:space-between; padding-top:28px; border-top:1px solid var(--ink-border); font-size:12.5px; color:var(--text-3); flex-wrap:wrap; gap:12px;}
+  .foot-social{display:flex; gap:10px;}
+  .foot-social a{width:32px; height:32px; border-radius:8px; background:var(--ink-800); border:1px solid var(--ink-border); display:flex; align-items:center; justify-content:center;}
+  .foot-social svg{width:14px; height:14px;}
+
+  /* ---------- responsive ---------- */
+  @media (max-width:980px){
+    nav.links, .nav-cta .link-login{display:none;}
+    .burger{display:flex;}
+    .hero-grid{grid-template-columns:1fr;}
+    .device{transform:none; margin-top:20px;}
+    .float-badge{display:none;}
+    .stats-grid{grid-template-columns:repeat(2,1fr);}
+    .mod-grid{grid-template-columns:repeat(2,1fr);}
+    .dd-grid, .dd-grid.rev{grid-template-columns:1fr; gap:36px;}
+    .dd-grid.rev .dd-copy, .dd-grid .dd-copy{order:1;}
+    .dd-grid.rev .dd-visual, .dd-grid .dd-visual{order:2;}
+    .store-row{grid-template-columns:1fr;}
+    .cmp-grid{grid-template-columns:1fr;}
+    .price-grid{grid-template-columns:1fr;}
+    .foot-grid{grid-template-columns:1fr 1fr;}
+    h1.hero-h{font-size:38px;}
+    .sec-head h2{font-size:28px;}
+  }
+  @media (max-width:560px){
+    .wrap{padding:0 20px;}
+    .stats-grid{grid-template-columns:1fr;}
+    .mod-grid{grid-template-columns:1fr;}
+    .trust-inner{flex-direction:column; align-items:flex-start;}
+  }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="nav-inner">
+    <a class="logo" href="#top">
+      <span class="mark"><svg viewBox="0 0 24 24" fill="white"><path d="M12 2 L14.5 8.5 L21 9 L16 13.5 L17.5 20 L12 16.5 L6.5 20 L8 13.5 L3 9 L9.5 8.5 Z"/></svg></span>
+      HelpFix
+    </a>
+    <nav class="links">
+      <a href="#modules">Modüller</a>
+      <a href="#ai">Yapay Zeka</a>
+      <a href="#stores">Mağaza Sağlığı</a>
+      <a href="#pricing">Fiyatlandırma</a>
+      <a href="#faq">SSS</a>
+    </nav>
+    <div class="nav-cta">
+      <button class="theme-toggle" id="themeToggle" aria-label="Tema değiştir">
+        <svg class="ic-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+        <svg class="ic-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.8A9 9 0 1111.2 3 7 7 0 0021 12.8z"/></svg>
+      </button>
+      <a class="link-login js-app-link" href="#">Giriş Yap</a>
+      <a class="btn btn-primary" href="#final">Ücretsiz Demo İste</a>
+    </div>
+    <div class="burger">☰</div>
+  </div>
+</header>
+
+<main id="top">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div class="reveal in">
+        <span class="eyebrow"><span class="dot"></span>14 modül, tek platform, tek oturum açma</span>
+        <h1 class="hero-h">BT ekibinizin <span class="accent">tüm iş akışı</span>, birbirine bağlı tek bir sistemde.</h1>
+        <p class="hero-sub">Servis Masası'ndan Değişiklik Yönetimi'ne, CMDB'den mağaza bazlı BT sağlık skoruna — HelpFix, dağınık araçları birleştirip her talebi, her varlığı ve her kararı birbirine bağlar.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary btn-lg" href="#final">Ücretsiz Demo İste</a>
+          <a class="btn btn-ghost btn-lg" href="#modules">Modülleri İncele ↓</a>
+        </div>
+        <div class="hero-avatars">
+          <div class="avatar-stack">
+            <span style="background:#17B0A7">AY</span>
+            <span style="background:#F5A524">MK</span>
+            <span style="background:#4C6FFF">SD</span>
+          </div>
+          <span class="hero-note">Türkiye genelinde perakende, üretim ve hizmet şirketleri tarafından kullanılıyor</span>
+        </div>
+      </div>
+
+      <div style="position:relative;">
+        <div class="device reveal in">
+          <div class="device-bar">
+            <span></span><span></span><span></span>
+            <div class="url mono">itsm.helpfix.com.tr</div>
+          </div>
+          <div class="device-body">
+            <div class="kpi-card up">
+              <div class="num">128</div>
+              <div class="lbl">Açık Talep</div>
+            </div>
+            <div class="kpi-card warn">
+              <div class="num">%94</div>
+              <div class="lbl">SLA Uyumu</div>
+            </div>
+            <div class="device-list">
+              <div class="row"><span class="pill p1">P1</span><span class="row-title">Kadıköy — ESL ekranları toplu çöktü</span><span class="row-ref">#INC-1042</span></div>
+              <div class="row"><span class="pill p2">P2</span><span class="row-title">VPN bağlantısı zaman zaman kopuyor</span><span class="row-ref">#INC-1039</span></div>
+              <div class="row"><span class="pill p3">P3</span><span class="row-title">Yazıcı kağıt sıkışması — Beşiktaş</span><span class="row-ref">#INC-1035</span></div>
+            </div>
+            <div class="chat-bubble">
+              <span class="tag">AI Asistan</span>
+              <div class="ai-dot"><svg viewBox="0 0 24 24" fill="none" stroke="#04211F" stroke-width="2"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg></div>
+              <p>VPN sorununu tespit ettim, aynı hizmette 2 açık kayıt daha var. Sizin adınıza talep açayım mı?</p>
+            </div>
+          </div>
+        </div>
+        <div class="float-badge b1">
+          <div class="grade A">A</div>
+          <div class="ftxt"><b>Kadıköy Mağazası</b><span>BT Sağlık Skoru</span></div>
+        </div>
+        <div class="float-badge b2">
+          <div class="ftxt"><b class="mono" style="color:var(--brand)">↓ %38</b><span>Ort. çözüm süresi</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRUST STRIP -->
+  <section class="trust">
+    <div class="wrap trust-inner">
+      <span class="trust-label">Şu sektörlerde çalışıyor</span>
+      <div class="trust-chips">
+        <span class="chip">Perakende Zincirleri</span>
+        <span class="chip">Üretim</span>
+        <span class="chip">Lojistik</span>
+        <span class="chip">Finans & Sigorta</span>
+        <span class="chip">Sağlık</span>
+        <span class="chip">Holding & Grup Şirketleri</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <section class="stats">
+    <div class="wrap">
+      <div class="stats-grid">
+        <div class="stat reveal"><div class="num">14</div><div class="lbl">Birbirine bağlı modül</div></div>
+        <div class="stat reveal"><div class="num">%99.9</div><div class="lbl">Platform erişilebilirliği</div></div>
+        <div class="stat reveal"><div class="num">&lt;2dk</div><div class="lbl">Ortalama AI yanıt süresi</div></div>
+        <div class="stat reveal"><div class="num">ITIL 4</div><div class="lbl">Uyumlu süreç mimarisi</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MODULES -->
+  <section class="modules" id="modules">
+    <div class="wrap">
+      <div class="sec-head reveal">
+        <span class="kicker">Platform</span>
+        <h2>Tek ürün, dört kategori, sıfır entegrasyon derdi.</h2>
+        <p>Ayrı ayrı satın alıp birbirine bağlamaya çalıştığınız araçların hepsi burada — ve hepsi aynı veriyi paylaşıyor.</p>
+      </div>
+
+      <div class="cat-group reveal">
+        <div class="cat-label">Çekirdek ITSM</div>
+        <div class="mod-grid">
+          <div class="mod-card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 2a5 5 0 00-5 5v3a5 5 0 0010 0V7a5 5 0 00-5-5zM8 21h8M12 17v4"/></svg></div><h4>Servis Masası</h4><p>Çok kanallı talep yönetimi, AI destekli triyaj ve SLA takibi.</p></div>
+          <div class="mod-card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg></div><h4>Problem Yönetimi</h4><p>Fishbone kök neden analizi ve Bilinen Hata Veritabanı.</p></div>
+          <div class="mod-card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M6 3v12M18 9v12M6 15a3 3 0 106 0 3 3 0 00-6 0zM18 21a3 3 0 100-6 3 3 0 000 6zM18 9a3 3 0 100-6 3 3 0 000 6z"/></svg></div><h4>Değişiklik Yönetimi</h4><p>CAB onay akışı, çakışma tespiti ve dondurma pencereleri.</p></div>
+          <div class="mod-card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div><h4>Servis Kataloğu</h4><p>Çok kademeli onay zincirli, dinamik formlu talep kataloğu.</p></div>
+        </div>
+      </div>
+
+      <div class="cat-group reveal">
+        <div class="cat-label">Varlık & Envanter</div>
+        <div class="mod-grid">
+          <div class="mod-card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg></div><h4>Varlık & CMDB</h4><p>Checkout/checkin, iş hizmeti haritalama, QR etiketleme.</p></div>
+          <div class="mod-card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M9 12l2 2 4-4M12 3l8 4-8 4-8-4 8-4zM4 11l8 4 8-4M4 15l8 4 8-4"/></svg></div><h4>Yazılım Varlıkları</h4><p>Lisans koltuk takibi ve uyumluluk uyarıları.</p></div>
+          <div class="mod-card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M3 9l9-6 9 6M4 10v10h16V10M9 20v-6h6v6"/></svg></div><h4>Sözleşme & Satın Alma</h4><p>Sözleşme yenileme takibi, satın alma sipariş akışı.</p></div>
+          <div class="mod-card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div><h4>Bilgi Yönetimi</h4><p>Aranabilir makale havuzu, otomatik talep önerileri.</p></div>
+        </div>
+      </div>
+
+      <div class="cat-group reveal">
+        <div class="cat-label">Akıllı Otomasyon</div>
+        <div class="mod-grid">
+          <div class="mod-card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg></div><h4>AI Otomasyon</h4><p>Beceri bazlı otomatik atama, akıllı yönlendirme kuralları.</p></div>
+          <div class="mod-card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><h4>Olay/İzleme</h4><p>Monitoring uyarılarını tek tıkla gerçek talebe dönüştürün.</p></div>
+          <div class="mod-card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg></div><h4>On-Call</h4><p>Nöbet çizelgesi, otomatik eskalasyon zinciri.</p></div>
+          <div class="mod-card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div><h4>Proje Yönetimi</h4><p>BT projelerini talep ve değişikliklerle bağlantılı yönetin.</p></div>
+        </div>
+      </div>
+
+      <div class="cat-group reveal">
+        <div class="cat-label">İş Zekası</div>
+        <div class="mod-grid">
+          <div class="mod-card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M3 3v18h18M7 16l4-4 3 3 5-6"/></svg></div><h4>Raporlama & Analitik</h4><p>Sürükle-bırak özel rapor oluşturucu, canlı dashboard.</p></div>
+          <div class="mod-card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M3 21h18M5 21V7l8-4 8 4v14M9 9h1M9 13h1M9 17h1M14 9h1M14 13h1M14 17h1"/></svg></div><h4>Mağaza Performansı</h4><p>Şube bazlı BT sağlık skoru — A/B/C notlu, tam otomatik.</p></div>
+          <div class="mod-card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 10-16 0"/></svg></div><h4>Yönetim & Roller</h4><p>Site/bölge hiyerarşisi, ince ayarlı yetki kontrolü.</p></div>
+          <div class="mod-card"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div><h4>Gelişmiş Entegrasyon</h4><p>Webhook API'leri ile ESL, kiosk ve ağ sistemlerine bağlanın.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AI DEEP DIVE -->
+  <section class="deepdive" id="ai">
+    <div class="wrap dd-grid">
+      <div class="dd-copy reveal">
+        <span class="kicker">Yapay Zeka Asistanı</span>
+        <h2>Çalışanlarınız talep açmadan önce, sorunları AI ile çözsün.</h2>
+        <p>HelpFix'in AI asistanı bilgi bankasından yanıt üretir, geçmiş kayıtları tarar ve gerçekten insan müdahalesi gerektiğinde — sizin onayınızla — otomatik olarak doğru kategoride bir talep açar.</p>
+        <ul class="feat-list">
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span>Bilgi bankasından bağlamsal, çok turlu yanıtlar</li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span>Onay sonrası otomatik talep oluşturma</li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span>Aynı hizmette açık kayıt varsa mükerrer uyarısı</li>
+          <li><span class="tick"><svg viewBox="0 0 24 24" fill="none" stroke-width="3"><path d="M20 6L9 17l-5-5"/></svg></span>Beceri bazlı otomatik teknisyen ataması</li>
+        </ul>
+        <a class="btn btn-ghost" href="#final">AI Özelliklerini Keşfedin →</a>
+      </div>
+      <div class="dd-visual reveal">
+        <div class="chatmock">
+          <div class="head">
+            <div class="dotAi"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg></div>
+            <div><b>AI Destek Asistanı</b><span>Sorunuzu yazın, yardımcı olayım</span></div>
+          </div>
+          <div class="bubble user">VPN'e bağlanamıyorum, sürekli kopuyor.</div>
+          <div class="bubble ai">Aynı sorunu Beşiktaş şubesinden de bildiren var — muhtemelen ağ tarafında genel bir kesinti. Sizin adınıza talep açayım mı?
+            <div class="ticket-chip">✅ INC-1039 oluşturuldu · Beşiktaş VPN kesintisi</div>
+          </div>
+          <div class="bubble user">Evet, aç lütfen.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STORE HEALTH SIGNATURE -->
+  <section class="signature" id="stores">
+    <div class="wrap">
+      <div class="sig-head reveal">
+        <span class="kicker">Sadece HelpFix'te</span>
+        <h2>Perakende zincirleri için mağaza bazlı BT sağlık skoru.</h2>
+        <p>ESL ekranları, kiosk/mobil kasa, ağ altyapısı ve yardım masası verilerini birleştirip her mağaza için haftalık, tek harfli bir not üretir: A, B ya da C.</p>
+      </div>
+      <div class="store-row">
+        <div class="store-card reveal">
+          <div class="sc-head"><div><div class="sc-name">Kadıköy Mağazası</div><div class="sc-city">İstanbul</div></div><div class="grade-badge A">A</div></div>
+          <div class="pillar"><span class="pname">ESL Durumu</span><div class="pbar"><span style="width:96%;background:var(--brand)"></span></div><span class="pval">96</span></div>
+          <div class="pillar"><span class="pname">Kiosk & Kasa</span><div class="pbar"><span style="width:92%;background:var(--brand)"></span></div><span class="pval">92</span></div>
+          <div class="pillar"><span class="pname">Network</span><div class="pbar"><span style="width:98%;background:var(--brand)"></span></div><span class="pval">98</span></div>
+          <div class="pillar"><span class="pname">Yardım Masası</span><div class="pbar"><span style="width:90%;background:var(--brand)"></span></div><span class="pval">90</span></div>
+        </div>
+        <div class="store-card reveal">
+          <div class="sc-head"><div><div class="sc-name">Beşiktaş Mağazası</div><div class="sc-city">İstanbul</div></div><div class="grade-badge B">B</div></div>
+          <div class="pillar"><span class="pname">ESL Durumu</span><div class="pbar"><span style="width:78%;background:var(--gold)"></span></div><span class="pval">78</span></div>
+          <div class="pillar"><span class="pname">Kiosk & Kasa</span><div class="pbar"><span style="width:70%;background:var(--gold)"></span></div><span class="pval">70</span></div>
+          <div class="pillar"><span class="pname">Network</span><div class="pbar"><span style="width:82%;background:var(--gold)"></span></div><span class="pval">82</span></div>
+          <div class="pillar"><span class="pname">Yardım Masası</span><div class="pbar"><span style="width:75%;background:var(--gold)"></span></div><span class="pval">75</span></div>
+        </div>
+        <div class="store-card reveal">
+          <div class="sc-head"><div><div class="sc-name">Bakırköy Mağazası</div><div class="sc-city">İstanbul</div></div><div class="grade-badge C">C</div></div>
+          <div class="pillar"><span class="pname">ESL Durumu</span><div class="pbar"><span style="width:45%;background:var(--red)"></span></div><span class="pval">45</span></div>
+          <div class="pillar"><span class="pname">Kiosk & Kasa</span><div class="pbar"><span style="width:58%;background:var(--red)"></span></div><span class="pval">58</span></div>
+          <div class="pillar"><span class="pname">Network</span><div class="pbar"><span style="width:88%;background:var(--brand)"></span></div><span class="pval">88</span></div>
+          <div class="pillar"><span class="pname">Yardım Masası</span><div class="pbar"><span style="width:50%;background:var(--red)"></span></div><span class="pval">50</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMPARISON -->
+  <section class="compare">
+    <div class="wrap">
+      <div class="sec-head center reveal" style="margin-left:auto;margin-right:auto;">
+        <span class="kicker">Neden HelpFix</span>
+        <h2>Dağınık araçlar yerine, bağlı bir sistem.</h2>
+      </div>
+      <div class="cmp-grid">
+        <div class="cmp-card bad reveal">
+          <h3>Parça parça araçlarla<span>Ayrı destek, envanter ve otomasyon yazılımları</span></h3>
+          <ul class="cmp-list">
+            <li><span class="ico">✕</span>Her araç için ayrı oturum açma ve fatura</li>
+            <li><span class="ico">✕</span>Bir talebin hangi varlığı etkilediğini elle eşleştirme</li>
+            <li><span class="ico">✕</span>Mağaza/şube performansını Excel'de birleştirme</li>
+            <li><span class="ico">✕</span>Değişiklik onayları e-posta zincirlerinde kayboluyor</li>
+          </ul>
+        </div>
+        <div class="cmp-card good reveal">
+          <h3>HelpFix ile<span>Tek platform, tek veri modeli</span></h3>
+          <ul class="cmp-list">
+            <li><span class="ico">✓</span>Tek oturum açma, tek fatura, tek ekip yönetimi</li>
+            <li><span class="ico">✓</span>Talep → CMDB varlığı → iş hizmeti otomatik bağlı</li>
+            <li><span class="ico">✓</span>Mağaza sağlık skoru otomatik hesaplanır, kaydedilir</li>
+            <li><span class="ico">✓</span>CAB onay akışı ve çakışma tespiti sistem içinde</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section class="pricing" id="pricing">
+    <div class="wrap">
+      <div class="sec-head center reveal" style="margin-left:auto;margin-right:auto;">
+        <span class="kicker">Fiyatlandırma</span>
+        <h2>Ekip büyüklüğünüze göre, şeffaf fiyatlandırma.</h2>
+        <p>Tüm planlar 14 günlük ücretsiz deneme içerir, kredi kartı gerekmez.</p>
+      </div>
+      <div class="price-grid">
+        <div class="price-card reveal">
+          <div class="price-name">Başlangıç</div>
+          <div class="price-desc">Küçük ekipler ve tek lokasyon için</div>
+          <div class="price-amt"><span class="num">₺2.490</span><span class="per">/ ay</span></div>
+          <div class="price-note">5 teknisyene kadar, aylık faturalama</div>
+          <ul class="price-feats">
+            <li><span class="tick">✓</span>Servis Masası, CMDB, Bilgi Yönetimi</li>
+            <li><span class="tick">✓</span>Servis Kataloğu ve onay akışları</li>
+            <li><span class="tick">✓</span>Temel raporlama</li>
+            <li><span class="tick">✓</span>E-posta destek</li>
+          </ul>
+          <a class="btn btn-ghost" href="#final">Ücretsiz Dene</a>
+        </div>
+        <div class="price-card hi reveal">
+          <span class="badge-pop">En çok tercih edilen</span>
+          <div class="price-name">Profesyonel</div>
+          <div class="price-desc">Büyüyen ekipler ve çoklu şube için</div>
+          <div class="price-amt"><span class="num">₺5.990</span><span class="per">/ ay</span></div>
+          <div class="price-note">20 teknisyene kadar, aylık faturalama</div>
+          <ul class="price-feats">
+            <li><span class="tick">✓</span>Başlangıç'taki her şey, artı:</li>
+            <li><span class="tick">✓</span>Problem & Değişiklik Yönetimi</li>
+            <li><span class="tick">✓</span>AI Sohbet Asistanı ve otomasyon</li>
+            <li><span class="tick">✓</span>Mağaza Performansı & BT sağlık skoru</li>
+            <li><span class="tick">✓</span>Özel rapor oluşturucu</li>
+          </ul>
+          <a class="btn btn-primary" href="#final">Ücretsiz Dene</a>
+        </div>
+        <div class="price-card reveal">
+          <div class="price-name">Kurumsal</div>
+          <div class="price-desc">Çoklu bölge ve gelişmiş yönetişim için</div>
+          <div class="price-amt"><span class="num">Teklif Alın</span></div>
+          <div class="price-note">Sınırsız teknisyen, yıllık anlaşma</div>
+          <ul class="price-feats">
+            <li><span class="tick">✓</span>Profesyonel'deki her şey, artı:</li>
+            <li><span class="tick">✓</span>Site/bölge hiyerarşisi ve özel roller</li>
+            <li><span class="tick">✓</span>Sözleşme & Satın Alma Yönetimi</li>
+            <li><span class="tick">✓</span>Özel entegrasyon desteği</li>
+            <li><span class="tick">✓</span>Atanmış müşteri başarı yöneticisi</li>
+          </ul>
+          <a class="btn btn-ghost" href="#final">Satışla Görüşün</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="faq" id="faq">
+    <div class="sec-head reveal">
+      <span class="kicker">Sıkça Sorulan Sorular</span>
+      <h2>Merak ettikleriniz</h2>
+    </div>
+    <div class="faq-item open">
+      <div class="faq-q">Mevcut envanterimi HelpFix'e nasıl taşırım?<div class="plus"></div></div>
+      <div class="faq-a"><p>CSV içe aktarma aracıyla varlık listenizi dakikalar içinde yükleyebilir, ya da kurulum sırasında ekibimizden destek alabilirsiniz.</p></div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Mağaza Performansı modülü hangi verilerle çalışıyor?<div class="plus"></div></div>
+      <div class="faq-a"><p>ESL, kiosk/mobil kasa ve ağ cihazlarınızın durumunu doğrudan API üzerinden bildirebilir, ya da CMDB'de manuel olarak takip edebilirsiniz. Skor haftalık olarak otomatik hesaplanır.</p></div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Verilerim nerede saklanıyor?<div class="plus"></div></div>
+      <div class="faq-a"><p>Tüm veriler tenant bazlı izolasyonla, satır seviyesi güvenlik politikalarıyla korunur. Sözleşme detayları için satış ekibimizle görüşebilirsiniz.</p></div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Plan değiştirebilir ya da iptal edebilir miyim?<div class="plus"></div></div>
+      <div class="faq-a"><p>Evet, dilediğiniz zaman planınızı yükseltebilir, düşürebilir ya da iptal edebilirsiniz. Uzun vadeli taahhüt yoktur.</p></div>
+    </div>
+  </section>
+
+  <!-- FINAL CTA -->
+  <section class="final-cta" id="final">
+    <div class="wrap">
+      <div class="final-box reveal">
+        <h2>BT ekibinizi bugün bağlayın.</h2>
+        <p>14 gün ücretsiz deneyin — kredi kartı gerekmez, dakikalar içinde kurulur.</p>
+        <div class="final-actions">
+          <a class="btn btn-primary btn-lg js-app-link" href="#">Ücretsiz Demo İste</a>
+          <a class="btn btn-ghost btn-lg" href="mailto:satis@example.com">Satış Ekibiyle Görüş</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <a class="logo" href="#top">
+          <span class="mark"><svg viewBox="0 0 24 24" fill="white"><path d="M12 2 L14.5 8.5 L21 9 L16 13.5 L17.5 20 L12 16.5 L6.5 20 L8 13.5 L3 9 L9.5 8.5 Z"/></svg></span>
+          HelpFix
+        </a>
+        <p>Türkiye'nin bağlı ITSM platformu. Servis Masası'ndan mağaza sağlık skoruna, tüm BT operasyonunuz tek yerde.</p>
+      </div>
+      <div class="foot-col">
+        <h5>Ürün</h5>
+        <a href="#modules">Modüller</a>
+        <a href="#ai">Yapay Zeka</a>
+        <a href="#stores">Mağaza Sağlığı</a>
+        <a href="#pricing">Fiyatlandırma</a>
+      </div>
+      <div class="foot-col">
+        <h5>Şirket</h5>
+        <a href="#">Hakkımızda</a>
+        <a href="#">Kariyer</a>
+        <a href="#">Blog</a>
+        <a href="#">İletişim</a>
+      </div>
+      <div class="foot-col">
+        <h5>Kaynaklar</h5>
+        <a href="#">Dokümantasyon</a>
+        <a href="#">SSS</a>
+        <a href="#">Durum Sayfası</a>
+        <a href="#">Güvenlik</a>
+      </div>
+      <div class="foot-col">
+        <h5>Yasal</h5>
+        <a href="#">Gizlilik Politikası</a>
+        <a href="#">Kullanım Şartları</a>
+        <a href="#">KVKK</a>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 HelpFix. Tüm hakları saklıdır.</span>
+      <div class="foot-social">
+        <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/></svg></a>
+        <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5 1.9 8.2 2 5c2.6 2.9 6.4 4.6 10 5-1.5-6 6-9 10-4 1.2 0 3-1.5 3-1.5z"/></svg></a>
+        <a href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/><path d="M10 9v12M10 13a4 4 0 018 0v8"/></svg></a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Bu sayfa kök alan adında, uygulamanın kendisi "itsm" alt alan
+  // adında yayında (örn. siteniz.com → bu sayfa, itsm.siteniz.com →
+  // uygulama). Giriş/Demo butonlarını, hangi alan adında yayınlanırsa
+  // yayınlansın otomatik doğru alt alan adına yönlendirir.
+  (function () {
+    const host = location.hostname.replace(/^www\./, '');
+    // Yerelde (localhost, dosya önizlemesi vb.) test ederken kırılmasın:
+    const appUrl = /^(localhost|127\.0\.0\.1|.*\.local)$/.test(host) || host === ''
+      ? '#'
+      : `https://itsm.${host}/`;
+    document.querySelectorAll('.js-app-link').forEach((a) => { a.href = appUrl; });
+  })();
+
+  // theme toggle — dark kalır varsayılan, tercih localStorage'da saklanır
+  const root = document.documentElement;
+  const themeBtn = document.getElementById('themeToggle');
+  const savedTheme = localStorage.getItem('helpfix-landing-theme');
+  if (savedTheme === 'light') root.setAttribute('data-theme', 'light');
+  themeBtn.addEventListener('click', () => {
+    const isLight = root.getAttribute('data-theme') === 'light';
+    if (isLight) { root.removeAttribute('data-theme'); localStorage.setItem('helpfix-landing-theme', 'dark'); }
+    else { root.setAttribute('data-theme', 'light'); localStorage.setItem('helpfix-landing-theme', 'light'); }
+  });
+
+  // reveal on scroll
+  const els = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, { threshold: 0.12 });
+  els.forEach(el => io.observe(el));
+
+  // faq accordion
+  document.querySelectorAll('.faq-item').forEach(item => {
+    const a = item.querySelector('.faq-a');
+    if (item.classList.contains('open')) a.style.maxHeight = a.scrollHeight + 'px';
+    item.querySelector('.faq-q').addEventListener('click', () => {
+      const isOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item.open').forEach(o => { o.classList.remove('open'); o.querySelector('.faq-a').style.maxHeight = 0; });
+      if (!isOpen) { item.classList.add('open'); a.style.maxHeight = a.scrollHeight + 'px'; }
+    });
+  });
+</script>
+
+</body>
+</html>

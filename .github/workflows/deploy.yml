@@ -1,7 +1,17 @@
 name: Build & Deploy to Hostinger
 
 # main branch'e her push'ta çalışır: bağımlılıkları kurar, prod build
-# alır, ve dist/ klasörünü FTP ile Hostinger'daki public_html'e kopyalar.
+# alır, ve İKİ AYRI FTP hedefine yükler:
+#   - dist/     (React uygulaması) → public_html/itsm/   (itsm.SIZINALANADI.com)
+#   - landing/  (tanıtım sitesi)   → public_html/         (SIZINALANADI.com kökü)
+#
+# ÖNEMLİ — TEK SEFERLİK MANUEL ADIM: Hostinger hPanel'de "itsm" adında
+# bir alt alan adı (subdomain) oluşturup belge kökünü (document root)
+# public_html/itsm olarak ayarlamanız gerekiyor. Bu, Hostinger panelinden
+# yapılan bir işlem — buradan otomatikleştirilemez. Alt alan adını
+# oluşturduktan sonra bu workflow otomatik olarak doğru klasöre yükleme
+# yapacak (Hostinger genelde subdomain'i siz oluşturduğunuzda ilgili
+# klasörü de otomatik açar).
 on:
   push:
     branches: [main]
@@ -49,7 +59,7 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
-      - name: Hostinger'a FTP ile yükle
+      - name: Uygulamayı itsm/ alt klasörüne yükle
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.HOSTINGER_FTP_SERVER }}
@@ -60,6 +70,23 @@ jobs:
           local-dir: ./dist/
           # KESİN DOĞRULAMA (srv1381-files.hstgr.io özel dosya yöneticisi
           # ile teyit edildi): bu FTP hesabının kök dizini ("/") zaten
-          # gerçek public_html ile birebir aynı yer.
+          # gerçek public_html ile birebir aynı yer. Uygulama artık itsm
+          # alt alan adının belge kökü olan public_html/itsm/'e gidiyor.
+          server-dir: ./itsm/
+          log-level: verbose
+
+      - name: Tanıtım sitesini kök dizine yükle
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.HOSTINGER_FTP_SERVER }}
+          username: ${{ secrets.HOSTINGER_FTP_USERNAME }}
+          password: ${{ secrets.HOSTINGER_FTP_PASSWORD }}
+          protocol: ftp
+          port: 21
+          local-dir: ./landing/
           server-dir: ./
           log-level: verbose
+          # itsm/ alt klasörünü ve uygulamanın kendi dosyalarını asla silme
+          exclude: |
+            itsm/**
+
