@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang} from '@/contexts/LangContext'
 import { useCreateContract, useVendors, type ContractType } from './useProcurement'
 
 const TYPES: ContractType[] = ['service', 'license', 'maintenance', 'lease', 'other']
@@ -78,7 +78,7 @@ export function NewContractModal({ onClose }: { onClose: () => void }) {
             <select value={contractType} onChange={(e) => setContractType(e.target.value as ContractType)} className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-2.5 py-2.5 text-[13px]">
               {TYPES.map((tp) => (
                 <option key={tp} value={tp}>
-                  {TYPE_LABEL[tp][lang]}
+                  {pickLang(TYPE_LABEL[tp], lang)}
                 </option>
               ))}
             </select>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useOpenParam } from '@/hooks/useOpenParam'
 import { Plus, Search } from 'lucide-react'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang} from '@/contexts/LangContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/Button'
 import { VoiceInputButton } from '@/components/ui/VoiceInputButton'
@@ -99,7 +99,7 @@ export function KnowledgeBasePage() {
                 : 'bg-[var(--panel)] border-[var(--border)] text-[var(--text-sub)]')
             }
           >
-            {v.label[lang]}
+            {pickLang(v.label, lang)}
           </button>
         ))}
       </div>

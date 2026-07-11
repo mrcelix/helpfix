@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Plus, Pencil, KeyRound, Trash2, Star } from 'lucide-react'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang} from '@/contexts/LangContext'
 import { NAV_MODULES } from '@/components/layout/nav-modules'
 import { AdminCatalogTab } from './AdminCatalogTab'
 import { AiUsageTab } from './AiUsageTab'
@@ -172,7 +172,7 @@ function UsersTab() {
                 >
                   {ROLE_OPTIONS.map((r) => (
                     <option key={r} value={r}>
-                      {ROLE_LABEL[r][lang]}
+                      {pickLang(ROLE_LABEL[r], lang)}
                     </option>
                   ))}
                 </select>
@@ -304,7 +304,7 @@ function ModulesTab() {
             return (
               <div key={m.code} className="flex items-center gap-3 bg-[var(--panel)] border border-[var(--border)] rounded-xl px-4 py-3">
                 <Icon className="w-[17px] h-[17px] text-[var(--text-sub)]" />
-                <span className="font-semibold text-[13px] flex-1">{m.name[lang]}</span>
+                <span className="font-semibold text-[13px] flex-1">{pickLang(m.name, lang)}</span>
                 {m.badge === 'beta' && (
                   <span className="text-[9px] font-mono font-bold bg-purple-tint text-purple rounded-full px-1.5 py-0.5">BETA</span>
                 )}
@@ -368,7 +368,7 @@ function AuditLogTab() {
             )}
             {entries?.map((e) => (
               <tr key={e.id} className="border-b border-[var(--border)] last:border-0">
-                <td className="px-3.5 py-3 font-semibold">{ACTION_LABEL[e.action]?.[lang] ?? e.action}</td>
+                <td className="px-3.5 py-3 font-semibold">{(ACTION_LABEL[e.action] ? pickLang(ACTION_LABEL[e.action], lang) : undefined) ?? e.action}</td>
                 <td className="px-3.5 py-3 text-[var(--text-sub)]">{e.target_label ?? '—'}</td>
                 <td className="px-3.5 py-3 text-[var(--text-sub)]">{e.actor?.full_name ?? '—'}</td>
                 <td className="px-3.5 py-3 text-[var(--text-faint)]">{new Date(e.created_at).toLocaleString(lang === 'tr' ? 'tr-TR' : 'en-US')}</td>

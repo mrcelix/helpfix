@@ -1,5 +1,6 @@
+import type { Lang } from '@/contexts/LangContext'
 /** "12 dk önce" / "12 min ago" gibi bağıl zaman metni üretir. */
-export function relativeTime(iso: string, lang: 'tr' | 'en'): string {
+export function relativeTime(iso: string, lang: Lang): string {
   const diffMs = Date.now() - new Date(iso).getTime()
   const diffSec = Math.floor(diffMs / 1000)
 

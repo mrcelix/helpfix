@@ -1,3 +1,4 @@
+import { pickLang, type Lang } from '@/contexts/LangContext'
 import { Monitor, Wifi, AppWindow, KeyRound, Mail, ShieldAlert, HelpCircle, type LucideIcon } from 'lucide-react'
 
 export interface TicketSubcategory {
@@ -93,7 +94,7 @@ export const TICKET_CATEGORIES: TicketCategory[] = [
 export function resolveCategoryLabel(
   category: TicketCategory,
   subcategory: TicketSubcategory | null,
-  lang: 'tr' | 'en'
+  lang: Lang
 ): string {
-  return subcategory ? `${category.label[lang]} – ${subcategory.label[lang]}` : category.label[lang]
+  return subcategory ? `${pickLang(category.label, lang)} – ${pickLang(subcategory.label, lang)}` : pickLang(category.label, lang)
 }

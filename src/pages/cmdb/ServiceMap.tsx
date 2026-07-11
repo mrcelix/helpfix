@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { ReactFlow, Background, Controls, MarkerType, type Node, type Edge } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang } from '@/contexts/LangContext'
 import { useServiceMap } from './useCmdb'
 
 const TYPE_COLOR: Record<string, string> = {
@@ -78,7 +78,7 @@ export function ServiceMap() {
       id: e.id,
       source: e.source_ci_id,
       target: e.target_ci_id,
-      label: REL_LABEL[e.relationship_type]?.[lang],
+      label: (REL_LABEL[e.relationship_type] ? pickLang(REL_LABEL[e.relationship_type], lang) : undefined),
       labelStyle: { fontSize: 9, fill: 'var(--text-faint)' },
       style: { stroke: 'var(--border)' },
       markerEnd: { type: MarkerType.ArrowClosed, color: 'var(--text-faint)' },

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Plus } from 'lucide-react'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang } from '@/contexts/LangContext'
 import { Button } from '@/components/ui/Button'
 import { useProjects } from './useProjects'
 import { ProjectDrawer } from './ProjectDrawer'
@@ -81,7 +81,7 @@ export function ProjectsPage() {
               <span className={`w-2.5 h-2.5 rounded-full ${HEALTH_COLOR[p.health]}`} />
               <span className="font-bold text-[13.5px]">{p.name}</span>
             </div>
-            <div className="text-[11px] text-[var(--text-faint)] mb-3">{STATUS_LABEL[p.status]?.[lang]}</div>
+            <div className="text-[11px] text-[var(--text-faint)] mb-3">{(STATUS_LABEL[p.status] ? pickLang(STATUS_LABEL[p.status], lang) : undefined)}</div>
             <div className="flex items-center justify-between text-[11px] text-[var(--text-faint)]">
               <span>{p.owner?.full_name ?? '—'}</span>
               {p.end_date && <span>{new Date(p.end_date).toLocaleDateString(lang === 'tr' ? 'tr-TR' : 'en-US')}</span>}

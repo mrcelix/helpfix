@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Drawer } from '@/components/ui/Drawer'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang} from '@/contexts/LangContext'
 import { useAuth } from '@/contexts/AuthContext'
 import {
   useChangeDetail,
@@ -144,7 +144,7 @@ export function ChangeDrawer({ id, onClose }: { id: string; onClose: () => void 
                 {approvals.map((a) => (
                   <div key={a.id} className="bg-[var(--panel-2)] border border-[var(--border)] rounded-lg p-3">
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-[12.5px] font-bold">{APPROVAL_LABEL[a.approval_type][lang]}</span>
+                      <span className="text-[12.5px] font-bold">{pickLang(APPROVAL_LABEL[a.approval_type], lang)}</span>
                       <span
                         className={
                           'text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ' +

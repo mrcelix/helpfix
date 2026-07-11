@@ -1,3 +1,4 @@
+import { pickLang, type Lang } from '@/contexts/LangContext'
 import type { Priority } from '@/types/database'
 
 // Veritabanındaki P1-P4 kodları DEĞİŞMEDİ (SLA politikaları, otomasyon
@@ -10,8 +11,8 @@ export const PRIORITY_LABEL: Record<Priority, { tr: string; en: string }> = {
   P4: { tr: 'Düşük', en: 'Low' },
 }
 
-export function priorityLabel(p: Priority, lang: 'tr' | 'en'): string {
-  return PRIORITY_LABEL[p][lang]
+export function priorityLabel(p: Priority, lang: Lang): string {
+  return pickLang(PRIORITY_LABEL[p], lang)
 }
 
 export const PRIORITY_ORDER: Priority[] = ['P1', 'P2', 'P3', 'P4']

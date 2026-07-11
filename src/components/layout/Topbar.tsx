@@ -5,6 +5,7 @@ import { useLang } from '@/contexts/LangContext'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useNotifications, useMarkAsRead, useMarkAllAsRead, type Notification } from './useNotifications'
 import { AccountMenu } from './AccountMenu'
+import { LanguageSwitcher } from './LanguageSwitcher'
 import { cn } from '@/lib/utils'
 
 const TYPE_ICON: Record<string, string> = {
@@ -19,7 +20,7 @@ function openCommandPalette() {
 }
 
 export function Topbar({ crumb, onMenuClick, homePath = '/service-desk' }: { crumb: string; onMenuClick?: () => void; homePath?: string }) {
-  const { lang, setLang, t } = useLang()
+  const { lang, t } = useLang()
   const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
   const [showNotifications, setShowNotifications] = useState(false)
@@ -76,33 +77,20 @@ export function Topbar({ crumb, onMenuClick, homePath = '/service-desk' }: { cru
         className="flex-1 sm:max-w-[380px] flex items-center gap-2 bg-[var(--panel)] border border-[var(--border)] rounded-lg px-3 py-1.5 sm:ml-3 text-left"
       >
         <Search className="w-[15px] h-[15px] text-[var(--text-faint)] shrink-0" />
-        <span className="hidden sm:inline text-[13px] text-[var(--text-faint)] flex-1">{t({ tr: 'Her yerde ara…', en: 'Search anywhere…' })}</span>
+        <span className="hidden sm:inline text-[13px] text-[var(--text-faint)] flex-1">{t({ tr: 'Her yerde ara…', en: 'Search anywhere…', fr: 'Rechercher partout…', it: 'Cerca ovunque…', ar: 'ابحث في كل مكان…' })}</span>
         <span className="hidden md:inline text-[9.5px] font-mono font-bold bg-[var(--panel-2)] border border-[var(--border)] rounded px-1.5 py-0.5 text-[var(--text-faint)]">
           ⌘K
         </span>
       </button>
 
       <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
-        <div className="hidden sm:flex border border-[var(--border)] rounded-lg overflow-hidden text-[11.5px] font-semibold">
-          {(['tr', 'en'] as const).map((l) => (
-            <button
-              key={l}
-              onClick={() => setLang(l)}
-              className={cn(
-                'px-2.5 py-1.5',
-                lang === l ? 'bg-brand text-white' : 'text-[var(--text-faint)]'
-              )}
-            >
-              {l.toUpperCase()}
-            </button>
-          ))}
-        </div>
+        <LanguageSwitcher />
 
         <button
           onClick={toggleFullscreen}
           className="hidden sm:flex w-[34px] h-[34px] shrink-0 rounded-lg border border-[var(--border)] bg-[var(--panel)] items-center justify-center text-[var(--text-sub)]"
           aria-label="Toggle fullscreen"
-          title={isFullscreen ? t({ tr: 'Tam Ekrandan Çık', en: 'Exit Fullscreen' }) : t({ tr: 'Tam Ekran', en: 'Fullscreen' })}
+          title={isFullscreen ? t({ tr: 'Tam Ekrandan Çık', en: 'Exit Fullscreen', fr: 'Quitter le plein écran', it: 'Esci da schermo intero', ar: 'الخروج من ملء الشاشة' }) : t({ tr: 'Tam Ekran', en: 'Fullscreen', fr: 'Plein écran', it: 'Schermo intero', ar: 'ملء الشاشة' })}
         >
           {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
         </button>
@@ -140,17 +128,17 @@ export function Topbar({ crumb, onMenuClick, homePath = '/service-desk' }: { cru
               <div className="fixed inset-0 z-30" onClick={() => setShowNotifications(false)} />
               <div className="fixed sm:absolute right-2 sm:right-0 left-2 sm:left-auto top-[64px] sm:top-[calc(100%+8px)] sm:w-[340px] bg-[var(--panel)] border border-[var(--border)] rounded-2xl shadow-2xl z-40 overflow-hidden">
                 <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
-                  <span className="font-bold text-[13px]">{t({ tr: 'Bildirimler', en: 'Notifications' })}</span>
+                  <span className="font-bold text-[13px]">{t({ tr: 'Bildirimler', en: 'Notifications', fr: 'Notifications', it: 'Notifiche', ar: 'الإشعارات' })}</span>
                   {unreadCount > 0 && (
                     <button onClick={() => markAllAsRead.mutate()} className="text-[10.5px] font-semibold text-brand-dim flex items-center gap-1">
-                      <Check className="w-3 h-3" /> {t({ tr: 'Tümünü okundu yap', en: 'Mark all read' })}
+                      <Check className="w-3 h-3" /> {t({ tr: 'Tümünü okundu yap', en: 'Mark all read', fr: 'Tout marquer comme lu', it: 'Segna tutto come letto', ar: 'وضع علامة على الكل كمقروء' })}
                     </button>
                   )}
                 </div>
                 <div className="max-h-[360px] overflow-y-auto">
                   {!notifications?.length && (
                     <p className="text-[12px] text-[var(--text-faint)] text-center py-8">
-                      {t({ tr: 'Henüz bildirim yok.', en: 'No notifications yet.' })}
+                      {t({ tr: 'Henüz bildirim yok.', en: 'No notifications yet.', fr: 'Aucune notification pour le moment.', it: 'Nessuna notifica al momento.', ar: 'لا توجد إشعارات بعد.' })}
                     </p>
                   )}
                   {notifications?.map((n) => (

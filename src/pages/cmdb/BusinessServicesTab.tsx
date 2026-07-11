@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronUp, AlertTriangle, Plus, X, Link2, Ticket, AlertCircle, GitBranch } from 'lucide-react'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang, type Lang } from '@/contexts/LangContext'
 import {
   useBusinessServiceHealth,
   useServiceLinkedCis,
@@ -65,7 +65,7 @@ export function BusinessServicesTab() {
                   <div className="text-[13.5px] font-semibold flex items-center gap-1.5">
                     {s.service_name}
                     <span className="text-[9px] font-bold bg-[var(--panel-2)] border border-[var(--border)] text-[var(--text-faint)] rounded-full px-1.5 py-0.5">
-                      {CRITICALITY_LABEL[s.criticality][lang]}
+                      {pickLang(CRITICALITY_LABEL[s.criticality], lang)}
                     </span>
                   </div>
                   <div className="text-[11px] text-[var(--text-faint)] mt-0.5">
@@ -73,7 +73,7 @@ export function BusinessServicesTab() {
                     {s.open_incidents > 0 && ` · ${s.open_incidents} ${t({ tr: 'açık talep', en: 'open tickets' })}`}
                   </div>
                 </div>
-                <span className={`text-[10.5px] font-bold rounded-full px-2.5 py-1 shrink-0 ${style.bg} ${style.text}`}>{style.label[lang]}</span>
+                <span className={`text-[10.5px] font-bold rounded-full px-2.5 py-1 shrink-0 ${style.bg} ${style.text}`}>{pickLang(style.label, lang)}</span>
                 {isOpen ? <ChevronUp className="w-4 h-4 text-[var(--text-faint)] shrink-0" /> : <ChevronDown className="w-4 h-4 text-[var(--text-faint)] shrink-0" />}
               </button>
               {isOpen && <ServiceDetailPanel service={s} />}
@@ -172,7 +172,7 @@ function LifecycleColumn({
   icon: React.ComponentType<{ className?: string }>
   label: string
   records?: { id: string; ref: string; title: string }[]
-  lang: 'tr' | 'en'
+  lang: Lang
 }) {
   return (
     <div className="bg-[var(--panel)] border border-[var(--border)] rounded-lg p-2">

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang} from '@/contexts/LangContext'
 import { useUpdateUser, useUpdateUserSite, useDepartments, type TenantUser } from './useAdmin'
 import { useSites } from './useSites'
 import type { UserRole } from '@/types/database'
@@ -104,7 +104,7 @@ export function EditUserModal({ user, onClose }: { user: TenantUser; onClose: ()
             >
               {(Object.keys(ROLE_LABEL) as UserRole[]).map((r) => (
                 <option key={r} value={r}>
-                  {ROLE_LABEL[r][lang]}
+                  {pickLang(ROLE_LABEL[r], lang)}
                 </option>
               ))}
             </select>

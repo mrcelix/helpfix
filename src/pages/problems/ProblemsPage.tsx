@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useOpenParam } from '@/hooks/useOpenParam'
 import { Plus, Sparkles, Download } from 'lucide-react'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang} from '@/contexts/LangContext'
 import { Button } from '@/components/ui/Button'
 import { PriorityBadge } from '@/components/ui/Badge'
 import { useProblems, useClusterCandidates, type ProblemSavedView, type ClusterCandidate } from './useProblems'
@@ -52,7 +52,7 @@ export function ProblemsPage() {
       p.ref,
       p.title,
       p.priority,
-      STATUS_LABEL[p.status]?.[lang] ?? p.status,
+      (STATUS_LABEL[p.status] ? pickLang(STATUS_LABEL[p.status], lang) : undefined) ?? p.status,
       p.owner?.full_name ?? '',
       new Date(p.created_at).toLocaleDateString(lang === 'tr' ? 'tr-TR' : 'en-US'),
     ])
@@ -155,7 +155,7 @@ export function ProblemsPage() {
                 : 'bg-[var(--panel)] border-[var(--border)] text-[var(--text-sub)]')
             }
           >
-            {v.label[lang]}
+            {pickLang(v.label, lang)}
           </button>
         ))}
         <select
@@ -228,7 +228,7 @@ export function ProblemsPage() {
                 <td className="px-3.5 py-3">
                   <PriorityBadge priority={p.priority} lang={lang} />
                 </td>
-                <td className="px-3.5 py-3 text-[var(--text-sub)]">{STATUS_LABEL[p.status]?.[lang] ?? p.status}</td>
+                <td className="px-3.5 py-3 text-[var(--text-sub)]">{(STATUS_LABEL[p.status] ? pickLang(STATUS_LABEL[p.status], lang) : undefined) ?? p.status}</td>
                 <td className="px-3.5 py-3 text-[var(--text-sub)]">
                   {p.owner?.full_name ?? <span className="italic text-[var(--text-faint)]">—</span>}
                 </td>

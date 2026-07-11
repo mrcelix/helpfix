@@ -1,7 +1,7 @@
 import { Star } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang} from '@/contexts/LangContext'
 import { useUserSkills, useSetUserSkill, useRemoveUserSkill, type TenantUser } from './useAdmin'
 import { TICKET_CATEGORIES } from '@/pages/service-desk/ticket-categories'
 
@@ -48,7 +48,7 @@ export function UserSkillsModal({ user, onClose }: { user: TenantUser; onClose: 
             >
               <button type="button" onClick={() => toggle(cat.label.tr)} className="flex items-center gap-2.5 flex-1 text-left">
                 <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-brand-dim' : 'text-[var(--text-faint)]'}`} />
-                <span className="text-[13px] font-semibold">{cat.label[lang]}</span>
+                <span className="text-[13px] font-semibold">{pickLang(cat.label, lang)}</span>
               </button>
               {isActive && (
                 <div className="flex items-center gap-0.5 shrink-0">

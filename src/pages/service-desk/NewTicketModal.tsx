@@ -3,7 +3,7 @@ import { Sparkles, Loader2, ChevronLeft, Check, Pencil, Search, BookOpen, Extern
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { VoiceInputButton } from '@/components/ui/VoiceInputButton'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang} from '@/contexts/LangContext'
 import { useCreateIncident, useDistinctCategories, useTicketCategoryFields } from './useIncidents'
 import { useBusinessServicesList, useBusinessServiceHealth } from '@/pages/cmdb/useBusinessServices'
 import { DynamicFieldsRenderer } from '@/components/ui/DynamicFields'
@@ -32,11 +32,11 @@ export function NewTicketModal({ onClose }: { onClose: () => void }) {
     categorySearch.trim().length > 0
       ? TICKET_CATEGORIES.flatMap((cat) => {
           const q = categorySearch.trim().toLocaleLowerCase(lang === 'tr' ? 'tr-TR' : 'en-US')
-          const catLabel = cat.label[lang].toLocaleLowerCase(lang === 'tr' ? 'tr-TR' : 'en-US')
+          const catLabel = pickLang(cat.label, lang).toLocaleLowerCase(lang === 'tr' ? 'tr-TR' : 'en-US')
           const matches: { category: TicketCategory; subcategory: TicketSubcategory | null }[] = []
           if (catLabel.includes(q) && cat.subcategories.length === 0) matches.push({ category: cat, subcategory: null })
           cat.subcategories.forEach((sub) => {
-            const subLabel = sub.label[lang].toLocaleLowerCase(lang === 'tr' ? 'tr-TR' : 'en-US')
+            const subLabel = pickLang(sub.label, lang).toLocaleLowerCase(lang === 'tr' ? 'tr-TR' : 'en-US')
             if (catLabel.includes(q) || subLabel.includes(q)) matches.push({ category: cat, subcategory: sub })
           })
           return matches
@@ -217,8 +217,8 @@ export function NewTicketModal({ onClose }: { onClose: () => void }) {
                       <Icon className="w-3.5 h-3.5 text-brand-dim" />
                     </div>
                     <span className="text-[13px] font-medium">
-                      {category.label[lang]}
-                      {subcategory && <span className="text-[var(--text-faint)]"> — {subcategory.label[lang]}</span>}
+                      {pickLang(category.label, lang)}
+                      {subcategory && <span className="text-[var(--text-faint)]"> — {pickLang(subcategory.label, lang)}</span>}
                     </span>
                   </button>
                 )
@@ -238,7 +238,7 @@ export function NewTicketModal({ onClose }: { onClose: () => void }) {
                     <div className="w-10 h-10 rounded-full bg-[var(--panel)] border border-[var(--border)] flex items-center justify-center">
                       <Icon className="w-[18px] h-[18px] text-brand-dim" />
                     </div>
-                    <span className="text-[12px] font-semibold leading-tight">{cat.label[lang]}</span>
+                    <span className="text-[12px] font-semibold leading-tight">{pickLang(cat.label, lang)}</span>
                   </button>
                 )
               })}
@@ -252,7 +252,7 @@ export function NewTicketModal({ onClose }: { onClose: () => void }) {
         <div>
           <div className="flex items-center gap-2 mb-3.5 text-[12.5px] text-[var(--text-faint)]">
             <selectedCategory.icon className="w-4 h-4 text-brand-dim" />
-            <span className="font-semibold text-[var(--text-sub)]">{selectedCategory.label[lang]}</span>
+            <span className="font-semibold text-[var(--text-sub)]">{pickLang(selectedCategory.label, lang)}</span>
           </div>
           <div className="flex flex-col gap-1.5">
             {selectedCategory.subcategories.map((sub) => (
@@ -262,7 +262,7 @@ export function NewTicketModal({ onClose }: { onClose: () => void }) {
                 onClick={() => pickSubcategory(sub)}
                 className="flex items-center justify-between text-left px-3.5 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--panel-2)] hover:border-brand hover:bg-brand-tint transition-colors text-[13px] font-medium"
               >
-                {sub.label[lang]}
+                {pickLang(sub.label, lang)}
                 <ChevronLeft className="w-3.5 h-3.5 rotate-180 text-[var(--text-faint)]" />
               </button>
             ))}

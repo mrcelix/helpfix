@@ -1,4 +1,4 @@
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang } from '@/contexts/LangContext'
 import { useConfigurationItems } from '@/pages/cmdb/useCmdb'
 
 const TYPE_LABEL: Record<string, { tr: string; en: string }> = {
@@ -35,7 +35,7 @@ export function MyAssetsPage() {
         {items?.map((ci) => (
           <div key={ci.id} className="bg-[var(--panel)] border border-[var(--border)] rounded-2xl p-4">
             <div className="font-bold text-[13.5px] mb-1">{ci.name}</div>
-            <div className="text-[11px] text-[var(--text-faint)] mb-3">{TYPE_LABEL[ci.ci_type]?.[lang]}</div>
+            <div className="text-[11px] text-[var(--text-faint)] mb-3">{(TYPE_LABEL[ci.ci_type] ? pickLang(TYPE_LABEL[ci.ci_type], lang) : undefined)}</div>
             <div className="flex items-center justify-between text-[10.5px] text-[var(--text-faint)] font-mono">
               <span>{ci.tag}</span>
               {ci.warranty_expiry && (

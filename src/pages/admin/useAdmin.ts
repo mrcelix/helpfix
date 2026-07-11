@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import type { UserRole } from '@/types/database'
 import { NAV_MODULES } from '@/components/layout/nav-modules'
+import { pickLang, type Lang } from '@/contexts/LangContext'
 
 export interface TenantUser {
   id: string
@@ -334,8 +335,8 @@ const ACTION_LABEL: Record<string, { tr: string; en: string }> = {
   chat_message: { tr: 'AI Sohbet Asistanı', en: 'AI Chat Assistant' },
 }
 
-export function getActionLabel(action: string, lang: 'tr' | 'en'): string {
-  return ACTION_LABEL[action]?.[lang] ?? action
+export function getActionLabel(action: string, lang: Lang): string {
+  return ACTION_LABEL[action] ? pickLang(ACTION_LABEL[action], lang) : action
 }
 
 export function useAiQuota() {

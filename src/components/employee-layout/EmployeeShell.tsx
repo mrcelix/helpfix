@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useLocation, Link } from 'react-router-dom'
 import { Home, Ticket, LayoutGrid, BookOpen, Monitor } from 'lucide-react'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang} from '@/contexts/LangContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { Topbar } from '@/components/layout/Topbar'
 import { CommandPalette } from '@/components/command-palette/CommandPalette'
@@ -8,11 +8,11 @@ import { ChatWidget } from '@/pages/employee-center/ChatWidget'
 import { cn } from '@/lib/utils'
 
 const EMPLOYEE_NAV = [
-  { path: '/home', icon: Home, name: { tr: 'Ana Sayfa', en: 'Home' } },
-  { path: '/my-tickets', icon: Ticket, name: { tr: 'Taleplerim', en: 'My Tickets' } },
-  { path: '/catalog', icon: LayoutGrid, name: { tr: 'Servis Kataloğu', en: 'Service Catalog' } },
-  { path: '/knowledge-base', icon: BookOpen, name: { tr: 'Bilgi Bankası', en: 'Knowledge Base' } },
-  { path: '/my-assets', icon: Monitor, name: { tr: 'Varlıklarım', en: 'My Assets' } },
+  { path: '/home', icon: Home, name: { tr: 'Ana Sayfa', en: 'Home', fr: 'Accueil', it: 'Home', ar: 'الرئيسية' } },
+  { path: '/my-tickets', icon: Ticket, name: { tr: 'Taleplerim', en: 'My Tickets', fr: 'Mes tickets', it: 'I miei ticket', ar: 'طلباتي' } },
+  { path: '/catalog', icon: LayoutGrid, name: { tr: 'Servis Kataloğu', en: 'Service Catalog', fr: 'Catalogue de services', it: 'Catalogo servizi', ar: 'كتالوج الخدمات' } },
+  { path: '/knowledge-base', icon: BookOpen, name: { tr: 'Bilgi Bankası', en: 'Knowledge Base', fr: 'Base de connaissances', it: 'Base di conoscenza', ar: 'قاعدة المعرفة' } },
+  { path: '/my-assets', icon: Monitor, name: { tr: 'Varlıklarım', en: 'My Assets', fr: 'Mes actifs', it: 'I miei asset', ar: 'أصولي' } },
 ]
 
 export function EmployeeShell() {
@@ -21,7 +21,7 @@ export function EmployeeShell() {
 
   const location = useLocation()
   const activeItem = EMPLOYEE_NAV.find((i) => location.pathname.startsWith(i.path))
-  const crumb = activeItem?.name[lang] ?? ''
+  const crumb = activeItem ? pickLang(activeItem.name, lang) : ''
 
   return (
     // Mobilde (< md) tek kolon + altta sabit tab bar; md ve üzeri klasik
@@ -36,7 +36,7 @@ export function EmployeeShell() {
           </div>
           <div>
             <div className="font-display font-bold text-[17px] tracking-tight leading-none">HelpFix</div>
-            <div className="text-[11px] text-[var(--text-faint)] mt-0.5">{t({ tr: 'Çalışan Merkezi', en: 'Employee Center' })}</div>
+            <div className="text-[11px] text-[var(--text-faint)] mt-0.5">{t({ tr: 'Çalışan Merkezi', en: 'Employee Center', fr: 'Espace employé', it: 'Centro dipendenti', ar: 'مركز الموظفين' })}</div>
           </div>
         </Link>
 
@@ -57,7 +57,7 @@ export function EmployeeShell() {
                 }
               >
                 <Icon className="w-[17px] h-[17px] shrink-0" />
-                <span>{item.name[lang]}</span>
+                <span>{pickLang(item.name, lang)}</span>
               </NavLink>
             )
           })}
@@ -69,7 +69,7 @@ export function EmployeeShell() {
           </div>
           <div className="min-w-0">
             <div className="text-[12.5px] font-semibold truncate">{profile?.fullName ?? '—'}</div>
-            <div className="text-[11px] text-[var(--text-faint)] truncate">{t({ tr: 'Çalışan', en: 'Employee' })}</div>
+            <div className="text-[11px] text-[var(--text-faint)] truncate">{t({ tr: 'Çalışan', en: 'Employee', fr: 'Employé', it: 'Dipendente', ar: 'موظف' })}</div>
           </div>
         </div>
       </aside>
@@ -100,7 +100,7 @@ export function EmployeeShell() {
               }
             >
               <Icon className="w-5 h-5" />
-              <span className="truncate max-w-full px-0.5">{item.name[lang]}</span>
+              <span className="truncate max-w-full px-0.5">{pickLang(item.name, lang)}</span>
             </NavLink>
           )
         })}

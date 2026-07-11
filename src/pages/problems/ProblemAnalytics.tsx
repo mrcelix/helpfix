@@ -1,5 +1,5 @@
 import { AreaChart, Area, PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend, XAxis, YAxis, CartesianGrid } from 'recharts'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang } from '@/contexts/LangContext'
 import { useRootCauseBreakdown, useProblemWeeklyTrend, useAvgProblemResolutionDays } from './useProblems'
 
 const CATEGORY_LABEL: Record<string, { tr: string; en: string }> = {
@@ -21,7 +21,7 @@ export function ProblemAnalytics() {
   const { data: trend, isLoading: trendLoading } = useProblemWeeklyTrend()
   const { data: avgDays } = useAvgProblemResolutionDays()
 
-  const pieData = breakdown?.map((b) => ({ name: CATEGORY_LABEL[b.category]?.[lang] ?? b.category, value: b.confirmed_count, key: b.category }))
+  const pieData = breakdown?.map((b) => ({ name: (CATEGORY_LABEL[b.category] ? pickLang(CATEGORY_LABEL[b.category], lang) : undefined) ?? b.category, value: b.confirmed_count, key: b.category }))
   const chartTrend = trend?.map((p) => ({
     week: new Date(p.week_start).toLocaleDateString(lang === 'tr' ? 'tr-TR' : 'en-US', { day: '2-digit', month: '2-digit' }),
     [t({ tr: 'Açılan', en: 'Opened' })]: p.created_count,

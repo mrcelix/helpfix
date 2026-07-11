@@ -1,6 +1,6 @@
 import { BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { Star } from 'lucide-react'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang } from '@/contexts/LangContext'
 import { useChannelDistribution, useTechnicianCsatLeaderboard, useDailyVolume } from './useIncidents'
 
 const CHANNEL_LABEL: Record<string, { tr: string; en: string }> = {
@@ -24,7 +24,7 @@ export function ServiceDeskAnalytics() {
     [t({ tr: 'Çözülen', en: 'Resolved' })]: d.resolved_count,
   }))
 
-  const chartData = channels?.map((c) => ({ channel: CHANNEL_LABEL[c.channel]?.[lang] ?? c.channel, count: c.ticket_count }))
+  const chartData = channels?.map((c) => ({ channel: (CHANNEL_LABEL[c.channel] ? pickLang(CHANNEL_LABEL[c.channel], lang) : undefined) ?? c.channel, count: c.ticket_count }))
 
   return (
     <div>

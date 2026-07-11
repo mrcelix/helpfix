@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useOpenParam } from '@/hooks/useOpenParam'
 import { Plus, List, Share2, Download, ShieldCheck, Layers, Package, Upload } from 'lucide-react'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang} from '@/contexts/LangContext'
 import { Button } from '@/components/ui/Button'
 import { useConfigurationItems, useDuplicateCis, type CiSavedView } from './useCmdb'
 import { CiDrawer } from './CiDrawer'
@@ -79,9 +79,9 @@ export function CmdbPage() {
     const rows = sortedItems.map((ci) => [
       ci.tag,
       ci.name,
-      TYPE_LABEL[ci.ci_type]?.[lang] ?? ci.ci_type,
+      (TYPE_LABEL[ci.ci_type] ? pickLang(TYPE_LABEL[ci.ci_type], lang) : undefined) ?? ci.ci_type,
       ci.assigned_user?.full_name ?? '',
-      STATUS_LABEL[ci.status]?.[lang] ?? ci.status,
+      (STATUS_LABEL[ci.status] ? pickLang(STATUS_LABEL[ci.status], lang) : undefined) ?? ci.status,
       ci.warranty_expiry ? new Date(ci.warranty_expiry).toLocaleDateString(lang === 'tr' ? 'tr-TR' : 'en-US') : '',
     ])
     const csv = [headers, ...rows].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')
@@ -222,7 +222,7 @@ export function CmdbPage() {
                 : 'bg-[var(--panel)] border-[var(--border)] text-[var(--text-sub)]')
             }
           >
-            {v.label[lang]}
+            {pickLang(v.label, lang)}
           </button>
         ))}
         <select
@@ -285,11 +285,11 @@ export function CmdbPage() {
               >
                 <td className="px-3.5 py-3 font-mono text-[var(--text-faint)]">{ci.tag}</td>
                 <td className="px-3.5 py-3 font-semibold">{ci.name}</td>
-                <td className="px-3.5 py-3 text-[var(--text-sub)]">{TYPE_LABEL[ci.ci_type]?.[lang]}</td>
+                <td className="px-3.5 py-3 text-[var(--text-sub)]">{(TYPE_LABEL[ci.ci_type] ? pickLang(TYPE_LABEL[ci.ci_type], lang) : undefined)}</td>
                 <td className="px-3.5 py-3 text-[var(--text-sub)]">
                   {ci.assigned_user?.full_name ?? <span className="italic text-[var(--text-faint)]">—</span>}
                 </td>
-                <td className="px-3.5 py-3 text-[var(--text-sub)]">{STATUS_LABEL[ci.status]?.[lang]}</td>
+                <td className="px-3.5 py-3 text-[var(--text-sub)]">{(STATUS_LABEL[ci.status] ? pickLang(STATUS_LABEL[ci.status], lang) : undefined)}</td>
                 <td className={`px-3.5 py-3 ${isWarrantySoon(ci.warranty_expiry) ? 'text-p2 font-bold' : 'text-[var(--text-faint)]'}`}>
                   {ci.warranty_expiry
                     ? new Date(ci.warranty_expiry).toLocaleDateString(lang === 'tr' ? 'tr-TR' : 'en-US')

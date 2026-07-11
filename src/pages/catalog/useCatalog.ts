@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import type { RequestStatus } from '@/types/database'
 import type { FormFieldSchema } from '@/components/ui/DynamicFields'
+import { pickLang, type Lang } from '@/contexts/LangContext'
 
 export type { FormFieldSchema }
 
@@ -185,8 +186,8 @@ const APPROVER_TYPE_LABEL: Record<RequestApproverType, { tr: string; en: string 
   specific_user: { tr: 'Belirli Kişi', en: 'Specific Person' },
 }
 
-export function approverTypeLabel(type: RequestApproverType, lang: 'tr' | 'en'): string {
-  return APPROVER_TYPE_LABEL[type][lang]
+export function approverTypeLabel(type: RequestApproverType, lang: Lang): string {
+  return pickLang(APPROVER_TYPE_LABEL[type], lang)
 }
 
 export function useRequestApprovals(requestId: string | null) {

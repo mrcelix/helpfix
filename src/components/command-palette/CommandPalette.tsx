@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, Ticket, CircleDot, GitBranch, BookOpen, LayoutGrid, Server } from 'lucide-react'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang} from '@/contexts/LangContext'
 import { VoiceInputButton } from '@/components/ui/VoiceInputButton'
 import { useGlobalSearch, type SearchResult } from './useGlobalSearch'
 
@@ -100,7 +100,7 @@ export function CommandPalette() {
                 <div className="min-w-0 flex-1">
                   <div className="text-[13px] font-semibold truncate">{r.title}</div>
                   <div className="text-[10.5px] text-[var(--text-faint)]">
-                    {TYPE_LABEL[r.type][lang]}
+                    {pickLang(TYPE_LABEL[r.type], lang)}
                     {r.ref && ` · ${r.ref}`}
                   </div>
                 </div>

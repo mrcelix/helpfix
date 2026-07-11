@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Plus, X, CheckCircle2 } from 'lucide-react'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang} from '@/contexts/LangContext'
 import { useFishboneCauses, useAddFishboneCause, useDeleteFishboneCause, useConfirmRootCause } from './useProblems'
 import type { FishboneCategory } from '@/types/database'
 
@@ -53,7 +53,7 @@ export function FishboneDiagram({ problemId, problemTitle }: { problemId: string
             <div key={cat.key} className="bg-[var(--panel-2)] border border-[var(--border)] rounded-lg p-2.5">
               <div className="flex items-center gap-1.5 mb-2">
                 <span className="w-2 h-2 rounded-full shrink-0" style={{ background: cat.color }} />
-                <span className="text-[11px] font-bold">{cat.label[lang]}</span>
+                <span className="text-[11px] font-bold">{pickLang(cat.label, lang)}</span>
               </div>
               <div className="space-y-1.5 mb-2">
                 {catCauses.map((c) => (

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Download, Save, Trash2, FileBarChart } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang} from '@/contexts/LangContext'
 import { Button } from '@/components/ui/Button'
 import {
   useReportData,
@@ -72,7 +72,7 @@ export function ReportBuilderTab() {
             >
               {DATA_SOURCES.map((s) => (
                 <option key={s} value={s}>
-                  {DATA_SOURCE_LABEL[s][lang]}
+                  {pickLang(DATA_SOURCE_LABEL[s], lang)}
                 </option>
               ))}
             </select>
@@ -87,7 +87,7 @@ export function ReportBuilderTab() {
             >
               {SUPPORTED_GROUP_BY[dataSource].map((g) => (
                 <option key={g} value={g}>
-                  {GROUP_BY_LABEL[g][lang]}
+                  {pickLang(GROUP_BY_LABEL[g], lang)}
                 </option>
               ))}
             </select>
@@ -143,7 +143,7 @@ export function ReportBuilderTab() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="font-display text-[15px] font-bold">
-                {DATA_SOURCE_LABEL[dataSource][lang]} — {GROUP_BY_LABEL[groupBy][lang]}
+                {pickLang(DATA_SOURCE_LABEL[dataSource], lang)} — {pickLang(GROUP_BY_LABEL[groupBy], lang)}
               </h3>
               <p className="text-[11.5px] text-[var(--text-faint)] mt-0.5">
                 {t({ tr: `Son ${dateRangeDays} gün · Toplam ${total} kayıt`, en: `Last ${dateRangeDays} days · ${total} records total` })}
@@ -180,7 +180,7 @@ export function ReportBuilderTab() {
                 <table className="w-full text-[12.5px]">
                   <thead>
                     <tr className="bg-[var(--panel-2)] border-b border-[var(--border)]">
-                      <th className="text-left px-3 py-2 text-[10.5px] uppercase tracking-wide text-[var(--text-faint)] font-semibold">{GROUP_BY_LABEL[groupBy][lang]}</th>
+                      <th className="text-left px-3 py-2 text-[10.5px] uppercase tracking-wide text-[var(--text-faint)] font-semibold">{pickLang(GROUP_BY_LABEL[groupBy], lang)}</th>
                       <th className="text-right px-3 py-2 text-[10.5px] uppercase tracking-wide text-[var(--text-faint)] font-semibold">{t({ tr: 'Sayı', en: 'Count' })}</th>
                     </tr>
                   </thead>

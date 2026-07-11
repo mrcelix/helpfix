@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang} from '@/contexts/LangContext'
 import { useCreateBusinessService, type ServiceCriticality } from './useBusinessServices'
 import { useAssignableUsers } from '@/pages/oncall/useOnCall'
 
@@ -66,7 +66,7 @@ export function NewBusinessServiceModal({ onClose }: { onClose: () => void }) {
             <select value={criticality} onChange={(e) => setCriticality(e.target.value as ServiceCriticality)} className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-2.5 py-2.5 text-[13px]">
               {LEVELS.map((l) => (
                 <option key={l} value={l}>
-                  {LEVEL_LABEL[l][lang]}
+                  {pickLang(LEVEL_LABEL[l], lang)}
                 </option>
               ))}
             </select>

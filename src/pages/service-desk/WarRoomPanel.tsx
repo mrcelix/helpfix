@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { X, Plus, Radio, Search, Link2 } from 'lucide-react'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, type Lang } from '@/contexts/LangContext'
 import { useIncidentResponders, useAddResponder, useRemoveResponder, useMajorIncidentChildren, useSearchIncidentsToLink, useCreateIncidentLink, useDeleteIncidentLink } from './useIncidents'
 import { useAssignableUsers } from '@/pages/oncall/useOnCall'
 
-function elapsedString(since: string, lang: 'tr' | 'en'): string {
+function elapsedString(since: string, lang: Lang): string {
   const ms = Date.now() - new Date(since).getTime()
   const totalMin = Math.floor(ms / 60_000)
   const h = Math.floor(totalMin / 60)

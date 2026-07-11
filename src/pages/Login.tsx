@@ -35,7 +35,7 @@ export function LoginPage() {
     const { error } = await signInWithPassword(email, password)
     setLoading(false)
     if (error) {
-      setError(t({ tr: 'E-posta veya şifre hatalı.', en: 'Incorrect email or password.' }))
+      setError(t({ tr: 'E-posta veya şifre hatalı.', en: 'Incorrect email or password.', fr: 'E-mail ou mot de passe incorrect.', it: 'E-mail o password errati.', ar: 'البريد الإلكتروني أو كلمة المرور غير صحيحة.' }))
       return
     }
     navigate('/')
@@ -57,7 +57,7 @@ export function LoginPage() {
   async function handleResetPassword(e: FormEvent) {
     e.preventDefault()
     if (newPassword.length < 8) {
-      setError(t({ tr: 'Şifre en az 8 karakter olmalı.', en: 'Password must be at least 8 characters.' }))
+      setError(t({ tr: 'Şifre en az 8 karakter olmalı.', en: 'Password must be at least 8 characters.', fr: 'Le mot de passe doit contenir au moins 8 caractères.', it: 'La password deve contenere almeno 8 caratteri.', ar: 'يجب أن تتكون كلمة المرور من 8 أحرف على الأقل.' }))
       return
     }
     setLoading(true)
@@ -98,15 +98,15 @@ export function LoginPage() {
         <div className="bg-[var(--panel)] border border-[var(--border)] rounded-2xl p-7">
           {mode === 'signin' && (
             <>
-              <h1 className="font-display font-bold text-lg mb-1">{t({ tr: 'Giriş Yap', en: 'Sign In' })}</h1>
+              <h1 className="font-display font-bold text-lg mb-1">{t({ tr: 'Giriş Yap', en: 'Sign In', fr: 'Se connecter', it: 'Accedi', ar: 'تسجيل الدخول' })}</h1>
               <p className="text-[13px] text-[var(--text-faint)] mb-6">
-                {t({ tr: 'Kurumsal hesabınızla devam edin', en: 'Continue with your work account' })}
+                {t({ tr: 'Kurumsal hesabınızla devam edin', en: 'Continue with your work account', fr: 'Continuez avec votre compte professionnel', it: 'Continua con il tuo account aziendale', ar: 'تابع باستخدام حساب العمل الخاص بك' })}
               </p>
 
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div>
                   <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">
-                    {t({ tr: 'E-posta', en: 'Email' })}
+                    {t({ tr: 'E-posta', en: 'Email', fr: 'E-mail', it: 'Email', ar: 'البريد الإلكتروني' })}
                   </label>
                   <input
                     type="email"
@@ -120,14 +120,14 @@ export function LoginPage() {
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide">
-                      {t({ tr: 'Şifre', en: 'Password' })}
+                      {t({ tr: 'Şifre', en: 'Password', fr: 'Mot de passe', it: 'Password', ar: 'كلمة المرور' })}
                     </label>
                     <button
                       type="button"
                       onClick={() => { setMode('forgot'); setError(null) }}
                       className="text-[11px] font-semibold text-brand-dim"
                     >
-                      {t({ tr: 'Şifremi unuttum', en: 'Forgot password' })}
+                      {t({ tr: 'Şifremi unuttum', en: 'Forgot password', fr: 'Mot de passe oublié', it: 'Password dimenticata', ar: 'نسيت كلمة المرور' })}
                     </button>
                   </div>
                   <input
@@ -143,7 +143,7 @@ export function LoginPage() {
                 {error && <p className="text-p1 text-xs">{error}</p>}
 
                 <Button type="submit" disabled={loading} className="w-full justify-center">
-                  {loading ? t({ tr: 'Giriş yapılıyor…', en: 'Signing in…' }) : t({ tr: 'Giriş Yap', en: 'Sign In' })}
+                  {loading ? t({ tr: 'Giriş yapılıyor…', en: 'Signing in…', fr: 'Connexion en cours…', it: 'Accesso in corso…', ar: 'جارٍ تسجيل الدخول…' }) : t({ tr: 'Giriş Yap', en: 'Sign In', fr: 'Se connecter', it: 'Accedi', ar: 'تسجيل الدخول' })}
                 </Button>
               </form>
             </>
@@ -151,14 +151,14 @@ export function LoginPage() {
 
           {mode === 'forgot' && (
             <>
-              <h1 className="font-display font-bold text-lg mb-1">{t({ tr: 'Şifremi Unuttum', en: 'Forgot Password' })}</h1>
+              <h1 className="font-display font-bold text-lg mb-1">{t({ tr: 'Şifremi Unuttum', en: 'Forgot Password', fr: 'Mot de passe oublié', it: 'Password dimenticata', ar: 'نسيت كلمة المرور' })}</h1>
               <p className="text-[13px] text-[var(--text-faint)] mb-6">
                 {t({ tr: 'E-posta adresinize bir sıfırlama linki gönderelim.', en: "We'll send a reset link to your email." })}
               </p>
               <form onSubmit={handleForgot} className="space-y-4">
                 <div>
                   <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">
-                    {t({ tr: 'E-posta', en: 'Email' })}
+                    {t({ tr: 'E-posta', en: 'Email', fr: 'E-mail', it: 'Email', ar: 'البريد الإلكتروني' })}
                   </label>
                   <input
                     type="email"
@@ -170,10 +170,10 @@ export function LoginPage() {
                 </div>
                 {error && <p className="text-p1 text-xs">{error}</p>}
                 <Button type="submit" disabled={loading} className="w-full justify-center">
-                  {loading ? t({ tr: 'Gönderiliyor…', en: 'Sending…' }) : t({ tr: 'Sıfırlama Linki Gönder', en: 'Send Reset Link' })}
+                  {loading ? t({ tr: 'Gönderiliyor…', en: 'Sending…', fr: 'Envoi en cours…', it: 'Invio in corso…', ar: 'جارٍ الإرسال…' }) : t({ tr: 'Sıfırlama Linki Gönder', en: 'Send Reset Link', fr: 'Envoyer le lien de réinitialisation', it: 'Invia link di reimpostazione', ar: 'إرسال رابط إعادة التعيين' })}
                 </Button>
                 <button type="button" onClick={() => setMode('signin')} className="w-full text-center text-[12px] font-semibold text-[var(--text-faint)]">
-                  {t({ tr: '← Girişe dön', en: '← Back to sign in' })}
+                  {t({ tr: '← Girişe dön', en: '← Back to sign in', fr: '← Retour à la connexion', it: "← Torna all'accesso", ar: '→ العودة لتسجيل الدخول' })}
                 </button>
               </form>
             </>
@@ -187,24 +187,24 @@ export function LoginPage() {
                 </svg>
               </div>
               <p className="text-[13.5px] text-[var(--text-sub)] mb-5">
-                {t({ tr: `${email} adresine bir sıfırlama linki gönderdik.`, en: `We sent a reset link to ${email}.` })}
+                {t({ tr: `${email} adresine bir sıfırlama linki gönderdik.`, en: `We sent a reset link to ${email}.`, fr: `Nous avons envoyé un lien de réinitialisation à ${email}.`, it: `Abbiamo inviato un link di reimpostazione a ${email}.`, ar: `لقد أرسلنا رابط إعادة التعيين إلى ${email}.` })}
               </p>
               <button onClick={() => setMode('signin')} className="text-[12.5px] font-semibold text-brand-dim">
-                {t({ tr: '← Girişe dön', en: '← Back to sign in' })}
+                {t({ tr: '← Girişe dön', en: '← Back to sign in', fr: '← Retour à la connexion', it: "← Torna all'accesso", ar: '→ العودة لتسجيل الدخول' })}
               </button>
             </div>
           )}
 
           {mode === 'reset-password' && (
             <>
-              <h1 className="font-display font-bold text-lg mb-1">{t({ tr: 'Yeni Şifre Belirle', en: 'Set New Password' })}</h1>
+              <h1 className="font-display font-bold text-lg mb-1">{t({ tr: 'Yeni Şifre Belirle', en: 'Set New Password', fr: 'Définir un nouveau mot de passe', it: 'Imposta nuova password', ar: 'تعيين كلمة مرور جديدة' })}</h1>
               <p className="text-[13px] text-[var(--text-faint)] mb-6">
-                {t({ tr: 'Hesabınız için yeni bir şifre girin.', en: 'Enter a new password for your account.' })}
+                {t({ tr: 'Hesabınız için yeni bir şifre girin.', en: 'Enter a new password for your account.', fr: 'Entrez un nouveau mot de passe pour votre compte.', it: 'Inserisci una nuova password per il tuo account.', ar: 'أدخل كلمة مرور جديدة لحسابك.' })}
               </p>
               <form onSubmit={handleResetPassword} className="space-y-4">
                 <div>
                   <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">
-                    {t({ tr: 'Yeni Şifre', en: 'New Password' })}
+                    {t({ tr: 'Yeni Şifre', en: 'New Password', fr: 'Nouveau mot de passe', it: 'Nuova password', ar: 'كلمة المرور الجديدة' })}
                   </label>
                   <input
                     type="password"
@@ -217,7 +217,7 @@ export function LoginPage() {
                 </div>
                 {error && <p className="text-p1 text-xs">{error}</p>}
                 <Button type="submit" disabled={loading} className="w-full justify-center">
-                  {loading ? t({ tr: 'Kaydediliyor…', en: 'Saving…' }) : t({ tr: 'Şifreyi Güncelle', en: 'Update Password' })}
+                  {loading ? t({ tr: 'Kaydediliyor…', en: 'Saving…', fr: 'Enregistrement…', it: 'Salvataggio…', ar: 'جارٍ الحفظ…' }) : t({ tr: 'Şifreyi Güncelle', en: 'Update Password', fr: 'Mettre à jour le mot de passe', it: 'Aggiorna password', ar: 'تحديث كلمة المرور' })}
                 </Button>
               </form>
             </>

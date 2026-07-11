@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronUp, Plus, X, TrendingDown } from 'lucide-react'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang} from '@/contexts/LangContext'
 import {
   useSoftwareLicenses,
   useLicenseSeatUsage,
@@ -77,7 +77,7 @@ export function SoftwareLicensesTab() {
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-[13.5px]">{l.name}</div>
                   <div className="text-[11px] text-[var(--text-faint)] mt-0.5">
-                    {l.vendor?.name ?? '—'} · {TYPE_LABEL[l.license_type][lang]}
+                    {l.vendor?.name ?? '—'} · {pickLang(TYPE_LABEL[l.license_type], lang)}
                     {l.renewal_date && ` · ${t({ tr: 'Yenileme', en: 'Renewal' })}: ${new Date(l.renewal_date).toLocaleDateString(lang === 'tr' ? 'tr-TR' : 'en-US')}`}
                   </div>
                 </div>

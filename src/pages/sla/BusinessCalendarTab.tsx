@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Plus, Trash2, Clock } from 'lucide-react'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang} from '@/contexts/LangContext'
 import { Button } from '@/components/ui/Button'
 import {
   useBusinessHours,
@@ -90,7 +90,7 @@ export function BusinessCalendarTab() {
                 >
                   <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${isOpen ? 'left-[18px]' : 'left-0.5'}`} />
                 </button>
-                <span className="text-[12.5px] font-semibold w-24 shrink-0">{DAY_LABEL[day][lang]}</span>
+                <span className="text-[12.5px] font-semibold w-24 shrink-0">{pickLang(DAY_LABEL[day], lang)}</span>
                 {isOpen ? (
                   <div className="flex items-center gap-1.5 flex-1">
                     <input

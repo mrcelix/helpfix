@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Settings, ArrowUp, ArrowDown, Check, ChevronUp, ChevronDown } from 'lucide-react'
 import { AreaChart, Area, BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang} from '@/contexts/LangContext'
 import { priorityLabel } from '@/lib/priority'
 import type { Priority } from '@/types/database'
 import { ReportBuilderTab } from './ReportBuilderTab'
@@ -140,7 +140,7 @@ export function AnalyticsPage() {
           <div key={w} className="bg-[var(--panel)] border border-[var(--border)] rounded-2xl p-5 col-span-2">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <span className="text-[13px] font-bold">{WIDGET_LABEL.weekly_trend[lang]}</span>
+                <span className="text-[13px] font-bold">{pickLang(WIDGET_LABEL.weekly_trend, lang)}</span>
                 {weekOverWeekChange != null && (
                   <span
                     className={`flex items-center gap-0.5 text-[10.5px] font-bold rounded-full px-1.5 py-0.5 ${
@@ -188,7 +188,7 @@ export function AnalyticsPage() {
         return (
           <div key={w} className="bg-[var(--panel)] border border-[var(--border)] rounded-2xl p-5 col-span-2">
             <div className="flex items-center justify-between mb-4">
-              <span className="text-[13px] font-bold">{WIDGET_LABEL.priority_chart[lang]}</span>
+              <span className="text-[13px] font-bold">{pickLang(WIDGET_LABEL.priority_chart, lang)}</span>
               <button onClick={() => toggleCollapse(w)} className="text-[var(--text-faint)] hover:text-[var(--text)]">
                 {collapsedWidgets.has(w) ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
               </button>
@@ -269,7 +269,7 @@ export function AnalyticsPage() {
           <div className="space-y-1.5">
             {(draftOrder ?? activeOrder).map((w) => (
               <div key={w} className="flex items-center gap-2 bg-[var(--panel)] border border-[var(--border)] rounded-lg px-3 py-2">
-                <span className="flex-1 text-[12px] font-semibold">{WIDGET_LABEL[w][lang]}</span>
+                <span className="flex-1 text-[12px] font-semibold">{pickLang(WIDGET_LABEL[w], lang)}</span>
                 <button onClick={() => move(w, -1)}><ArrowUp className="w-3.5 h-3.5 text-[var(--text-faint)]" /></button>
                 <button onClick={() => move(w, 1)}><ArrowDown className="w-3.5 h-3.5 text-[var(--text-faint)]" /></button>
                 <button onClick={() => toggleWidget(w)} className="text-[10.5px] font-bold text-p1 ml-2">
@@ -285,7 +285,7 @@ export function AnalyticsPage() {
                 onClick={() => toggleWidget(w)}
                 className="text-[10.5px] font-bold px-2.5 py-1.5 rounded-full border border-dashed border-[var(--border)] text-[var(--text-faint)]"
               >
-                + {WIDGET_LABEL[w][lang]}
+                + {pickLang(WIDGET_LABEL[w], lang)}
               </button>
             ))}
           </div>

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Plus, AlertTriangle, FileText, ShoppingCart, Building2 } from 'lucide-react'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang} from '@/contexts/LangContext'
 import { Button } from '@/components/ui/Button'
 import {
   useContracts,
@@ -118,7 +118,7 @@ export function PurchasingPage() {
                     <td className="px-3.5 py-3 font-mono text-[var(--text-faint)]">{c.ref}</td>
                     <td className="px-3.5 py-3 font-semibold">{c.name}</td>
                     <td className="px-3.5 py-3 text-[var(--text-sub)]">{c.vendor?.name ?? '—'}</td>
-                    <td className="px-3.5 py-3 text-[var(--text-sub)]">{CONTRACT_TYPE_LABEL[c.contract_type][lang]}</td>
+                    <td className="px-3.5 py-3 text-[var(--text-sub)]">{pickLang(CONTRACT_TYPE_LABEL[c.contract_type], lang)}</td>
                     <td className="px-3.5 py-3 text-[var(--text-sub)]">{new Date(c.end_date).toLocaleDateString(lang === 'tr' ? 'tr-TR' : 'en-US')}</td>
                     <td className="px-3.5 py-3 text-[var(--text-sub)]">{c.cost != null ? `₺${c.cost.toLocaleString(lang === 'tr' ? 'tr-TR' : 'en-US')}` : '—'}</td>
                     <td className="px-3.5 py-3">
@@ -189,7 +189,7 @@ export function PurchasingPage() {
                           onClick={() => updatePoStatus.mutate({ id: o.id, status: nextStatus as PoStatus })}
                           className="text-[10.5px] font-bold px-2.5 py-1 rounded-md bg-brand text-white"
                         >
-                          {PO_STATUS_LABEL[nextStatus][lang]} →
+                          {pickLang(PO_STATUS_LABEL[nextStatus], lang)} →
                         </button>
                       )}
                     </td>
@@ -232,7 +232,7 @@ function PoStatusBadge({ status }: { status: PoStatus }) {
     received: 'bg-ok/15 text-ok',
     cancelled: 'bg-p1-tint text-p1',
   }
-  return <span className={`text-[10.5px] font-bold rounded-full px-2 py-0.5 w-fit inline-block ${colors[status]}`}>{PO_STATUS_LABEL[status][lang]}</span>
+  return <span className={`text-[10.5px] font-bold rounded-full px-2 py-0.5 w-fit inline-block ${colors[status]}`}>{pickLang(PO_STATUS_LABEL[status], lang)}</span>
 }
 
 function Kpi({ label, value, accent }: { label: string; value: number; accent: string }) {

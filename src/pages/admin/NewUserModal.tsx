@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Copy, Check } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang} from '@/contexts/LangContext'
 import { useCreateUser, useDepartments, generateTempPassword } from './useAdmin'
 import type { UserRole } from '@/types/database'
 
@@ -120,7 +120,7 @@ export function NewUserModal({ onClose }: { onClose: () => void }) {
             >
               {(Object.keys(ROLE_LABEL) as UserRole[]).map((r) => (
                 <option key={r} value={r}>
-                  {ROLE_LABEL[r][lang]}
+                  {pickLang(ROLE_LABEL[r], lang)}
                 </option>
               ))}
             </select>

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { Sidebar, MobileSidebarDrawer } from './Sidebar'
 import { Topbar } from './Topbar'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang} from '@/contexts/LangContext'
 import { NAV_MODULES } from './nav-modules'
 import { CommandPalette } from '@/components/command-palette/CommandPalette'
 import { useSidebarCollapsed } from '@/hooks/useSidebarCollapsed'
@@ -17,7 +17,7 @@ export function AppShell() {
   // biz <BrowserRouter> kullandığımız için mevcut path'i doğrudan
   // NAV_MODULES listesiyle eşleştiriyoruz — daha basit ve bağımlılıksız.
   const activeModule = NAV_MODULES.find((m) => location.pathname.startsWith(m.path))
-  const crumb = activeModule?.name[lang] ?? ''
+  const crumb = activeModule ? pickLang(activeModule.name, lang) : ''
 
   return (
     <div className={`flex flex-col lg:grid min-h-screen ${collapsed ? 'lg:grid-cols-[72px_1fr]' : 'lg:grid-cols-[248px_1fr]'}`}>

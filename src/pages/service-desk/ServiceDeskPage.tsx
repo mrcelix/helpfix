@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useOpenParam } from '@/hooks/useOpenParam'
 import { Plus, Download, List, Kanban, BookmarkPlus, X, MonitorPlay, CheckSquare, Square } from 'lucide-react'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang} from '@/contexts/LangContext'
 import { Button } from '@/components/ui/Button'
 import { PriorityBadge, StatusBadge, STATUS_LABEL } from '@/components/ui/Badge'
 import { priorityLabel } from '@/lib/priority'
@@ -239,7 +239,7 @@ export function ServiceDeskPage() {
                 : 'bg-[var(--panel)] border-[var(--border)] text-[var(--text-sub)]')
             }
           >
-            {v.label[lang]}
+            {pickLang(v.label, lang)}
           </button>
         ))}
         {savedFilters?.map((sf) => (
@@ -314,7 +314,7 @@ export function ServiceDeskPage() {
             onClick={() => setChannel(c)}
             className={`text-[11px] font-bold px-2.5 py-1 rounded-full border ${channel === c ? 'bg-brand border-brand text-white' : 'bg-[var(--panel)] border-[var(--border)] text-[var(--text-sub)]'}`}
           >
-            {CHANNEL_LABEL[c][lang]}
+            {pickLang(CHANNEL_LABEL[c], lang)}
           </button>
         ))}
         <select
@@ -334,7 +334,7 @@ export function ServiceDeskPage() {
           {KANBAN_COLUMNS.map((col) => (
             <div key={col.key}>
               <div className="text-[10.5px] font-bold text-[var(--text-faint)] uppercase mb-2 flex items-center justify-between">
-                <span>{col.label[lang]}</span>
+                <span>{pickLang(col.label, lang)}</span>
                 <span>{incidents?.filter((i) => i.status === col.key).length ?? 0}</span>
               </div>
               <div className="space-y-2 min-h-[60px]">
@@ -368,7 +368,7 @@ export function ServiceDeskPage() {
             </option>
             {STATUS_OPTIONS_BULK.map((s) => (
               <option key={s} value={s}>
-                {STATUS_LABEL[s][lang]}
+                {pickLang(STATUS_LABEL[s], lang)}
               </option>
             ))}
           </select>

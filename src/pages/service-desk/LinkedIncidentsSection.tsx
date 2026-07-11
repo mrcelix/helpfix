@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link2, Plus, X, Search } from 'lucide-react'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang} from '@/contexts/LangContext'
 import { PriorityBadge, StatusBadge } from '@/components/ui/Badge'
 import {
   useIncidentLinks,
@@ -66,7 +66,7 @@ export function LinkedIncidentsSection({ incidentId, onOpen }: { incidentId: str
                   (linkType === lt ? 'bg-brand border-brand text-white' : 'bg-[var(--panel)] border-[var(--border)] text-[var(--text-faint)]')
                 }
               >
-                {LINK_TYPE_LABEL[lt][lang]}
+                {pickLang(LINK_TYPE_LABEL[lt], lang)}
               </button>
             ))}
           </div>
@@ -120,7 +120,7 @@ export function LinkedIncidentsSection({ incidentId, onOpen }: { incidentId: str
               <div className="text-[12px] font-medium truncate mt-0.5">{l.other.title}</div>
             </button>
             <span className="text-[10px] font-bold text-[var(--text-faint)] shrink-0 max-w-[90px] text-right">
-              {(l.isSourceSide ? LINK_TYPE_LABEL : LINK_TYPE_LABEL_REVERSE)[l.link_type][lang]}
+              {pickLang((l.isSourceSide ? LINK_TYPE_LABEL : LINK_TYPE_LABEL_REVERSE)[l.link_type], lang)}
             </span>
             <button onClick={() => deleteLink.mutate(l.id)} className="shrink-0 text-[var(--text-faint)] hover:text-p1">
               <X className="w-3.5 h-3.5" />

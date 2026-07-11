@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Plus, ArrowUpCircle } from 'lucide-react'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, type Lang } from '@/contexts/LangContext'
 import { Button } from '@/components/ui/Button'
 import { PriorityBadge } from '@/components/ui/Badge'
 import { usePolicies, useMonitoredIncidents, useTogglePolicy, useAllEscalationLevels, computeTriggeredLevel, type MonitoredIncident } from './useSla'
@@ -17,7 +17,7 @@ function slaState(incident: MonitoredIncident): 'ok' | 'warning' | 'breached' {
   return 'ok'
 }
 
-function formatCountdown(dueAt: string, lang: 'tr' | 'en'): string {
+function formatCountdown(dueAt: string, lang: Lang): string {
   const diffMs = new Date(dueAt).getTime() - Date.now()
   const abs = Math.abs(diffMs)
   const hours = Math.floor(abs / 3_600_000)

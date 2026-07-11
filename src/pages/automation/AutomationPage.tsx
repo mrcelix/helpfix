@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Plus, Sparkles, Trash2 } from 'lucide-react'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang } from '@/contexts/LangContext'
 import { Button } from '@/components/ui/Button'
 import { useAutomationRules, useToggleRule, useDeleteRule } from './useAutomation'
 
@@ -65,7 +65,7 @@ export function AutomationPage() {
             <div className="flex-1">
               <div className="font-bold text-[13.5px] mb-1">{r.name}</div>
               <div className="text-[11.5px] text-[var(--text-faint)]">
-                <span className="font-bold text-[var(--text-sub)]">{TRIGGER_LABEL[r.trigger_type]?.[lang]}</span>
+                <span className="font-bold text-[var(--text-sub)]">{(TRIGGER_LABEL[r.trigger_type] ? pickLang(TRIGGER_LABEL[r.trigger_type], lang) : undefined)}</span>
                 {' · '}
                 {t({ tr: 'Eğer', en: 'If' })}{' '}
                 {r.condition_category ? `kategori = "${r.condition_category}"` : t({ tr: 'herhangi bir kategori', en: 'any category' })}

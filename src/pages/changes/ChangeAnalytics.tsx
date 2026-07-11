@@ -1,5 +1,5 @@
 import { BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang } from '@/contexts/LangContext'
 import { useChangeRiskDistribution, useApprovalBottleneck, useChangeSuccessTrend } from './useChanges'
 
 const BUCKET_LABEL: Record<string, { tr: string; en: string }> = {
@@ -20,7 +20,7 @@ export function ChangeAnalytics() {
   const { data: bottleneck } = useApprovalBottleneck()
   const { data: trend, isLoading: trendLoading } = useChangeSuccessTrend()
 
-  const riskData = riskDist?.map((r) => ({ bucket: BUCKET_LABEL[r.bucket]?.[lang] ?? r.bucket, count: r.change_count, key: r.bucket }))
+  const riskData = riskDist?.map((r) => ({ bucket: (BUCKET_LABEL[r.bucket] ? pickLang(BUCKET_LABEL[r.bucket], lang) : undefined) ?? r.bucket, count: r.change_count, key: r.bucket }))
   const chartTrend = trend?.map((p) => ({
     week: new Date(p.week_start).toLocaleDateString(lang === 'tr' ? 'tr-TR' : 'en-US', { day: '2-digit', month: '2-digit' }),
     [t({ tr: 'Başarılı', en: 'Successful' })]: p.successful_count,
@@ -35,7 +35,7 @@ export function ChangeAnalytics() {
             <div key={b.approval_type} className="bg-[var(--panel)] border border-[var(--border)] rounded-xl p-3.5">
               <div className="font-display text-xl font-bold text-p2">{b.avg_wait_hours} {t({ tr: 'saat', en: 'hours' })}</div>
               <div className="text-[11px] text-[var(--text-faint)] mt-1">
-                {APPROVAL_LABEL[b.approval_type]?.[lang]} — {t({ tr: 'ortalama onay bekleme süresi', en: 'avg. approval wait time' })} ({b.decided_count})
+                {(APPROVAL_LABEL[b.approval_type] ? pickLang(APPROVAL_LABEL[b.approval_type], lang) : undefined)} — {t({ tr: 'ortalama onay bekleme süresi', en: 'avg. approval wait time' })} ({b.decided_count})
               </div>
             </div>
           ))}

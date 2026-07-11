@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Ticket, LayoutGrid, BookOpen } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang} from '@/contexts/LangContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { useMyRequests } from '@/pages/service-desk/useIncidents'
 import { StatusBadge } from '@/components/ui/Badge'
@@ -66,59 +66,59 @@ export function EmployeeHomePage() {
     <div>
       <div className="mb-6">
         <h1 className="font-display text-[24px] font-bold tracking-tight">
-          {t({ tr: `Merhaba, ${profile?.fullName?.split(' ')[0] ?? ''} 👋`, en: `Hi, ${profile?.fullName?.split(' ')[0] ?? ''} 👋` })}
+          {t({ tr: `Merhaba, ${profile?.fullName?.split(' ')[0] ?? ''} 👋`, en: `Hi, ${profile?.fullName?.split(' ')[0] ?? ''} 👋`, fr: `Bonjour, ${profile?.fullName?.split(' ')[0] ?? ''} 👋`, it: `Ciao, ${profile?.fullName?.split(' ')[0] ?? ''} 👋`, ar: `مرحبًا، ${profile?.fullName?.split(' ')[0] ?? ''} 👋` })}
         </h1>
         <p className="text-[13.5px] text-[var(--text-faint)] mt-1">
-          {t({ tr: 'Bugün size nasıl yardımcı olabiliriz?', en: 'How can we help you today?' })}
+          {t({ tr: 'Bugün size nasıl yardımcı olabiliriz?', en: 'How can we help you today?', fr: "Comment pouvons-nous vous aider aujourd'hui ?", it: 'Come possiamo aiutarti oggi?', ar: 'كيف يمكننا مساعدتك اليوم؟' })}
         </p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 mb-6">
         <div className="bg-[var(--panel)] border border-[var(--border)] rounded-2xl p-4 hover:border-brand/40 transition-colors">
           <div className="font-display text-2xl font-bold">{openCount}</div>
-          <div className="text-[11px] text-[var(--text-faint)] mt-1">{t({ tr: 'Açık Talebim', en: 'Open Tickets' })}</div>
+          <div className="text-[11px] text-[var(--text-faint)] mt-1">{t({ tr: 'Açık Talebim', en: 'Open Tickets', fr: 'Tickets ouverts', it: 'Ticket aperti', ar: 'الطلبات المفتوحة' })}</div>
         </div>
         <div className="bg-[var(--panel)] border border-[var(--border)] rounded-2xl p-4 hover:border-ok/40 transition-colors">
           <div className="font-display text-2xl font-bold text-ok">{resolvedCount}</div>
-          <div className="text-[11px] text-[var(--text-faint)] mt-1">{t({ tr: 'Çözülen Talebim', en: 'Resolved Tickets' })}</div>
+          <div className="text-[11px] text-[var(--text-faint)] mt-1">{t({ tr: 'Çözülen Talebim', en: 'Resolved Tickets', fr: 'Tickets résolus', it: 'Ticket risolti', ar: 'الطلبات المحلولة' })}</div>
         </div>
         <div className="bg-[var(--panel)] border border-[var(--border)] rounded-2xl p-4 hover:border-brand/40 transition-colors">
           <div className="font-display text-2xl font-bold">{myRequests?.length ?? 0}</div>
-          <div className="text-[11px] text-[var(--text-faint)] mt-1">{t({ tr: 'Toplam Talep', en: 'Total Tickets' })}</div>
+          <div className="text-[11px] text-[var(--text-faint)] mt-1">{t({ tr: 'Toplam Talep', en: 'Total Tickets', fr: 'Total des tickets', it: 'Ticket totali', ar: 'إجمالي الطلبات' })}</div>
         </div>
         <div className="bg-[var(--panel)] border border-[var(--border)] rounded-2xl p-4 hover:border-brand/40 transition-colors">
           <div className="font-display text-2xl font-bold text-brand">
-            {avgResolutionDays != null ? `${avgResolutionDays}${t({ tr: ' gün', en: 'd' })}` : '—'}
+            {avgResolutionDays != null ? `${avgResolutionDays}${t({ tr: ' gün', en: 'd', fr: ' j', it: ' gg', ar: ' يوم' })}` : '—'}
           </div>
-          <div className="text-[11px] text-[var(--text-faint)] mt-1">{t({ tr: 'Ort. Çözüm Süreniz', en: 'Avg. Resolution Time' })}</div>
+          <div className="text-[11px] text-[var(--text-faint)] mt-1">{t({ tr: 'Ort. Çözüm Süreniz', en: 'Avg. Resolution Time', fr: 'Délai de résolution moyen', it: 'Tempo medio di risoluzione', ar: 'متوسط وقت الحل' })}</div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mb-6">
         <ActionCard
           icon={Ticket}
-          title={t({ tr: 'Yeni Talep Oluştur', en: 'Create a Ticket' })}
-          desc={t({ tr: 'Bir sorun mu var? Hemen bildirin.', en: 'Something wrong? Report it now.' })}
+          title={t({ tr: 'Yeni Talep Oluştur', en: 'Create a Ticket', fr: 'Créer un ticket', it: 'Crea un ticket', ar: 'إنشاء طلب' })}
+          desc={t({ tr: 'Bir sorun mu var? Hemen bildirin.', en: 'Something wrong? Report it now.', fr: 'Un problème ? Signalez-le maintenant.', it: 'Qualcosa non va? Segnalalo subito.', ar: 'هل هناك مشكلة؟ أبلغ عنها الآن.' })}
           onClick={() => navigate('/my-tickets')}
         />
         <ActionCard
           icon={LayoutGrid}
-          title={t({ tr: 'Servis Kataloğunu Gez', en: 'Browse Service Catalog' })}
-          desc={t({ tr: 'Donanım, yazılım ve daha fazlasını talep edin.', en: 'Request hardware, software, and more.' })}
+          title={t({ tr: 'Servis Kataloğunu Gez', en: 'Browse Service Catalog', fr: 'Parcourir le catalogue de services', it: 'Sfoglia il catalogo servizi', ar: 'تصفح كتالوج الخدمات' })}
+          desc={t({ tr: 'Donanım, yazılım ve daha fazlasını talep edin.', en: 'Request hardware, software, and more.', fr: 'Demandez du matériel, des logiciels et plus encore.', it: 'Richiedi hardware, software e altro.', ar: 'اطلب الأجهزة والبرامج والمزيد.' })}
           onClick={() => navigate('/catalog')}
         />
         <ActionCard
           icon={BookOpen}
-          title={t({ tr: 'Bilgi Bankasında Ara', en: 'Search Knowledge Base' })}
-          desc={t({ tr: 'Sık sorulan sorulara kendiniz çözüm bulun.', en: 'Find answers to common questions yourself.' })}
+          title={t({ tr: 'Bilgi Bankasında Ara', en: 'Search Knowledge Base', fr: 'Rechercher dans la base de connaissances', it: 'Cerca nella base di conoscenza', ar: 'ابحث في قاعدة المعرفة' })}
+          desc={t({ tr: 'Sık sorulan sorulara kendiniz çözüm bulun.', en: 'Find answers to common questions yourself.', fr: 'Trouvez vous-même des réponses aux questions courantes.', it: 'Trova da solo le risposte alle domande frequenti.', ar: 'اعثر بنفسك على إجابات للأسئلة الشائعة.' })}
           onClick={() => navigate('/knowledge-base')}
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4 mb-8">
         <div className="bg-[var(--panel)] border border-[var(--border)] rounded-2xl p-5">
-          <div className="text-[13px] font-bold mb-1">{t({ tr: 'Talep Hacminiz', en: 'Your Ticket Volume' })}</div>
-          <div className="text-[11px] text-[var(--text-faint)] mb-3">{t({ tr: 'Son 6 ay', en: 'Last 6 months' })}</div>
+          <div className="text-[13px] font-bold mb-1">{t({ tr: 'Talep Hacminiz', en: 'Your Ticket Volume', fr: 'Votre volume de tickets', it: 'Il tuo volume di ticket', ar: 'حجم طلباتك' })}</div>
+          <div className="text-[11px] text-[var(--text-faint)] mb-3">{t({ tr: 'Son 6 ay', en: 'Last 6 months', fr: 'Les 6 derniers mois', it: 'Ultimi 6 mesi', ar: 'آخر 6 أشهر' })}</div>
           <ResponsiveContainer width="100%" height={140}>
             <BarChart data={monthlyVolume}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -135,7 +135,7 @@ export function EmployeeHomePage() {
       {!!myRequests?.length && (
         <div>
           <div className="text-[10.5px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-2.5">
-            {t({ tr: 'Son Taleplerim', en: 'My Recent Tickets' })}
+            {t({ tr: 'Son Taleplerim', en: 'My Recent Tickets', fr: 'Mes tickets récents', it: 'I miei ticket recenti', ar: 'طلباتي الأخيرة' })}
           </div>
           <div className="space-y-1.5">
             {myRequests.slice(0, 5).map((r) => {
@@ -151,7 +151,7 @@ export function EmployeeHomePage() {
                   <span className="font-mono text-[11px] text-[var(--text-faint)]">{r.ref}</span>
                   {isOpen && r.sla_due_at && (
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${SLA_STYLE[state]}`}>
-                      {SLA_LABEL[state][lang]}
+                      {pickLang(SLA_LABEL[state], lang)}
                     </span>
                   )}
                   <StatusBadge status={r.status} lang={lang} />

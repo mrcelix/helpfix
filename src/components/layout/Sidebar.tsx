@@ -1,7 +1,7 @@
 import { NavLink, Link } from 'react-router-dom'
 import { Settings, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import { NAV_MODULES } from './nav-modules'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang} from '@/contexts/LangContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { useFeatureFlags } from '@/pages/admin/useAdmin'
 import { useNavBadgeCounts } from './useNavBadgeCounts'
@@ -31,7 +31,7 @@ function SidebarContent({ onNavigate, collapsed = false }: { onNavigate?: () => 
           <div>
             <div className="font-display font-bold text-[17px] tracking-tight leading-none">HelpFix</div>
             <div className="text-[11px] text-[var(--text-faint)] mt-0.5">
-              {t({ tr: 'Yönetim Paneli', en: 'Admin Panel' })}
+              {t({ tr: 'Yönetim Paneli', en: 'Admin Panel', fr: "Panneau d'administration", it: 'Pannello di amministrazione', ar: 'لوحة الإدارة' })}
             </div>
           </div>
         )}
@@ -46,7 +46,7 @@ function SidebarContent({ onNavigate, collapsed = false }: { onNavigate?: () => 
               key={mod.code}
               to={mod.path}
               onClick={onNavigate}
-              title={collapsed ? mod.name[lang] : undefined}
+              title={collapsed ? pickLang(mod.name, lang) : undefined}
               className={({ isActive }) =>
                 cn(
                   'flex items-center gap-2.5 py-2 rounded-lg text-[13.5px] font-medium mb-0.5 transition-colors relative',
@@ -63,7 +63,7 @@ function SidebarContent({ onNavigate, collapsed = false }: { onNavigate?: () => 
               )}
               {!collapsed && (
                 <>
-                  <span>{mod.name[lang]}</span>
+                  <span>{pickLang(mod.name, lang)}</span>
                   {count > 0 && (
                     <span className="ml-auto text-[9.5px] font-bold bg-p1 text-white rounded-full min-w-[16px] h-[16px] px-1 flex items-center justify-center">
                       {count > 99 ? '99+' : count}
@@ -86,7 +86,7 @@ function SidebarContent({ onNavigate, collapsed = false }: { onNavigate?: () => 
             <NavLink
               to="/admin"
               onClick={onNavigate}
-              title={collapsed ? t({ tr: 'Yönetim Paneli', en: 'Admin Panel' }) : undefined}
+              title={collapsed ? t({ tr: 'Yönetim Paneli', en: 'Admin Panel', fr: "Panneau d'administration", it: 'Pannello di amministrazione', ar: 'لوحة الإدارة' }) : undefined}
               className={({ isActive }) =>
                 cn(
                   'flex items-center gap-2.5 py-2 rounded-lg text-[13.5px] font-medium mb-0.5 transition-colors',
@@ -98,7 +98,7 @@ function SidebarContent({ onNavigate, collapsed = false }: { onNavigate?: () => 
               }
             >
               <Settings className="w-[17px] h-[17px] shrink-0" />
-              {!collapsed && <span>{t({ tr: 'Yönetim Paneli', en: 'Admin Panel' })}</span>}
+              {!collapsed && <span>{t({ tr: 'Yönetim Paneli', en: 'Admin Panel', fr: "Panneau d'administration", it: 'Pannello di amministrazione', ar: 'لوحة الإدارة' })}</span>}
             </NavLink>
           </>
         )}

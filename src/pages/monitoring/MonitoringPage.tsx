@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang} from '@/contexts/LangContext'
 import { useAlerts, useDailyAlertVolume, useAcknowledgeAlert, useResolveAlert, useMttaBySource, useRunbooks, findMatchingRunbook, type AlertSavedView } from './useMonitoring'
 import { CreateIncidentModal } from './CreateIncidentModal'
 import { RunbooksModal } from './RunbooksModal'
@@ -102,7 +102,7 @@ export function MonitoringPage() {
                 : 'bg-[var(--panel)] border-[var(--border)] text-[var(--text-sub)]')
             }
           >
-            {v.label[lang]}
+            {pickLang(v.label, lang)}
           </button>
         ))}
       </div>

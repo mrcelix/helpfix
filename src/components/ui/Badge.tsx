@@ -1,3 +1,4 @@
+import { pickLang, type Lang } from '@/contexts/LangContext'
 import { cn } from '@/lib/utils'
 import type { Priority, TicketStatus } from '@/types/database'
 import { PRIORITY_LABEL } from '@/lib/priority'
@@ -9,7 +10,7 @@ const PRIORITY_STYLES: Record<Priority, string> = {
   P4: 'bg-p4-tint text-p4',
 }
 
-export function PriorityBadge({ priority, lang = 'tr' }: { priority: Priority; lang?: 'tr' | 'en' }) {
+export function PriorityBadge({ priority, lang = 'tr' }: { priority: Priority; lang?: Lang }) {
   return (
     <span
       className={cn(
@@ -17,7 +18,7 @@ export function PriorityBadge({ priority, lang = 'tr' }: { priority: Priority; l
         PRIORITY_STYLES[priority]
       )}
     >
-      {PRIORITY_LABEL[priority][lang]}
+      {pickLang(PRIORITY_LABEL[priority], lang)}
     </span>
   )
 }
@@ -42,7 +43,7 @@ const STATUS_STYLES: Record<TicketStatus, string> = {
   merged: 'bg-purple-tint text-purple',
 }
 
-export function StatusBadge({ status, lang }: { status: TicketStatus; lang: 'tr' | 'en' }) {
+export function StatusBadge({ status, lang }: { status: TicketStatus; lang: Lang }) {
   return (
     <span
       className={cn(
@@ -50,7 +51,7 @@ export function StatusBadge({ status, lang }: { status: TicketStatus; lang: 'tr'
         STATUS_STYLES[status]
       )}
     >
-      {STATUS_LABEL[status][lang]}
+      {pickLang(STATUS_LABEL[status], lang)}
     </span>
   )
 }

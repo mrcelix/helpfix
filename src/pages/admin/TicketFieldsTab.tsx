@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang} from '@/contexts/LangContext'
 import { FieldSchemaEditor, type FormFieldSchema } from '@/components/ui/DynamicFields'
 import { useAllTicketCategoryFields, useSetTicketCategoryFields } from '@/pages/service-desk/useIncidents'
 import { TICKET_CATEGORIES } from '@/pages/service-desk/ticket-categories'
@@ -32,7 +32,7 @@ export function TicketFieldsTab() {
                 className="w-full flex items-center gap-2.5 px-4 py-3 text-left hover:bg-[var(--row-hover)]"
               >
                 <Icon className="w-4 h-4 text-brand-dim shrink-0" />
-                <span className="font-semibold text-[13px] flex-1">{cat.label[lang]}</span>
+                <span className="font-semibold text-[13px] flex-1">{pickLang(cat.label, lang)}</span>
                 <span className="text-[11px] text-[var(--text-faint)]">
                   {fields.length ? t({ tr: `${fields.length} alan`, en: `${fields.length} fields` }) : t({ tr: 'Alan yok', en: 'No fields' })}
                 </span>

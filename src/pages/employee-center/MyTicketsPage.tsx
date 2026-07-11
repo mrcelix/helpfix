@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Plus } from 'lucide-react'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang} from '@/contexts/LangContext'
 import { Button } from '@/components/ui/Button'
 import { StatusBadge, PriorityBadge } from '@/components/ui/Badge'
 import { useMyRequests } from '@/pages/service-desk/useIncidents'
@@ -75,7 +75,7 @@ export function MyTicketsPage() {
             </div>
             {isOpen && r.sla_due_at && (
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${SLA_STYLE[state]}`}>
-                {SLA_LABEL[state][lang]}
+                {pickLang(SLA_LABEL[state], lang)}
               </span>
             )}
             <StatusBadge status={r.status} lang={lang} />

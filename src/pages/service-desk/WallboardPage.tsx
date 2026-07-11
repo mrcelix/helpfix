@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { X, AlertTriangle } from 'lucide-react'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang} from '@/contexts/LangContext'
 import { PRIORITY_LABEL } from '@/lib/priority'
 import { computeSlaMeter } from './useServiceDeskExtras'
 import { useWallboardIncidents, useWallboardResolvedToday, useWallboardMajorIncidents } from './useWallboard'
@@ -86,7 +86,7 @@ export function WallboardPage() {
         {priorities.map((p) => (
           <div key={p} className="bg-[var(--panel)] border border-[var(--border)] rounded-2xl p-5 text-center">
             <div className={`font-display text-5xl font-bold ${PRIORITY_ACCENT[p]}`}>{counts[p]}</div>
-            <div className="text-[13px] text-[var(--text-faint)] mt-2 font-semibold">{PRIORITY_LABEL[p][lang]}</div>
+            <div className="text-[13px] text-[var(--text-faint)] mt-2 font-semibold">{pickLang(PRIORITY_LABEL[p], lang)}</div>
           </div>
         ))}
         <div className="bg-[var(--panel)] border border-[var(--border)] rounded-2xl p-5 text-center">

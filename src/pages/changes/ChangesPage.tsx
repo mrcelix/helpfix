@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useOpenParam } from '@/hooks/useOpenParam'
 import { Plus, Snowflake, Download } from 'lucide-react'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang} from '@/contexts/LangContext'
 import { Button } from '@/components/ui/Button'
 import { useChanges, type ChangeSavedView } from './useChanges'
 import { ChangeDrawer } from './ChangeDrawer'
@@ -68,9 +68,9 @@ export function ChangesPage() {
     const rows = sortedChanges.map((c) => [
       c.ref,
       c.title,
-      TYPE_LABEL[c.change_type]?.[lang] ?? c.change_type,
+      (TYPE_LABEL[c.change_type] ? pickLang(TYPE_LABEL[c.change_type], lang) : undefined) ?? c.change_type,
       c.risk_score,
-      STATUS_LABEL[c.status]?.[lang] ?? c.status,
+      (STATUS_LABEL[c.status] ? pickLang(STATUS_LABEL[c.status], lang) : undefined) ?? c.status,
       c.scheduled_start ? new Date(c.scheduled_start).toLocaleDateString(lang === 'tr' ? 'tr-TR' : 'en-US') : '',
     ])
     const csv = [headers, ...rows].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')
@@ -148,7 +148,7 @@ export function ChangesPage() {
                 : 'bg-[var(--panel)] border-[var(--border)] text-[var(--text-sub)]')
             }
           >
-            {v.label[lang]}
+            {pickLang(v.label, lang)}
           </button>
         ))}
         <select
@@ -211,13 +211,13 @@ export function ChangesPage() {
               >
                 <td className="px-3.5 py-3 font-mono text-[var(--text-faint)]">{c.ref}</td>
                 <td className="px-3.5 py-3 font-semibold">{c.title}</td>
-                <td className="px-3.5 py-3 text-[var(--text-sub)]">{TYPE_LABEL[c.change_type]?.[lang]}</td>
+                <td className="px-3.5 py-3 text-[var(--text-sub)]">{(TYPE_LABEL[c.change_type] ? pickLang(TYPE_LABEL[c.change_type], lang) : undefined)}</td>
                 <td className="px-3.5 py-3">
                   <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold ${riskColor(c.risk_score)}`}>
                     {c.risk_score}
                   </span>
                 </td>
-                <td className="px-3.5 py-3 text-[var(--text-sub)]">{STATUS_LABEL[c.status]?.[lang] ?? c.status}</td>
+                <td className="px-3.5 py-3 text-[var(--text-sub)]">{(STATUS_LABEL[c.status] ? pickLang(STATUS_LABEL[c.status], lang) : undefined) ?? c.status}</td>
                 <td className="px-3.5 py-3 text-[var(--text-faint)]">
                   {c.scheduled_start ? new Date(c.scheduled_start).toLocaleDateString(lang === 'tr' ? 'tr-TR' : 'en-US') : '—'}
                 </td>

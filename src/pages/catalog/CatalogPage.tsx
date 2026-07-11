@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Package, Check, X, ShieldCheck } from 'lucide-react'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang} from '@/contexts/LangContext'
 import { useAuth } from '@/contexts/AuthContext'
 import {
   useCategories,
@@ -181,7 +181,7 @@ export function CatalogPage() {
                 onClick={() => setView(v.key)}
                 className={`text-[12.5px] font-bold px-3.5 py-2 rounded-lg border transition-colors ${view === v.key ? 'bg-brand border-brand text-white' : 'bg-[var(--panel)] border-[var(--border)] text-[var(--text-sub)]'}`}
               >
-                {v.label[lang]}
+                {pickLang(v.label, lang)}
               </button>
             ))}
           </div>
@@ -253,7 +253,7 @@ function RequestRow({
       <td className="px-3.5 py-3 font-semibold">{request.catalog_item?.name ?? '—'}</td>
       <td className="px-3.5 py-3 text-[var(--text-sub)]">{request.requester?.full_name ?? '—'}</td>
       <td className="px-3.5 py-3 text-[var(--text-sub)]">
-        {STATUS_LABEL[request.status]?.[lang] ?? request.status}
+        {(STATUS_LABEL[request.status] ? pickLang(STATUS_LABEL[request.status], lang) : undefined) ?? request.status}
         {request.status === 'pending_approval' && currentStage && (
           <span className="ml-1.5 inline-flex items-center gap-1 text-[10px] font-bold bg-p2-tint text-p2 rounded-full px-1.5 py-0.5">
             <ShieldCheck className="w-2.5 h-2.5" />

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Trash2 } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang} from '@/contexts/LangContext'
 import { useEscalationLevels, useCreateEscalationLevel, useDeleteEscalationLevel } from './useSla'
 import type { EscalationNotifyRole } from '@/types/database'
 
@@ -43,7 +43,7 @@ export function EscalationMatrixModal({ policyId, policyName, onClose }: { polic
               {t({ tr: 'Seviye', en: 'Level' })} {lvl.level}
             </span>
             <span className="text-[12.5px] flex-1">
-              %{lvl.trigger_percent} {t({ tr: 'dolunca →', en: 'elapsed →' })} <b>{ROLE_LABEL[lvl.notify_role][lang]}</b>
+              %{lvl.trigger_percent} {t({ tr: 'dolunca →', en: 'elapsed →' })} <b>{pickLang(ROLE_LABEL[lvl.notify_role], lang)}</b>
             </span>
             <button onClick={() => deleteLevel.mutate(lvl.id)} className="text-[var(--text-faint)] hover:text-p1 shrink-0">
               <Trash2 className="w-4 h-4" />
@@ -80,7 +80,7 @@ export function EscalationMatrixModal({ policyId, policyName, onClose }: { polic
           >
             {(['agent', 'manager', 'tenant_admin'] as EscalationNotifyRole[]).map((r) => (
               <option key={r} value={r}>
-                {ROLE_LABEL[r][lang]}
+                {pickLang(ROLE_LABEL[r], lang)}
               </option>
             ))}
           </select>

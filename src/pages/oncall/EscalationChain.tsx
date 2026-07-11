@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Smartphone, Phone, Users, Plus, Trash2, ArrowRight } from 'lucide-react'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang} from '@/contexts/LangContext'
 import { useEscalationSteps, useAddEscalationStep, useDeleteEscalationStep } from './useOnCall'
 
 const METHOD_ICON: Record<string, typeof Smartphone> = { push: Smartphone, call: Phone, team_lead: Users }
@@ -38,7 +38,7 @@ export function EscalationChain({ scheduleId }: { scheduleId: string }) {
                 <div className={`flex items-center gap-1.5 rounded-lg px-2.5 py-2 ${METHOD_COLOR[s.notify_method]}`}>
                   <Icon className="w-3.5 h-3.5" />
                   <div className="text-[10.5px] font-bold leading-tight">
-                    {METHOD_LABEL[s.notify_method][lang]}
+                    {pickLang(METHOD_LABEL[s.notify_method], lang)}
                     <div className="text-[9px] opacity-80">
                       {i === 0
                         ? t({ tr: 'anında', en: 'immediately' })
@@ -82,9 +82,9 @@ export function EscalationChain({ scheduleId }: { scheduleId: string }) {
             onChange={(e) => setMethod(e.target.value as typeof method)}
             className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-2.5 py-1.5 text-[11.5px]"
           >
-            <option value="push">{METHOD_LABEL.push[lang]}</option>
-            <option value="call">{METHOD_LABEL.call[lang]}</option>
-            <option value="team_lead">{METHOD_LABEL.team_lead[lang]}</option>
+            <option value="push">{pickLang(METHOD_LABEL.push, lang)}</option>
+            <option value="call">{pickLang(METHOD_LABEL.call, lang)}</option>
+            <option value="team_lead">{pickLang(METHOD_LABEL.team_lead, lang)}</option>
           </select>
         </div>
         <button

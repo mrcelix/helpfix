@@ -53,14 +53,14 @@ export function AccountMenu() {
               className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left text-[13px] font-medium hover:bg-[var(--row-hover)]"
             >
               <User className="w-[15px] h-[15px] text-[var(--text-faint)]" />
-              {t({ tr: 'Hesabım', en: 'My Account' })}
+              {t({ tr: 'Hesabım', en: 'My Account', fr: 'Mon compte', it: 'Il mio account', ar: 'حسابي' })}
             </button>
             <button
               onClick={() => signOut()}
               className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left text-[13px] font-medium text-p1 hover:bg-[var(--row-hover)] border-t border-[var(--border)]"
             >
               <LogOut className="w-[15px] h-[15px]" />
-              {t({ tr: 'Çıkış Yap', en: 'Sign Out' })}
+              {t({ tr: 'Çıkış Yap', en: 'Sign Out', fr: 'Se déconnecter', it: 'Disconnetti', ar: 'تسجيل الخروج' })}
             </button>
           </div>
         </>
