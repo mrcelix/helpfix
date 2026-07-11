@@ -881,6 +881,22 @@ export interface Database {
         Update: Partial<Database['public']['Tables']['store_score_snapshots']['Insert']>
         Relationships: []
       }
+      personal_todos: {
+        Row: {
+          id: string
+          tenant_id: string
+          user_id: string
+          text: string
+          is_done: boolean
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['personal_todos']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['personal_todos']['Insert']>
+        Relationships: []
+      }
       custom_reports: {
         Row: {
           id: string

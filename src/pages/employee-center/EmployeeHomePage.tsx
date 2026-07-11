@@ -6,6 +6,7 @@ import { useLang } from '@/contexts/LangContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { useMyRequests } from '@/pages/service-desk/useIncidents'
 import { StatusBadge } from '@/components/ui/Badge'
+import { TodoWidget } from '@/components/widgets/TodoWidget'
 
 function slaState(slaDueAt: string | null): 'ok' | 'warning' | 'breached' {
   if (!slaDueAt) return 'ok'
@@ -114,18 +115,21 @@ export function EmployeeHomePage() {
         />
       </div>
 
-      <div className="bg-[var(--panel)] border border-[var(--border)] rounded-2xl p-5 mb-8">
-        <div className="text-[13px] font-bold mb-1">{t({ tr: 'Talep Hacminiz', en: 'Your Ticket Volume' })}</div>
-        <div className="text-[11px] text-[var(--text-faint)] mb-3">{t({ tr: 'Son 6 ay', en: 'Last 6 months' })}</div>
-        <ResponsiveContainer width="100%" height={140}>
-          <BarChart data={monthlyVolume}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-            <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'var(--text-faint)' }} />
-            <YAxis tick={{ fontSize: 11, fill: 'var(--text-faint)' }} allowDecimals={false} width={24} />
-            <Tooltip contentStyle={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} />
-            <Bar dataKey="count" fill="#17B0A7" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4 mb-8">
+        <div className="bg-[var(--panel)] border border-[var(--border)] rounded-2xl p-5">
+          <div className="text-[13px] font-bold mb-1">{t({ tr: 'Talep Hacminiz', en: 'Your Ticket Volume' })}</div>
+          <div className="text-[11px] text-[var(--text-faint)] mb-3">{t({ tr: 'Son 6 ay', en: 'Last 6 months' })}</div>
+          <ResponsiveContainer width="100%" height={140}>
+            <BarChart data={monthlyVolume}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+              <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'var(--text-faint)' }} />
+              <YAxis tick={{ fontSize: 11, fill: 'var(--text-faint)' }} allowDecimals={false} width={24} />
+              <Tooltip contentStyle={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} />
+              <Bar dataKey="count" fill="#17B0A7" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        <TodoWidget />
       </div>
 
       {!!myRequests?.length && (

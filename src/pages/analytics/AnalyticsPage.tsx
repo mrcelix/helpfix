@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { Settings, ArrowUp, ArrowDown, Check } from 'lucide-react'
+import { Settings, ArrowUp, ArrowDown, Check, ChevronUp, ChevronDown } from 'lucide-react'
 import { AreaChart, Area, BarChart, Bar, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { useLang } from '@/contexts/LangContext'
 import { priorityLabel } from '@/lib/priority'
 import type { Priority } from '@/types/database'
 import { ReportBuilderTab } from './ReportBuilderTab'
+import { TodoWidget } from '@/components/widgets/TodoWidget'
 import {
   useWeeklyTrend,
   useSlaCompliance,
@@ -31,6 +32,16 @@ export function AnalyticsPage() {
   const [pageTab, setPageTab] = useState<'dashboard' | 'custom-report'>('dashboard')
   const [editing, setEditing] = useState(false)
   const [draftOrder, setDraftOrder] = useState<WidgetType[] | null>(null)
+  const [collapsedWidgets, setCollapsedWidgets] = useState<Set<WidgetType>>(new Set())
+
+  function toggleCollapse(w: WidgetType) {
+    setCollapsedWidgets((prev) => {
+      const next = new Set(prev)
+      if (next.has(w)) next.delete(w)
+      else next.add(w)
+      return next
+    })
+  }
 
   const { data: trend, isLoading: trendLoading } = useWeeklyTrend()
   const { data: sla } = useSlaCompliance()
@@ -47,6 +58,13 @@ export function AnalyticsPage() {
     [t({ tr: 'Oluşturulan', en: 'Created' })]: p.created_count,
     [t({ tr: 'Çözülen', en: 'Resolved' })]: p.resolved_count,
   }))
+
+  const weekOverWeekChange =
+    trend && trend.length >= 2
+      ? Math.round(
+          ((trend[trend.length - 1].created_count - trend[trend.length - 2].created_count) / Math.max(trend[trend.length - 2].created_count, 1)) * 100
+        )
+      : null
 
   function startEditing() {
     setDraftOrder(activeOrder)
@@ -120,54 +138,79 @@ export function AnalyticsPage() {
       case 'weekly_trend':
         return (
           <div key={w} className="bg-[var(--panel)] border border-[var(--border)] rounded-2xl p-5 col-span-2">
-            <div className="text-[13px] font-bold mb-4">{WIDGET_LABEL.weekly_trend[lang]}</div>
-            {trendLoading ? (
-              <p className="text-[var(--text-faint)] text-sm py-16 text-center">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</p>
-            ) : (
-              <ResponsiveContainer width="100%" height={220}>
-                <AreaChart data={chartTrend}>
-                  <defs>
-                    <linearGradient id="colorCreated" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#4C6FFF" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#4C6FFF" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="colorResolved" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#17B0A7" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#17B0A7" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis dataKey="week" tick={{ fontSize: 11, fill: 'var(--text-faint)' }} />
-                  <YAxis tick={{ fontSize: 11, fill: 'var(--text-faint)' }} />
-                  <Tooltip contentStyle={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} />
-                  <Area type="monotone" dataKey={t({ tr: 'Oluşturulan', en: 'Created' })} stroke="#4C6FFF" fill="url(#colorCreated)" strokeWidth={2} />
-                  <Area type="monotone" dataKey={t({ tr: 'Çözülen', en: 'Resolved' })} stroke="#17B0A7" fill="url(#colorResolved)" strokeWidth={2} />
-                </AreaChart>
-              </ResponsiveContainer>
-            )}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="text-[13px] font-bold">{WIDGET_LABEL.weekly_trend[lang]}</span>
+                {weekOverWeekChange != null && (
+                  <span
+                    className={`flex items-center gap-0.5 text-[10.5px] font-bold rounded-full px-1.5 py-0.5 ${
+                      weekOverWeekChange > 0 ? 'bg-p1-tint text-p1' : weekOverWeekChange < 0 ? 'bg-ok/15 text-ok' : 'bg-[var(--panel-2)] text-[var(--text-faint)]'
+                    }`}
+                    title={t({ tr: 'Geçen haftaya göre', en: 'vs last week' })}
+                  >
+                    {weekOverWeekChange > 0 ? <ArrowUp className="w-2.5 h-2.5" /> : weekOverWeekChange < 0 ? <ArrowDown className="w-2.5 h-2.5" /> : null}
+                    {Math.abs(weekOverWeekChange)}%
+                  </span>
+                )}
+              </div>
+              <button onClick={() => toggleCollapse(w)} className="text-[var(--text-faint)] hover:text-[var(--text)]">
+                {collapsedWidgets.has(w) ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+              </button>
+            </div>
+            {!collapsedWidgets.has(w) &&
+              (trendLoading ? (
+                <p className="text-[var(--text-faint)] text-sm py-16 text-center">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</p>
+              ) : (
+                <ResponsiveContainer width="100%" height={220}>
+                  <AreaChart data={chartTrend}>
+                    <defs>
+                      <linearGradient id="colorCreated" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#4C6FFF" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#4C6FFF" stopOpacity={0} />
+                      </linearGradient>
+                      <linearGradient id="colorResolved" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#17B0A7" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#17B0A7" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                    <XAxis dataKey="week" tick={{ fontSize: 11, fill: 'var(--text-faint)' }} />
+                    <YAxis tick={{ fontSize: 11, fill: 'var(--text-faint)' }} />
+                    <Tooltip contentStyle={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} />
+                    <Area type="monotone" dataKey={t({ tr: 'Oluşturulan', en: 'Created' })} stroke="#4C6FFF" fill="url(#colorCreated)" strokeWidth={2} />
+                    <Area type="monotone" dataKey={t({ tr: 'Çözülen', en: 'Resolved' })} stroke="#17B0A7" fill="url(#colorResolved)" strokeWidth={2} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              ))}
           </div>
         )
       case 'priority_chart':
         return (
           <div key={w} className="bg-[var(--panel)] border border-[var(--border)] rounded-2xl p-5 col-span-2">
-            <div className="text-[13px] font-bold mb-4">{WIDGET_LABEL.priority_chart[lang]}</div>
-            {priorityLoading ? (
-              <p className="text-[var(--text-faint)] text-sm py-16 text-center">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</p>
-            ) : (
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={priorityData?.map((d) => ({ ...d, priority: priorityLabel(d.priority as Priority, lang) }))}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                  <XAxis dataKey="priority" tick={{ fontSize: 11, fill: 'var(--text-faint)' }} />
-                  <YAxis tick={{ fontSize: 11, fill: 'var(--text-faint)' }} allowDecimals={false} />
-                  <Tooltip contentStyle={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} />
-                  <Bar dataKey="count" radius={[6, 6, 0, 0]}>
-                    {priorityData?.map((_, i) => (
-                      <Cell key={i} fill={['#EF4444', '#F5A524', '#4C6FFF', '#8B95A8'][i]} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            )}
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-[13px] font-bold">{WIDGET_LABEL.priority_chart[lang]}</span>
+              <button onClick={() => toggleCollapse(w)} className="text-[var(--text-faint)] hover:text-[var(--text)]">
+                {collapsedWidgets.has(w) ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+              </button>
+            </div>
+            {!collapsedWidgets.has(w) &&
+              (priorityLoading ? (
+                <p className="text-[var(--text-faint)] text-sm py-16 text-center">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</p>
+              ) : (
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart data={priorityData?.map((d) => ({ ...d, priority: priorityLabel(d.priority as Priority, lang) }))}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+                    <XAxis dataKey="priority" tick={{ fontSize: 11, fill: 'var(--text-faint)' }} />
+                    <YAxis tick={{ fontSize: 11, fill: 'var(--text-faint)' }} allowDecimals={false} />
+                    <Tooltip contentStyle={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} />
+                    <Bar dataKey="count" radius={[6, 6, 0, 0]}>
+                      {priorityData?.map((_, i) => (
+                        <Cell key={i} fill={['#EF4444', '#F5A524', '#4C6FFF', '#8B95A8'][i]} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              ))}
           </div>
         )
     }
@@ -249,7 +292,10 @@ export function AnalyticsPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-4 gap-3.5">{activeOrder.map(renderWidget)}</div>
+      <div className="grid grid-cols-4 gap-3.5">
+        {activeOrder.map(renderWidget)}
+        <TodoWidget />
+      </div>
         </>
       )}
     </div>

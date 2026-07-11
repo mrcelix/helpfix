@@ -4,12 +4,14 @@ import { NAV_MODULES } from './nav-modules'
 import { useLang } from '@/contexts/LangContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { useFeatureFlags } from '@/pages/admin/useAdmin'
+import { useNavBadgeCounts } from './useNavBadgeCounts'
 import { cn } from '@/lib/utils'
 
 function SidebarContent({ onNavigate, collapsed = false }: { onNavigate?: () => void; collapsed?: boolean }) {
   const { lang, t } = useLang()
   const { profile } = useAuth()
   const { data: flags } = useFeatureFlags()
+  const { data: badgeCounts } = useNavBadgeCounts()
 
   const visibleModules = NAV_MODULES.filter((m) => flags?.[m.code] ?? true)
 
@@ -38,6 +40,7 @@ function SidebarContent({ onNavigate, collapsed = false }: { onNavigate?: () => 
       <nav className={cn('flex-1 overflow-y-auto overflow-x-hidden py-1', collapsed ? 'px-2' : 'px-3')}>
         {visibleModules.map((mod) => {
           const Icon = mod.icon
+          const count = badgeCounts?.[mod.code] ?? 0
           return (
             <NavLink
               key={mod.code}
@@ -46,7 +49,7 @@ function SidebarContent({ onNavigate, collapsed = false }: { onNavigate?: () => 
               title={collapsed ? mod.name[lang] : undefined}
               className={({ isActive }) =>
                 cn(
-                  'flex items-center gap-2.5 py-2 rounded-lg text-[13.5px] font-medium mb-0.5 transition-colors',
+                  'flex items-center gap-2.5 py-2 rounded-lg text-[13.5px] font-medium mb-0.5 transition-colors relative',
                   collapsed ? 'px-2 justify-center' : 'px-2.5',
                   isActive
                     ? 'bg-brand text-white font-semibold'
@@ -55,10 +58,18 @@ function SidebarContent({ onNavigate, collapsed = false }: { onNavigate?: () => 
               }
             >
               <Icon className="w-[17px] h-[17px] shrink-0" />
+              {collapsed && count > 0 && (
+                <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-p1 border border-[var(--panel)]" />
+              )}
               {!collapsed && (
                 <>
                   <span>{mod.name[lang]}</span>
-                  {mod.badge === 'beta' && (
+                  {count > 0 && (
+                    <span className="ml-auto text-[9.5px] font-bold bg-p1 text-white rounded-full min-w-[16px] h-[16px] px-1 flex items-center justify-center">
+                      {count > 99 ? '99+' : count}
+                    </span>
+                  )}
+                  {mod.badge === 'beta' && count === 0 && (
                     <span className="ml-auto text-[9px] font-mono font-bold bg-purple-tint text-purple rounded-full px-1.5 py-0.5">
                       BETA
                     </span>

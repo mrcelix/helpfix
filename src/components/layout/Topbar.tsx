@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Search, Sun, Moon, Bell, Check, Menu } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Search, Sun, Moon, Bell, Check, Menu, Maximize, Minimize } from 'lucide-react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useLang } from '@/contexts/LangContext'
 import { useTheme } from '@/contexts/ThemeContext'
@@ -23,6 +23,23 @@ export function Topbar({ crumb, onMenuClick, homePath = '/service-desk' }: { cru
   const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
   const [showNotifications, setShowNotifications] = useState(false)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+
+  useEffect(() => {
+    const handler = () => setIsFullscreen(!!document.fullscreenElement)
+    document.addEventListener('fullscreenchange', handler)
+    return () => document.removeEventListener('fullscreenchange', handler)
+  }, [])
+
+  function toggleFullscreen() {
+    if (document.fullscreenElement) {
+      document.exitFullscreen()
+    } else {
+      document.documentElement.requestFullscreen().catch(() => {
+        // Tarayıcı izin vermezse (ör. iframe içinde) sessizce yoksay
+      })
+    }
+  }
 
   const { data: notifications } = useNotifications()
   const markAsRead = useMarkAsRead()
@@ -80,6 +97,15 @@ export function Topbar({ crumb, onMenuClick, homePath = '/service-desk' }: { cru
             </button>
           ))}
         </div>
+
+        <button
+          onClick={toggleFullscreen}
+          className="hidden sm:flex w-[34px] h-[34px] shrink-0 rounded-lg border border-[var(--border)] bg-[var(--panel)] items-center justify-center text-[var(--text-sub)]"
+          aria-label="Toggle fullscreen"
+          title={isFullscreen ? t({ tr: 'Tam Ekrandan Çık', en: 'Exit Fullscreen' }) : t({ tr: 'Tam Ekran', en: 'Fullscreen' })}
+        >
+          {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+        </button>
 
         <button
           onClick={toggleTheme}
