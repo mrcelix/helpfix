@@ -334,18 +334,20 @@ export interface Database {
           rollback_plan: string | null
           ci_id: string | null
           business_service_id: string | null
+          problem_id: string | null
           pir_outcome: PirOutcome | null
           pir_notes: string | null
           created_at: string
           updated_at: string
           closed_at: string | null
         }
-        Insert: Omit<Database['public']['Tables']['changes']['Row'], 'id' | 'ref' | 'created_at' | 'updated_at' | 'business_service_id'> & {
+        Insert: Omit<Database['public']['Tables']['changes']['Row'], 'id' | 'ref' | 'created_at' | 'updated_at' | 'business_service_id' | 'problem_id'> & {
           id?: string
           ref?: string
+          business_service_id?: string | null
+          problem_id?: string | null
           created_at?: string
           updated_at?: string
-          business_service_id?: string | null
         }
         Update: Partial<Database['public']['Tables']['changes']['Insert']>
         Relationships: []

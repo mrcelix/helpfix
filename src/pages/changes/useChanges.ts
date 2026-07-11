@@ -42,6 +42,19 @@ const SELECT_LIST = `
   requester:requester_id ( full_name )
 `
 
+/** Bir probleme bağlı değişiklikler — Faz BT Problem → Değişiklik köprüsü. */
+export function useLinkedChanges(problemId: string | null) {
+  return useQuery({
+    queryKey: ['linked-changes', problemId],
+    enabled: !!problemId,
+    queryFn: async () => {
+      const { data, error } = await supabase.from('changes').select(SELECT_LIST).eq('problem_id', problemId!).order('created_at', { ascending: false })
+      if (error) throw error
+      return data as unknown as ChangeListItem[]
+    },
+  })
+}
+
 export function useChanges(view: ChangeSavedView) {
   const { profile } = useAuth()
 
@@ -151,6 +164,7 @@ export function useCreateChange() {
       category: string | null
       rollbackPlan?: string | null
       businessServiceId?: string | null
+      problemId?: string | null
     }) => {
       if (!profile) throw new Error('Profil yüklenmedi')
       const { data, error } = await supabase
@@ -172,6 +186,7 @@ export function useCreateChange() {
           rollback_plan: input.rollbackPlan ?? null,
           ci_id: null,
           business_service_id: input.businessServiceId ?? null,
+          problem_id: input.problemId ?? null,
           pir_outcome: null,
           pir_notes: null,
           closed_at: null,

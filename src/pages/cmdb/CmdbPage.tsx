@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useOpenParam } from '@/hooks/useOpenParam'
-import { Plus, List, Share2, Download, ShieldCheck, Layers, Package } from 'lucide-react'
+import { Plus, List, Share2, Download, ShieldCheck, Layers, Package, Upload } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import { Button } from '@/components/ui/Button'
 import { useConfigurationItems, useDuplicateCis, type CiSavedView } from './useCmdb'
@@ -13,6 +13,7 @@ import { BusinessServicesTab } from './BusinessServicesTab'
 import { NewBusinessServiceModal } from './NewBusinessServiceModal'
 import { ConsumablesTab } from './ConsumablesTab'
 import { NewConsumableModal } from './NewConsumableModal'
+import { ImportCsvModal } from './ImportCsvModal'
 
 const SAVED_VIEWS: { key: CiSavedView; label: { tr: string; en: string } }[] = [
   { key: 'all', label: { tr: 'Tümü', en: 'All' } },
@@ -49,6 +50,7 @@ export function CmdbPage() {
   const [view, setView] = useState<CiSavedView>('all')
   const [moduleTab, setModuleTab] = useState<'assets' | 'licenses' | 'services' | 'consumables'>('assets')
   const [showNewConsumableModal, setShowNewConsumableModal] = useState(false)
+  const [showImportModal, setShowImportModal] = useState(false)
   const [showNewServiceModal, setShowNewServiceModal] = useState(false)
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list')
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -121,10 +123,19 @@ export function CmdbPage() {
             </div>
           )}
           {moduleTab === 'assets' ? (
-            <Button onClick={() => setShowNewModal(true)}>
-              <Plus className="w-[15px] h-[15px]" />
-              {t({ tr: 'Yeni Varlık', en: 'New Asset' })}
-            </Button>
+            <>
+              <button
+                onClick={() => setShowImportModal(true)}
+                className="flex items-center gap-1.5 text-[12px] font-semibold px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--panel)] text-[var(--text-sub)] hover:border-brand hover:text-brand-dim"
+              >
+                <Upload className="w-[13px] h-[13px]" />
+                {t({ tr: 'İçe Aktar', en: 'Import' })}
+              </button>
+              <Button onClick={() => setShowNewModal(true)}>
+                <Plus className="w-[15px] h-[15px]" />
+                {t({ tr: 'Yeni Varlık', en: 'New Asset' })}
+              </Button>
+            </>
           ) : moduleTab === 'licenses' ? (
             <Button onClick={() => setShowNewLicenseModal(true)}>
               <Plus className="w-[15px] h-[15px]" />
@@ -299,6 +310,7 @@ export function CmdbPage() {
       {showNewLicenseModal && <NewSoftwareLicenseModal onClose={() => setShowNewLicenseModal(false)} />}
       {showNewServiceModal && <NewBusinessServiceModal onClose={() => setShowNewServiceModal(false)} />}
       {showNewConsumableModal && <NewConsumableModal onClose={() => setShowNewConsumableModal(false)} />}
+      {showImportModal && <ImportCsvModal onClose={() => setShowImportModal(false)} />}
     </div>
   )
 }

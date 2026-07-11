@@ -18,16 +18,22 @@ function riskColor(score: number) {
   return 'text-ok'
 }
 
-export function NewChangeModal({ onClose }: { onClose: () => void }) {
+export function NewChangeModal({
+  onClose,
+  prefill,
+}: {
+  onClose: () => void
+  prefill?: { title?: string; description?: string; category?: string; problemId?: string }
+}) {
   const { t } = useLang()
   const createChange = useCreateChange()
   const { data: templates } = useChangeTemplates()
 
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
+  const [title, setTitle] = useState(prefill?.title ?? '')
+  const [description, setDescription] = useState(prefill?.description ?? '')
   const [changeType, setChangeType] = useState<ChangeType>('normal')
   const [riskScore, setRiskScore] = useState(35)
-  const [category, setCategory] = useState('')
+  const [category, setCategory] = useState(prefill?.category ?? '')
   const [rollbackPlan, setRollbackPlan] = useState('')
   const [businessServiceId, setBusinessServiceId] = useState('')
   const { data: services } = useBusinessServicesList()
@@ -59,6 +65,7 @@ export function NewChangeModal({ onClose }: { onClose: () => void }) {
       category: category.trim() || null,
       rollbackPlan: rollbackPlan.trim() || null,
       businessServiceId: businessServiceId || null,
+      problemId: prefill?.problemId ?? null,
     })
     onClose()
   }
@@ -67,7 +74,7 @@ export function NewChangeModal({ onClose }: { onClose: () => void }) {
     <Modal
       open
       onClose={onClose}
-      title={t({ tr: 'Yeni Değişiklik', en: 'New Change' })}
+      title={prefill?.problemId ? t({ tr: 'Problemden Değişiklik Oluştur', en: 'Create Change from Problem' }) : t({ tr: 'Yeni Değişiklik', en: 'New Change' })}
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>
