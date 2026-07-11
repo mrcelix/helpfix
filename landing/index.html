@@ -93,14 +93,14 @@
   [data-theme="light"] .theme-toggle .ic-moon{display:block;}
 
   /* ---------- hero ---------- */
-  .hero{padding:96px 0 60px; position:relative; overflow:hidden;}
+  .hero{padding:88px 0 70px; position:relative; overflow:hidden;}
   .hero::before{
     content:''; position:absolute; top:-260px; left:50%; transform:translateX(-50%);
-    width:900px; height:560px; border-radius:50%;
+    width:1100px; height:600px; border-radius:50%;
     background:radial-gradient(closest-side, var(--brand-glow), transparent 70%);
     filter:blur(10px); pointer-events:none;
   }
-  .hero-grid{display:grid; grid-template-columns:1fr 1.05fr; gap:56px; align-items:center; position:relative;}
+  .hero-copy{max-width:700px; margin:0 auto 60px; text-align:center; position:relative;}
   .eyebrow{
     display:inline-flex; align-items:center; gap:8px; padding:7px 14px; border-radius:999px;
     background:var(--ink-800); border:1px solid var(--ink-border); font-size:12.5px; font-weight:600;
@@ -109,10 +109,10 @@
   .eyebrow .dot{width:6px; height:6px; border-radius:50%; background:var(--brand); box-shadow:0 0 0 3px var(--brand-glow);}
   h1.hero-h{font-size:52px; margin-bottom:20px;}
   h1.hero-h .accent{color:var(--brand);}
-  .hero-sub{font-size:17.5px; color:var(--text-2); max-width:490px; margin-bottom:34px; line-height:1.65;}
-  .hero-actions{display:flex; align-items:center; gap:16px; margin-bottom:36px; flex-wrap:wrap;}
+  .hero-sub{font-size:17.5px; color:var(--text-2); max-width:560px; margin:0 auto 34px; line-height:1.65;}
+  .hero-actions{display:flex; align-items:center; justify-content:center; gap:16px; margin-bottom:30px; flex-wrap:wrap;}
   .hero-note{font-size:13px; color:var(--text-3);}
-  .hero-avatars{display:flex; align-items:center; gap:12px; margin-top:8px;}
+  .hero-avatars{display:flex; align-items:center; justify-content:center; gap:12px; margin-top:8px;}
   .avatar-stack{display:flex;}
   .avatar-stack span{
     width:30px; height:30px; border-radius:50%; border:2px solid var(--ink-900);
@@ -120,6 +120,59 @@
     margin-left:-8px; color:var(--on-brand);
   }
   .avatar-stack span:first-child{margin-left:0;}
+
+  /* interaktif modül vitrini — bento grid + ortada yüzen "keşfet" rozeti */
+  .module-showcase{
+    position:relative; display:grid; grid-template-columns:repeat(4, 1fr); grid-auto-rows:1fr; gap:14px;
+    grid-template-areas:
+      "a b h d"
+      "a c h d"
+      "e c f g";
+    min-height:520px;
+  }
+  .ms-card{
+    grid-area: var(--area); position:relative; display:flex; flex-direction:column; justify-content:flex-end;
+    background:var(--ink-800); border:1px solid var(--ink-border); border-radius:16px; padding:20px;
+    text-decoration:none; color:inherit; overflow:hidden; transition:all .2s cubic-bezier(.2,.7,.2,1);
+  }
+  .ms-card:hover{border-color:var(--brand); transform:translateY(-3px); box-shadow:0 16px 32px -16px rgba(0,0,0,.4);}
+  .ms-card h4{font-family:'Space Grotesk'; font-size:15.5px; font-weight:600; margin-bottom:6px; line-height:1.25;}
+  .ms-card p{font-size:12px; color:var(--text-3); line-height:1.5; max-width:88%;}
+  .ms-card .ms-ic{
+    position:absolute; bottom:16px; right:16px; width:30px; height:30px; border-radius:9px;
+    background:var(--brand-tint); display:flex; align-items:center; justify-content:center;
+  }
+  .ms-card .ms-ic svg{width:15px; height:15px; stroke:var(--brand-dim);}
+  .ms-a{--area:a;} .ms-b{--area:b;} .ms-c{--area:c;} .ms-d{--area:d;}
+  .ms-e{--area:e;} .ms-f{--area:f;} .ms-g{--area:g;}
+  .ms-h{
+    --area:h; background:linear-gradient(150deg, var(--brand), var(--brand-dim)); border-color:transparent;
+    color:var(--on-brand); justify-content:flex-start; padding:26px 24px;
+  }
+  [data-theme="light"] .ms-h{color:#fff;}
+  .ms-h h4{font-size:19px; margin-bottom:12px;}
+  .ms-h p{color:rgba(255,255,255,.82); max-width:100%; font-size:13px; margin-bottom:20px;}
+  [data-theme="light"] .ms-h p{color:rgba(255,255,255,.92);}
+  .ms-h .ms-learn{
+    display:inline-flex; align-items:center; gap:8px; background:rgba(0,0,0,.22); color:#fff;
+    font-size:11.5px; font-weight:700; letter-spacing:.03em; padding:9px 16px; border-radius:999px; width:fit-content;
+  }
+  .ms-h .ms-learn svg{width:13px; height:13px;}
+  .ms-h:hover{transform:translateY(-3px); box-shadow:0 20px 40px -16px var(--brand-glow);}
+
+  .ms-explore{
+    position:absolute; top:34%; left:50%; transform:translate(-50%,-50%); z-index:5; text-decoration:none;
+  }
+  .ms-explore-ring{
+    width:132px; height:132px; border-radius:50%; background:var(--ink-900); border:6px solid var(--ink-800);
+    box-shadow:0 20px 50px -12px rgba(0,0,0,.55), 0 0 0 1px var(--ink-border);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;
+    transition:transform .2s ease, box-shadow .2s ease;
+  }
+  .ms-explore:hover .ms-explore-ring{transform:scale(1.05); box-shadow:0 26px 60px -12px var(--brand-glow), 0 0 0 1px var(--brand);}
+  .ms-explore-txt{font-family:'Space Grotesk'; font-size:11px; font-weight:700; text-align:center; line-height:1.35; color:var(--text-1); letter-spacing:.01em;}
+  .ms-explore-arrow{width:34px; height:34px; border-radius:50%; background:var(--brand); display:flex; align-items:center; justify-content:center;}
+  .ms-explore-arrow svg{width:16px; height:16px;}
 
   /* hero mockup */
   .device{
@@ -352,7 +405,12 @@
   @media (max-width:980px){
     nav.links, .nav-cta .link-login{display:none;}
     .burger{display:flex;}
-    .hero-grid{grid-template-columns:1fr;}
+    .hero-copy{text-align:center;}
+    .module-showcase{
+      grid-template-columns:1fr; grid-template-areas:"a" "b" "h" "d" "e" "c" "f" "g";
+      min-height:0;
+    }
+    .ms-explore{display:none;}
     .device{transform:none; margin-top:20px;}
     .float-badge{display:none;}
     .stats-grid{grid-template-columns:repeat(2,1fr);}
@@ -407,14 +465,14 @@
 
   <!-- HERO -->
   <section class="hero">
-    <div class="wrap hero-grid">
-      <div class="reveal in">
+    <div class="wrap">
+      <div class="hero-copy reveal in">
         <span class="eyebrow"><span class="dot"></span>14 modül, tek platform, tek oturum açma</span>
         <h1 class="hero-h">BT ekibinizin <span class="accent">tüm iş akışı</span>, birbirine bağlı tek bir sistemde.</h1>
         <p class="hero-sub">Servis Masası'ndan Değişiklik Yönetimi'ne, CMDB'den mağaza bazlı BT sağlık skoruna — HelpFix, dağınık araçları birleştirip her talebi, her varlığı ve her kararı birbirine bağlar.</p>
         <div class="hero-actions">
           <a class="btn btn-primary btn-lg" href="#final">Ücretsiz Demo İste</a>
-          <a class="btn btn-ghost btn-lg" href="#modules">Modülleri İncele ↓</a>
+          <a class="btn btn-ghost btn-lg" href="#modules">Tüm Modülleri İncele ↓</a>
         </div>
         <div class="hero-avatars">
           <div class="avatar-stack">
@@ -426,40 +484,55 @@
         </div>
       </div>
 
-      <div style="position:relative;">
-        <div class="device reveal in">
-          <div class="device-bar">
-            <span></span><span></span><span></span>
-            <div class="url mono">itsm.helpfix.com.tr</div>
-          </div>
-          <div class="device-body">
-            <div class="kpi-card up">
-              <div class="num">128</div>
-              <div class="lbl">Açık Talep</div>
-            </div>
-            <div class="kpi-card warn">
-              <div class="num">%94</div>
-              <div class="lbl">SLA Uyumu</div>
-            </div>
-            <div class="device-list">
-              <div class="row"><span class="pill p1">P1</span><span class="row-title">Kadıköy — ESL ekranları toplu çöktü</span><span class="row-ref">#INC-1042</span></div>
-              <div class="row"><span class="pill p2">P2</span><span class="row-title">VPN bağlantısı zaman zaman kopuyor</span><span class="row-ref">#INC-1039</span></div>
-              <div class="row"><span class="pill p3">P3</span><span class="row-title">Yazıcı kağıt sıkışması — Beşiktaş</span><span class="row-ref">#INC-1035</span></div>
-            </div>
-            <div class="chat-bubble">
-              <span class="tag">AI Asistan</span>
-              <div class="ai-dot"><svg viewBox="0 0 24 24" fill="none" stroke="#04211F" stroke-width="2"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg></div>
-              <p>VPN sorununu tespit ettim, aynı hizmette 2 açık kayıt daha var. Sizin adınıza talep açayım mı?</p>
-            </div>
-          </div>
-        </div>
-        <div class="float-badge b1">
-          <div class="grade A">A</div>
-          <div class="ftxt"><b>Kadıköy Mağazası</b><span>BT Sağlık Skoru</span></div>
-        </div>
-        <div class="float-badge b2">
-          <div class="ftxt"><b class="mono" style="color:var(--brand)">↓ %38</b><span>Ort. çözüm süresi</span></div>
-        </div>
+      <!-- İNTERAKTİF MODÜL VİTRİNİ (bento grid + ortada yüzen 'Tüm Modülleri Keşfet' rozeti) -->
+      <div class="module-showcase reveal in">
+        <a class="ms-card ms-a" href="#modules">
+          <h4>Varlık & Envanter</h4>
+          <p>CMDB, checkout/checkin, yazılım lisansları, sarf malzemeleri</p>
+          <span class="ms-ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg></span>
+        </a>
+        <a class="ms-card ms-b" href="#modules">
+          <h4>Değişiklik & Problem</h4>
+          <p>CAB onayı, Fishbone kök neden analizi</p>
+          <span class="ms-ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M6 3v12M18 9v12M6 15a3 3 0 106 0 3 3 0 00-6 0zM18 21a3 3 0 100-6 3 3 0 000 6zM18 9a3 3 0 100-6 3 3 0 000 6z"/></svg></span>
+        </a>
+        <a class="ms-card ms-h" href="#modules">
+          <h4>Servis Masası & Talep Yönetimi</h4>
+          <p>Çok kanallı destek, servis kataloğu ve bilgi yönetimini tek yerde tasarlayın, otomatikleştirin, sunun.</p>
+          <span class="ms-learn">İNCELE <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+        </a>
+        <a class="ms-card ms-d" href="#modules">
+          <h4>Raporlama & Analitik</h4>
+          <p>Sürükle-bırak rapor oluşturucu, canlı dashboard</p>
+          <span class="ms-ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M3 3v18h18M7 16l4-4 3 3 5-6"/></svg></span>
+        </a>
+        <a class="ms-card ms-e" href="#modules">
+          <h4>Sözleşme & Satın Alma</h4>
+          <p>Tedarikçi ve satın alma sipariş akışı</p>
+          <span class="ms-ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M3 9l9-6 9 6M4 10v10h16V10M9 20v-6h6v6"/></svg></span>
+        </a>
+        <a class="ms-card ms-c" href="#ai">
+          <h4>Yapay Zeka & Otomasyon</h4>
+          <p>Sohbet asistanı, beceri bazlı otomatik atama</p>
+          <span class="ms-ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg></span>
+        </a>
+        <a class="ms-card ms-f" href="#modules">
+          <h4>SLA & İş Sürekliliği</h4>
+          <p>Politika, iş takvimi, eskalasyon</p>
+          <span class="ms-ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></span>
+        </a>
+        <a class="ms-card ms-g" href="#stores">
+          <h4>Mağaza Performansı</h4>
+          <p>Şube bazlı BT sağlık skoru (A/B/C)</p>
+          <span class="ms-ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M3 21h18M5 21V7l8-4 8 4v14M9 9h1M9 13h1M9 17h1M14 9h1M14 13h1M14 17h1"/></svg></span>
+        </a>
+
+        <a href="#modules" class="ms-explore">
+          <span class="ms-explore-ring">
+            <span class="ms-explore-txt">TÜM MODÜLLERİ<br>KEŞFET</span>
+            <span class="ms-explore-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M7 17L17 7M17 7H9M17 7v8"/></svg></span>
+          </span>
+        </a>
       </div>
     </div>
   </section>
