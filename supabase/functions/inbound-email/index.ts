@@ -13,7 +13,7 @@
 // {
 //   "From": "ali@musteri.com",
 //   "FromName": "Ali Veli",
-//   "To": "acme@tickets.helpfix.app",
+//   "To": "acme@tickets.helpfix.io",
 //   "Subject": "Yazıcım çalışmıyor",
 //   "TextBody": "Merhaba, ofisteki yazıcı...",
 //   "MessageID": "<abc123@mail.musteri.com>",

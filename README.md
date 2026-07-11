@@ -106,13 +106,13 @@ Repo → **Settings → Secrets and variables → Actions → New repository sec
 |---|---|
 | `VITE_SUPABASE_URL` | Supabase Dashboard → Project Settings → API |
 | `VITE_SUPABASE_ANON_KEY` | Supabase Dashboard → Project Settings → API |
-| `HOSTINGER_FTP_SERVER` | hPanel → Dosyalar → FTP Hesapları (genelde `ftp.siteniz.com`) |
+| `HOSTINGER_FTP_SERVER` | hPanel → Dosyalar → FTP Hesapları (genelde `ftp.helpfix.io`) |
 | `HOSTINGER_FTP_USERNAME` | hPanel → Dosyalar → FTP Hesapları |
 | `HOSTINGER_FTP_PASSWORD` | hPanel → Dosyalar → FTP Hesapları |
 
 ### 3. Hostinger'da hedef klasörü doğrulayın
 
-`.github/workflows/deploy.yml` içindeki `server-dir` değeri varsayılan olarak `./public_html/`. Alt alan adı kullanıyorsanız (örn. `helpfix.siteniz.com`) hPanel'de o alt alan adının kök klasörünü kontrol edip buna göre güncelleyin.
+`.github/workflows/deploy.yml` içindeki `server-dir` değeri varsayılan olarak `./public_html/`. Alt alan adı kullanıyorsanız (örn. `itsm.helpfix.io`) hPanel'de o alt alan adının kök klasörünü kontrol edip buna göre güncelleyin.
 
 ### 4. Push edin, otomatik deploy başlasın
 

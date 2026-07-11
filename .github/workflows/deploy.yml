@@ -2,8 +2,8 @@ name: Build & Deploy to Hostinger
 
 # main branch'e her push'ta çalışır: bağımlılıkları kurar, prod build
 # alır, ve TEK bir FTP oturumunda İKİ hedefi birleştirip yükler:
-#   - landing/  (tanıtım sitesi)   → public_html/ kökü         (SIZINALANADI.com)
-#   - dist/     (React uygulaması) → public_html/itsm/          (itsm.SIZINALANADI.com)
+#   - landing/  (tanıtım sitesi)   → public_html/ kökü         (helpfix.io)
+#   - dist/     (React uygulaması) → public_html/itsm/          (itsm.helpfix.io)
 #
 # NOT: Önceden bu iki hedef için AYRI AYRI iki FTP-Deploy-Action adımı
 # vardı, ama Hostinger'ın FTP sunucusu zaman zaman "Timeout (control
