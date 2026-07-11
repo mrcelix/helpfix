@@ -1,17 +1,24 @@
 name: Build & Deploy to Hostinger
 
 # main branch'e her push'ta çalışır: bağımlılıkları kurar, prod build
-# alır, ve İKİ AYRI FTP hedefine yükler:
-#   - dist/     (React uygulaması) → public_html/itsm/   (itsm.SIZINALANADI.com)
-#   - landing/  (tanıtım sitesi)   → public_html/         (SIZINALANADI.com kökü)
+# alır, ve TEK bir FTP oturumunda İKİ hedefi birleştirip yükler:
+#   - landing/  (tanıtım sitesi)   → public_html/ kökü         (SIZINALANADI.com)
+#   - dist/     (React uygulaması) → public_html/itsm/          (itsm.SIZINALANADI.com)
+#
+# NOT: Önceden bu iki hedef için AYRI AYRI iki FTP-Deploy-Action adımı
+# vardı, ama Hostinger'ın FTP sunucusu zaman zaman "Timeout (control
+# socket)" hatası veriyor (bu action'ın GitHub'daki issue'larında da
+# sıkça karşılaşılan, bilinen bir sorun) — iki ayrı bağlantı açmak bu
+# riski ikiye katlıyordu. Şimdi build sırasında iki klasörü tek bir
+# staging klasöründe (deploy-staging/) birleştirip TEK FTP oturumuyla
+# yüklüyoruz; bağlantı kopma riski yarıya iniyor ve itsm/ klasörünü
+# yanlışlıkla silme riski de (artık kaynağın parçası olduğu için)
+# tamamen ortadan kalkıyor.
 #
 # ÖNEMLİ — TEK SEFERLİK MANUEL ADIM: Hostinger hPanel'de "itsm" adında
-# bir alt alan adı (subdomain) oluşturup belge kökünü (document root)
-# public_html/itsm olarak ayarlamanız gerekiyor. Bu, Hostinger panelinden
-# yapılan bir işlem — buradan otomatikleştirilemez. Alt alan adını
-# oluşturduktan sonra bu workflow otomatik olarak doğru klasöre yükleme
-# yapacak (Hostinger genelde subdomain'i siz oluşturduğunuzda ilgili
-# klasörü de otomatik açar).
+# bir alt alan adı oluşturup belge kökünü public_html/itsm olarak
+# ayarlamanız gerekiyor (bu adım panelden yapılıyor, buradan
+# otomatikleştirilemiyor).
 on:
   push:
     branches: [main]
@@ -59,7 +66,17 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
-      - name: Uygulamayı itsm/ alt klasörüne yükle
+      - name: Deploy klasörünü birleştir (landing kökte, uygulama itsm/ altında)
+        run: |
+          mkdir -p deploy-staging
+          cp -r landing/. deploy-staging/
+          mkdir -p deploy-staging/itsm
+          cp -r dist/. deploy-staging/itsm/
+          echo "Staging klasörü hazır:"
+          ls -la deploy-staging/
+          ls -la deploy-staging/itsm/
+
+      - name: Hostinger'a TEK FTP oturumuyla yükle
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.HOSTINGER_FTP_SERVER }}
@@ -67,26 +84,11 @@ jobs:
           password: ${{ secrets.HOSTINGER_FTP_PASSWORD }}
           protocol: ftp
           port: 21
-          local-dir: ./dist/
+          local-dir: ./deploy-staging/
           # KESİN DOĞRULAMA (srv1381-files.hstgr.io özel dosya yöneticisi
           # ile teyit edildi): bu FTP hesabının kök dizini ("/") zaten
-          # gerçek public_html ile birebir aynı yer. Uygulama artık itsm
-          # alt alan adının belge kökü olan public_html/itsm/'e gidiyor.
-          server-dir: ./itsm/
-          log-level: verbose
-
-      - name: Tanıtım sitesini kök dizine yükle
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.HOSTINGER_FTP_SERVER }}
-          username: ${{ secrets.HOSTINGER_FTP_USERNAME }}
-          password: ${{ secrets.HOSTINGER_FTP_PASSWORD }}
-          protocol: ftp
-          port: 21
-          local-dir: ./landing/
+          # gerçek public_html ile birebir aynı yer.
           server-dir: ./
           log-level: verbose
-          # itsm/ alt klasörünü ve uygulamanın kendi dosyalarını asla silme
-          exclude: |
-            itsm/**
+          timeout: 60000
 
