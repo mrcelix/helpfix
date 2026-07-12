@@ -2,6 +2,7 @@ import { useState, useEffect, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useLang } from '@/contexts/LangContext'
+import { LanguageSwitcher } from '@/components/layout/LanguageSwitcher'
 import { Button } from '@/components/ui/Button'
 import { supabase } from '@/lib/supabase'
 
@@ -9,7 +10,7 @@ type Mode = 'signin' | 'forgot' | 'forgot-sent' | 'reset-password'
 
 export function LoginPage() {
   const { signInWithPassword, sendPasswordResetEmail, updatePassword } = useAuth()
-  const { t, lang, setLang } = useLang()
+  const { t } = useLang()
   const navigate = useNavigate()
 
   const [mode, setMode] = useState<Mode>('signin')
@@ -73,16 +74,8 @@ export function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[var(--bg)] px-4">
-      <div className="absolute top-5 right-5 flex border border-[var(--border)] rounded-lg overflow-hidden text-[11.5px] font-semibold">
-        {(['tr', 'en'] as const).map((l) => (
-          <button
-            key={l}
-            onClick={() => setLang(l)}
-            className={l === lang ? 'bg-brand text-white px-2.5 py-1.5' : 'text-[var(--text-faint)] px-2.5 py-1.5'}
-          >
-            {l.toUpperCase()}
-          </button>
-        ))}
+      <div className="absolute top-5 right-5">
+        <LanguageSwitcher alwaysVisible />
       </div>
 
       <div className="w-full max-w-[380px]">

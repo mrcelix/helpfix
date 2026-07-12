@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
  * Önceden sadece TR/EN buton çifti vardı; 5 dile çıkınca dropdown'a
  * dönüştürüldü. Seçili dil kısaltması (TR, EN, FR, IT, AR) her zaman
  * görünür, açılınca tüm diller yerel adlarıyla listelenir. */
-export function LanguageSwitcher() {
+export function LanguageSwitcher({ alwaysVisible = false }: { alwaysVisible?: boolean } = {}) {
   const { lang, setLang } = useLang()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -21,7 +21,7 @@ export function LanguageSwitcher() {
   }, [])
 
   return (
-    <div ref={ref} className="relative hidden sm:block">
+    <div ref={ref} className={cn('relative', !alwaysVisible && 'hidden sm:block')}>
       <button
         onClick={() => setOpen((o) => !o)}
         className="flex items-center gap-1.5 h-[34px] px-2.5 rounded-lg border border-[var(--border)] bg-[var(--panel)] text-[11.5px] font-bold text-[var(--text-sub)] hover:border-brand/40"
