@@ -70,6 +70,35 @@
   --purple-tint-a: #F0EAFE;
 }
 
+/* ------------------------------------------------------------
+   Takım Temaları (Çalışan Merkezi > Hesabım'dan seçilir) — sadece
+   marka vurgu rengini (--color-brand ailesi) değiştirir, tüm buton/
+   rozet/aktif-menü stilleri zaten bu değişkenleri referans aldığı
+   için otomatik uyum sağlar. "Kurumsal" varsayılan, ek kural gerekmez.
+   Metin okunabilirliği için brand rengi her zaman koyu/doygun seçildi
+   (üzerine beyaz yazı biniyor) — takımın ikinci rengi tint'te yaşıyor.
+   ------------------------------------------------------------ */
+[data-team="fenerbahce"] {
+  --color-brand: #00285C;
+  --color-brand-dim: #001B3D;
+  --color-brand-tint: #FFF6D2;
+}
+[data-team="galatasaray"] {
+  --color-brand: #A6192E;
+  --color-brand-dim: #7A1220;
+  --color-brand-tint: #FFF6D2;
+}
+[data-team="besiktas"] {
+  --color-brand: #1A1A1A;
+  --color-brand-dim: #000000;
+  --color-brand-tint: #EDEDED;
+}
+[data-team="trabzonspor"] {
+  --color-brand: #7A1128;
+  --color-brand-dim: #4D0A1A;
+  --color-brand-tint: #E3F6FC;
+}
+
 html, body, #root {
   height: 100%;
 }

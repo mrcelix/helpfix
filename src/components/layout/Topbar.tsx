@@ -19,7 +19,17 @@ function openCommandPalette() {
   window.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true, ctrlKey: true }))
 }
 
-export function Topbar({ crumb, onMenuClick, homePath = '/service-desk' }: { crumb: string; onMenuClick?: () => void; homePath?: string }) {
+export function Topbar({
+  crumb,
+  onMenuClick,
+  homePath = '/service-desk',
+  showThemeSelector = false,
+}: {
+  crumb: string
+  onMenuClick?: () => void
+  homePath?: string
+  showThemeSelector?: boolean
+}) {
   const { lang, t } = useLang()
   const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
@@ -166,7 +176,7 @@ export function Topbar({ crumb, onMenuClick, homePath = '/service-desk' }: { cru
             </>
           )}
         </div>
-        <AccountMenu />
+        <AccountMenu showThemeSelector={showThemeSelector} />
       </div>
     </header>
   )

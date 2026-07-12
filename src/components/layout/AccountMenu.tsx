@@ -3,6 +3,7 @@ import { User, LogOut, ChevronDown, LayoutPanelTop } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { AccountModal } from './AccountModal'
+import { TeamThemeSelector } from './TeamThemeSelector'
 import { clearStoredPanelChoice } from '@/lib/panelPreference'
 
 const ROLE_LABEL: Record<string, { tr: string; en: string }> = {
@@ -12,7 +13,7 @@ const ROLE_LABEL: Record<string, { tr: string; en: string }> = {
   requester: { tr: 'Çalışan', en: 'Employee' },
 }
 
-export function AccountMenu() {
+export function AccountMenu({ showThemeSelector = false }: { showThemeSelector?: boolean } = {}) {
   const { t } = useLang()
   const { profile, signOut } = useAuth()
   const [open, setOpen] = useState(false)
@@ -68,6 +69,7 @@ export function AccountMenu() {
                 {t({ tr: 'Panel Değiştir', en: 'Switch Panel', fr: 'Changer de panneau', it: 'Cambia pannello', ar: 'تبديل اللوحة' })}
               </button>
             )}
+            {showThemeSelector && <TeamThemeSelector />}
             <button
               onClick={() => signOut()}
               className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left text-[13px] font-medium text-p1 hover:bg-[var(--row-hover)] border-t border-[var(--border)]"
