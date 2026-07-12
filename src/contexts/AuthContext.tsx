@@ -10,6 +10,7 @@ interface Profile {
   email: string
   role: UserRole
   avatarInitials: string | null
+  siteId: string | null
 }
 
 interface AuthContextValue {
@@ -34,7 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   async function loadProfile(userId: string) {
     const { data, error } = await supabase
       .from('user_profiles')
-      .select('id, tenant_id, full_name, email, role, avatar_initials')
+      .select('id, tenant_id, full_name, email, role, avatar_initials, site_id')
       .eq('auth_user_id', userId)
       .single()
 
@@ -50,6 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email: data.email,
       role: data.role,
       avatarInitials: data.avatar_initials,
+      siteId: data.site_id,
     })
   }
 

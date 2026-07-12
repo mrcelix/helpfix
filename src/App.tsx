@@ -35,6 +35,7 @@ const AdminPage = lazy(() => import('@/pages/admin/AdminPage').then((m) => ({ de
 const EmployeeHomePage = lazy(() => import('@/pages/employee-center/EmployeeHomePage').then((m) => ({ default: m.EmployeeHomePage })))
 const MyTicketsPage = lazy(() => import('@/pages/employee-center/MyTicketsPage').then((m) => ({ default: m.MyTicketsPage })))
 const MyAssetsPage = lazy(() => import('@/pages/employee-center/MyAssetsPage').then((m) => ({ default: m.MyAssetsPage })))
+const MyStorePage = lazy(() => import('@/pages/employee-center/MyStorePage').then((m) => ({ default: m.MyStorePage })))
 
 const MODULE_PAGES: Record<string, ComponentType> = {
   'service-desk': ServiceDeskPage,
@@ -97,6 +98,7 @@ function RoleBasedShell() {
             <Route path="/catalog" element={<CatalogPage />} />
             <Route path="/knowledge-base" element={<KnowledgeBasePage />} />
             <Route path="/my-assets" element={<MyAssetsPage />} />
+            <Route path="/my-store" element={<MyStorePage />} />
             <Route path="*" element={<Navigate to="/home" replace />} />
           </Route>
         </Routes>

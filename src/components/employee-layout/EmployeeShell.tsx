@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useLocation, Link } from 'react-router-dom'
-import { Home, Ticket, LayoutGrid, BookOpen, Monitor } from 'lucide-react'
+import { Home, Ticket, LayoutGrid, BookOpen, Monitor, Store } from 'lucide-react'
 import { useLang, pickLang} from '@/contexts/LangContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { Topbar } from '@/components/layout/Topbar'
@@ -7,7 +7,7 @@ import { CommandPalette } from '@/components/command-palette/CommandPalette'
 import { ChatWidget } from '@/pages/employee-center/ChatWidget'
 import { cn } from '@/lib/utils'
 
-const EMPLOYEE_NAV = [
+const EMPLOYEE_NAV_BASE = [
   { path: '/home', icon: Home, name: { tr: 'Ana Sayfa', en: 'Home', fr: 'Accueil', it: 'Home', ar: 'الرئيسية' } },
   { path: '/my-tickets', icon: Ticket, name: { tr: 'Taleplerim', en: 'My Tickets', fr: 'Mes tickets', it: 'I miei ticket', ar: 'طلباتي' } },
   { path: '/catalog', icon: LayoutGrid, name: { tr: 'Servis Kataloğu', en: 'Service Catalog', fr: 'Catalogue de services', it: 'Catalogo servizi', ar: 'كتالوج الخدمات' } },
@@ -15,9 +15,18 @@ const EMPLOYEE_NAV = [
   { path: '/my-assets', icon: Monitor, name: { tr: 'Varlıklarım', en: 'My Assets', fr: 'Mes actifs', it: 'I miei asset', ar: 'أصولي' } },
 ]
 
+// Bir mağazaya atanmış çalışanlar için ek nav öğesi — Faz BV.
+const MY_STORE_NAV_ITEM = {
+  path: '/my-store',
+  icon: Store,
+  name: { tr: 'Mağazam', en: 'My Store', fr: 'Mon magasin', it: 'Il mio negozio', ar: 'متجري' },
+}
+
 export function EmployeeShell() {
   const { lang, t } = useLang()
   const { profile } = useAuth()
+
+  const EMPLOYEE_NAV = profile?.siteId ? [...EMPLOYEE_NAV_BASE, MY_STORE_NAV_ITEM] : EMPLOYEE_NAV_BASE
 
   const location = useLocation()
   const activeItem = EMPLOYEE_NAV.find((i) => location.pathname.startsWith(i.path))
