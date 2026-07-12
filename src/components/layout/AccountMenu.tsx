@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import { User, LogOut, ChevronDown } from 'lucide-react'
+import { User, LogOut, ChevronDown, LayoutPanelTop } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { AccountModal } from './AccountModal'
+import { clearStoredPanelChoice } from '@/lib/panelPreference'
 
 const ROLE_LABEL: Record<string, { tr: string; en: string }> = {
   tenant_admin: { tr: 'Tenant Admin', en: 'Tenant Admin' },
@@ -55,6 +56,18 @@ export function AccountMenu() {
               <User className="w-[15px] h-[15px] text-[var(--text-faint)]" />
               {t({ tr: 'Hesabım', en: 'My Account', fr: 'Mon compte', it: 'Il mio account', ar: 'حسابي' })}
             </button>
+            {profile.role !== 'requester' && (
+              <button
+                onClick={() => {
+                  clearStoredPanelChoice()
+                  window.location.href = '/'
+                }}
+                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left text-[13px] font-medium hover:bg-[var(--row-hover)]"
+              >
+                <LayoutPanelTop className="w-[15px] h-[15px] text-[var(--text-faint)]" />
+                {t({ tr: 'Panel Değiştir', en: 'Switch Panel', fr: 'Changer de panneau', it: 'Cambia pannello', ar: 'تبديل اللوحة' })}
+              </button>
+            )}
             <button
               onClick={() => signOut()}
               className="w-full flex items-center gap-2.5 px-4 py-2.5 text-left text-[13px] font-medium text-p1 hover:bg-[var(--row-hover)] border-t border-[var(--border)]"

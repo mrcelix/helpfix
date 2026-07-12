@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useLang } from '@/contexts/LangContext'
 import { LanguageSwitcher } from '@/components/layout/LanguageSwitcher'
 import { Button } from '@/components/ui/Button'
-import { supabase } from '@/lib/supabase'
+import { supabase, REMEMBER_ME_KEY } from '@/lib/supabase'
 
 type Mode = 'signin' | 'forgot' | 'forgot-sent' | 'reset-password'
 
@@ -16,6 +16,7 @@ export function LoginPage() {
   const [mode, setMode] = useState<Mode>('signin')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [rememberMe, setRememberMe] = useState(true)
   const [newPassword, setNewPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
@@ -33,6 +34,10 @@ export function LoginPage() {
     e.preventDefault()
     setLoading(true)
     setError(null)
+    // Supabase'in oturum jetonunu localStorage'a mı (hatırla) yoksa
+    // sessionStorage'a mı (hatırlama, sekme kapanınca oturum biter)
+    // yazacağını, oturum açmadan ÖNCE belirlememiz gerekiyor.
+    localStorage.setItem(REMEMBER_ME_KEY, rememberMe ? '1' : '0')
     const { error } = await signInWithPassword(email, password)
     setLoading(false)
     if (error) {
@@ -132,6 +137,18 @@ export function LoginPage() {
                     placeholder="••••••••"
                   />
                 </div>
+
+                <label className="flex items-center gap-2 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="w-4 h-4 rounded border-[var(--border)] accent-brand"
+                  />
+                  <span className="text-[12.5px] text-[var(--text-sub)]">
+                    {t({ tr: 'Beni hatırla', en: 'Remember me', fr: 'Se souvenir de moi', it: 'Ricordami', ar: 'تذكرني' })}
+                  </span>
+                </label>
 
                 {error && <p className="text-p1 text-xs">{error}</p>}
 

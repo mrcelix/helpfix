@@ -1,16 +1,18 @@
-import { lazy, Suspense, type ComponentType } from 'react'
+import { lazy, Suspense, useState, type ComponentType } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 import { AppShell } from '@/components/layout/AppShell'
 import { EmployeeShell } from '@/components/employee-layout/EmployeeShell'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { LoginPage } from '@/pages/Login'
+import { PanelChooserPage } from '@/pages/PanelChooser'
 import { ComingSoonPage } from '@/pages/ComingSoon'
 import { ConfigMissingPage } from '@/pages/ConfigMissing'
 import { NAV_MODULES } from '@/components/layout/nav-modules'
 import { useFeatureFlags } from '@/pages/admin/useAdmin'
 import { useAuth } from '@/contexts/AuthContext'
 import { isSupabaseConfigured } from '@/lib/supabase'
+import { getPanelFromUrl, getStoredPanelChoice, type PanelChoice } from '@/lib/panelPreference'
 
 // Performans cilalaması: her sayfa ayrı bir chunk olarak lazy-load
 // edilir — ilk yüklemede tek dev bir bundle yerine sadece o an
@@ -81,31 +83,30 @@ function AdminRoute() {
   return <AdminPage />
 }
 
-/** requester rolü tamamen ayrı, basit bir kabuk (Çalışan Merkezi) üzerinden
- * gezinir — 12 modüllü agent arayüzünü hiç görmez. */
-function RoleBasedShell() {
-  const { profile, loading } = useAuth()
-  if (loading || !profile) return null
+/** Çalışan Merkezi route ağacı (requester rolü HER ZAMAN, diğer roller
+ * ise panel seçiminde "Çalışan Merkezi"ni seçtiyse burayı görür). */
+function EmployeeCenterRoutes() {
+  return (
+    <Suspense fallback={<RouteLoadingFallback />}>
+      <Routes>
+        <Route element={<EmployeeShell />}>
+          <Route index element={<Navigate to="/home" replace />} />
+          <Route path="/home" element={<EmployeeHomePage />} />
+          <Route path="/my-tickets" element={<MyTicketsPage />} />
+          <Route path="/catalog" element={<CatalogPage />} />
+          <Route path="/knowledge-base" element={<KnowledgeBasePage />} />
+          <Route path="/my-assets" element={<MyAssetsPage />} />
+          <Route path="/my-store" element={<MyStorePage />} />
+          <Route path="*" element={<Navigate to="/home" replace />} />
+        </Route>
+      </Routes>
+    </Suspense>
+  )
+}
 
-  if (profile.role === 'requester') {
-    return (
-      <Suspense fallback={<RouteLoadingFallback />}>
-        <Routes>
-          <Route element={<EmployeeShell />}>
-            <Route index element={<Navigate to="/home" replace />} />
-            <Route path="/home" element={<EmployeeHomePage />} />
-            <Route path="/my-tickets" element={<MyTicketsPage />} />
-            <Route path="/catalog" element={<CatalogPage />} />
-            <Route path="/knowledge-base" element={<KnowledgeBasePage />} />
-            <Route path="/my-assets" element={<MyAssetsPage />} />
-            <Route path="/my-store" element={<MyStorePage />} />
-            <Route path="*" element={<Navigate to="/home" replace />} />
-          </Route>
-        </Routes>
-      </Suspense>
-    )
-  }
-
+/** Yönetim & Servis Masası paneli route ağacı — 14 modüllü agent/admin
+ * arayüzü. */
+function AgentPanelRoutes() {
   return (
     <Suspense fallback={<RouteLoadingFallback />}>
       <Routes>
@@ -132,6 +133,30 @@ function RoleBasedShell() {
       </Routes>
     </Suspense>
   )
+}
+
+/** requester rolü Çalışan Merkezi'nden başka bir şey görmez. Diğer
+ * roller (agent/manager/tenant_admin) hem Yönetim & Servis Masası
+ * panelinin hem Çalışan Merkezi'nin (kendi talepleri için) yetkisine
+ * sahiptir — hangisine gireceklerini bir kez seçerler (istenirse
+ * hatırlanır), ikisini de ayrı sekmelerde aynı anda açabilirler. */
+function RoleBasedShell() {
+  const { profile, loading } = useAuth()
+  const [panelOverride, setPanelOverride] = useState<PanelChoice | null>(null)
+
+  if (loading || !profile) return null
+
+  if (profile.role === 'requester') {
+    return <EmployeeCenterRoutes />
+  }
+
+  const activePanel = panelOverride ?? getPanelFromUrl() ?? getStoredPanelChoice()
+
+  if (!activePanel) {
+    return <PanelChooserPage onChoose={setPanelOverride} />
+  }
+
+  return activePanel === 'employee' ? <EmployeeCenterRoutes /> : <AgentPanelRoutes />
 }
 
 function App() {
