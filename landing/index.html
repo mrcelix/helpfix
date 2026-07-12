@@ -189,6 +189,11 @@
   .ms-a{--area:a;} .ms-b{--area:b;} .ms-h{--area:h;} .ms-d{--area:d;}
   .ms-e{--area:e;} .ms-f{--area:f;} .ms-g{--area:g;} .ms-c{--area:c;}
 
+  /* Varlık & Envanter / Değişiklik & Problem / Servis Masası / Raporlama & Analitik:
+     başlık ve açıklama kartın üstünde; ikon ve filigran alt/arka planda kalır
+     (h4 ve p, mutlak konumlu ms-bg/ms-arrow/ms-ic dışında akıştaki tek elemanlar). */
+  .ms-a, .ms-b, .ms-h, .ms-d{justify-content:flex-start;}
+
   /* ortada yüzen "Tüm Modülleri Keşfet" rozeti — öne çıkan interaktif öğe */
   .ms-explore{
     position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:5; text-decoration:none;
