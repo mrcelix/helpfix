@@ -20,7 +20,7 @@ export function PoweredByFooter({ collapsed = false }: { collapsed?: boolean }) 
       <button
         onClick={() => setOpen(true)}
         className={cn(
-          'border-t border-[var(--border)] p-3 text-[11px] font-semibold text-[var(--text-faint)] hover:text-brand-dim transition-colors text-center',
+          'border-t border-[var(--sidebar-border)] p-3 text-[11px] font-semibold text-[var(--sidebar-text-inactive)] hover:text-[var(--sidebar-text-active)] transition-colors text-center',
           collapsed && 'px-1'
         )}
       >

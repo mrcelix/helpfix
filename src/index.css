@@ -58,6 +58,22 @@
   --purple-tint-a: rgb(167 139 250 / 0.14);
 }
 
+/* Çalışan Merkezi sidebar'ı — Kurumsal varsayılan (mevcut nötr panel
+   görünümüyle birebir aynı, hiçbir görsel fark yaratmaz). Takım
+   temaları aşağıda bu değişkenleri override ederek sidebar'ı gerçek
+   takım renklerine büründürüyor (NovaPort mockup'ındaki gibi koyu/
+   renkli sidebar + parlak aktif menü metni deseni) — SADECE bu
+   değişkenleri kullanan Çalışan Merkezi sidebar'ını etkiler, agent
+   panelinin sidebar'ı bu değişkenlere hiç dokunmaz. */
+:root {
+  --sidebar-bg: var(--panel);
+  --sidebar-border: var(--border);
+  --sidebar-text-inactive: var(--text-sub);
+  --sidebar-text-active: #ffffff;
+  --sidebar-active-bg: var(--color-brand);
+  --sidebar-hover-bg: var(--row-hover);
+}
+
 [data-theme="light"] {
   --bg: var(--color-paper-0);
   --panel: var(--color-paper-card);
@@ -94,6 +110,12 @@
   --panel-2: #182448;
   --border: #29365C;
   --row-hover: #182448;
+  --sidebar-bg: #0A2E63;
+  --sidebar-border: rgb(255 255 255 / 0.12);
+  --sidebar-text-inactive: rgb(255 255 255 / 0.78);
+  --sidebar-text-active: #FFE800;
+  --sidebar-active-bg: rgb(255 232 0 / 0.16);
+  --sidebar-hover-bg: rgb(255 255 255 / 0.08);
 }
 [data-theme="light"][data-team="fenerbahce"] {
   --bg: #F2F5FB;
@@ -113,6 +135,12 @@
   --panel-2: #2E1A1C;
   --border: #4A2529;
   --row-hover: #2E1A1C;
+  --sidebar-bg: #7A0C1E;
+  --sidebar-border: rgb(255 255 255 / 0.12);
+  --sidebar-text-inactive: rgb(255 255 255 / 0.78);
+  --sidebar-text-active: #FFD447;
+  --sidebar-active-bg: rgb(255 212 71 / 0.16);
+  --sidebar-hover-bg: rgb(255 255 255 / 0.08);
 }
 [data-theme="light"][data-team="galatasaray"] {
   --bg: #FBF4F4;
@@ -132,6 +160,12 @@
   --panel-2: #202020;
   --border: #363636;
   --row-hover: #202020;
+  --sidebar-bg: #0A0A0A;
+  --sidebar-border: rgb(255 255 255 / 0.12);
+  --sidebar-text-inactive: rgb(255 255 255 / 0.58);
+  --sidebar-text-active: #FFFFFF;
+  --sidebar-active-bg: rgb(255 255 255 / 0.12);
+  --sidebar-hover-bg: rgb(255 255 255 / 0.07);
 }
 [data-theme="light"][data-team="besiktas"] {
   --bg: #F6F6F6;
@@ -151,6 +185,12 @@
   --panel-2: #2A1522;
   --border: #452537;
   --row-hover: #2A1522;
+  --sidebar-bg: #5C0E22;
+  --sidebar-border: rgb(255 255 255 / 0.12);
+  --sidebar-text-inactive: rgb(255 255 255 / 0.78);
+  --sidebar-text-active: #4FD1F2;
+  --sidebar-active-bg: rgb(79 209 242 / 0.16);
+  --sidebar-hover-bg: rgb(255 255 255 / 0.08);
 }
 [data-theme="light"][data-team="trabzonspor"] {
   --bg: #FBF4F6;

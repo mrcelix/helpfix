@@ -5,10 +5,10 @@ export type TeamTheme = 'kurumsal' | 'fenerbahce' | 'galatasaray' | 'besiktas' |
 
 export const TEAM_THEMES: { code: TeamTheme; label: string; colors: [string, string] }[] = [
   { code: 'kurumsal', label: 'Kurumsal', colors: ['#17B0A7', '#0E7D76'] },
-  { code: 'fenerbahce', label: 'Fenerbahçe', colors: ['#FFE800', '#00285C'] },
-  { code: 'galatasaray', label: 'Galatasaray', colors: ['#FFB81C', '#A6192E'] },
-  { code: 'besiktas', label: 'Beşiktaş', colors: ['#1A1A1A', '#FFFFFF'] },
-  { code: 'trabzonspor', label: 'Trabzonspor', colors: ['#7A1128', '#009DDC'] },
+  { code: 'fenerbahce', label: 'FB', colors: ['#FFE800', '#0A2E63'] },
+  { code: 'galatasaray', label: 'GS', colors: ['#FFD447', '#7A0C1E'] },
+  { code: 'besiktas', label: 'BJK', colors: ['#0A0A0A', '#FFFFFF'] },
+  { code: 'trabzonspor', label: 'TS', colors: ['#5C0E22', '#4FD1F2'] },
 ]
 
 interface ThemeContextValue {

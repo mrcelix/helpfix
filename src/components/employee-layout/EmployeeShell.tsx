@@ -37,7 +37,7 @@ export function EmployeeShell() {
     // Mobilde (< md) tek kolon + altta sabit tab bar; md ve üzeri klasik
     // sidebar + içerik grid'i.
     <div className="flex flex-col md:grid md:grid-cols-[248px_1fr] min-h-screen">
-      <aside className="hidden md:flex w-[248px] shrink-0 h-screen sticky top-0 flex-col bg-[var(--panel)] border-r border-[var(--border)]">
+      <aside className="hidden md:flex w-[248px] shrink-0 h-screen sticky top-0 flex-col bg-[var(--sidebar-bg)] border-r border-[var(--sidebar-border)]">
         <Link to="/home" className="flex items-center gap-2.5 px-5 pt-5 pb-4 hover:opacity-80 transition-opacity">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-brand to-brand-dim flex items-center justify-center shrink-0">
             <svg viewBox="0 0 24 24" className="w-[18px] h-[18px]" fill="white">
@@ -45,8 +45,8 @@ export function EmployeeShell() {
             </svg>
           </div>
           <div>
-            <div className="font-display font-bold text-[17px] tracking-tight leading-none">HelpFix</div>
-            <div className="text-[11px] text-[var(--text-faint)] mt-0.5">{t({ tr: 'Çalışan Merkezi', en: 'Employee Center', fr: 'Espace employé', it: 'Centro dipendenti', ar: 'مركز الموظفين' })}</div>
+            <div className="font-display font-bold text-[17px] tracking-tight leading-none text-[var(--sidebar-text-active)]">HelpFix</div>
+            <div className="text-[11px] text-[var(--sidebar-text-inactive)] mt-0.5">{t({ tr: 'Çalışan Merkezi', en: 'Employee Center', fr: 'Espace employé', it: 'Centro dipendenti', ar: 'مركز الموظفين' })}</div>
           </div>
         </Link>
 
@@ -61,8 +61,8 @@ export function EmployeeShell() {
                   cn(
                     'flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13.5px] font-medium mb-0.5 transition-colors',
                     isActive
-                      ? 'bg-brand text-white font-semibold'
-                      : 'text-[var(--text-sub)] hover:bg-[var(--row-hover)] hover:text-[var(--text)]'
+                      ? 'bg-[var(--sidebar-active-bg)] text-[var(--sidebar-text-active)] font-semibold'
+                      : 'text-[var(--sidebar-text-inactive)] hover:bg-[var(--sidebar-hover-bg)] hover:text-[var(--sidebar-text-active)]'
                   )
                 }
               >
