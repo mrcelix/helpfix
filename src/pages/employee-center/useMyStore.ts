@@ -15,6 +15,20 @@ export function useMySite() {
   })
 }
 
+export function useMyStoreIntegrationStatus() {
+  const { profile } = useAuth()
+  return useQuery({
+    queryKey: ['my-store-integration-status', profile?.siteId],
+    enabled: !!profile?.siteId,
+    refetchInterval: 60_000,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('get_my_store_integration_status')
+      if (error) throw error
+      return data?.[0] ?? null
+    },
+  })
+}
+
 export interface MyStoreHealthScore {
   week_start: string
   esl_score: number

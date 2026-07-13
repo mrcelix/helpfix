@@ -900,6 +900,51 @@ export interface Database {
         Update: Partial<{ business_service_id: string; ci_id: string }>
         Relationships: []
       }
+      integration_endpoints: {
+        Row: {
+          id: string
+          tenant_id: string
+          site_id: string
+          name: string
+          endpoint_url: string
+          http_method: string
+          auth_header_name: string | null
+          auth_header_value: string | null
+          poll_interval_minutes: number
+          is_active: boolean
+          last_synced_at: string | null
+          last_status: 'success' | 'error' | 'partial' | null
+          created_by: string | null
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['integration_endpoints']['Row'], 'id' | 'created_at' | 'last_synced_at' | 'last_status'> & {
+          id?: string
+          created_at?: string
+          last_synced_at?: string | null
+          last_status?: 'success' | 'error' | 'partial' | null
+        }
+        Update: Partial<Database['public']['Tables']['integration_endpoints']['Insert']>
+        Relationships: []
+      }
+      integration_logs: {
+        Row: {
+          id: string
+          tenant_id: string
+          endpoint_id: string
+          status: 'success' | 'error' | 'partial'
+          http_status: number | null
+          duration_ms: number | null
+          devices_updated: number
+          message: string | null
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['integration_logs']['Row'], 'id' | 'created_at'> & {
+          id?: string
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['integration_logs']['Insert']>
+        Relationships: []
+      }
       device_status_events: {
         Row: {
           id: string
@@ -1544,6 +1589,24 @@ export interface Database {
       capture_store_score_snapshots: {
         Args: { p_tenant_id: string }
         Returns: number
+      }
+      get_my_store_integration_status: {
+        Args: Record<string, never>
+        Returns: {
+          active_endpoints: number
+          last_synced_at: string | null
+          last_status: 'success' | 'error' | 'partial' | null
+        }[]
+      }
+      get_integration_summary: {
+        Args: { p_tenant_id: string }
+        Returns: {
+          site_id: string
+          site_name: string
+          active_endpoints: number
+          last_synced_at: string | null
+          last_status: 'success' | 'error' | 'partial' | null
+        }[]
       }
       get_business_service_health: {
         Args: { p_tenant_id: string }

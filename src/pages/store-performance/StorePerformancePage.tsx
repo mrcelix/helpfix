@@ -1,15 +1,17 @@
 import { useState } from 'react'
-import { Camera, AlertTriangle, Wifi, ChevronRight, Store as StoreIcon } from 'lucide-react'
+import { Camera, AlertTriangle, Wifi, ChevronRight, Store as StoreIcon, RefreshCw, CheckCircle2, XCircle, Clock } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from 'recharts'
 import { useLang } from '@/contexts/LangContext'
 import { Button } from '@/components/ui/Button'
 import { useStoreScorecard, useCaptureSnapshot, useStoreScoreHistory, scoreLevel, type StoreScorecard } from './useStorePerformance'
+import { useIntegrationSummary, useSyncNow } from './useIntegrations'
 import { StoreDetailDrawer } from './StoreDetailDrawer'
 import { HealthScoreTab } from './HealthScoreTab'
+import { IntegrationsTab } from './IntegrationsTab'
 
 export function StorePerformancePage() {
   const { t } = useLang()
-  const [pageTab, setPageTab] = useState<'dashboard' | 'health-score' | 'history'>('dashboard')
+  const [pageTab, setPageTab] = useState<'dashboard' | 'health-score' | 'history' | 'integrations'>('dashboard')
   const [selectedStore, setSelectedStore] = useState<StoreScorecard | null>(null)
   const [sortBy, setSortBy] = useState<'score' | 'name'>('score')
 
@@ -80,9 +82,16 @@ export function StorePerformancePage() {
         >
           {t({ tr: 'Geçmiş', en: 'History' })}
         </button>
+        <button
+          onClick={() => setPageTab('integrations')}
+          className={`shrink-0 whitespace-nowrap px-1 py-2.5 text-[13.5px] font-semibold mr-5 border-b-2 ${pageTab === 'integrations' ? 'border-brand text-brand-dim' : 'border-transparent text-[var(--text-faint)]'}`}
+        >
+          {t({ tr: 'Entegrasyonlar', en: 'Integrations' })}
+        </button>
       </div>
 
       {pageTab === 'health-score' && <HealthScoreTab />}
+      {pageTab === 'integrations' && <IntegrationsTab />}
 
       {pageTab === 'dashboard' && (
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
@@ -142,12 +151,57 @@ export function StorePerformancePage() {
               </BarChart>
             </ResponsiveContainer>
           </div>
+
+          <IntegrationStatusWidget onOpenIntegrations={() => setPageTab('integrations')} />
         </div>
       )}
 
       {pageTab === 'history' && <StoreHistoryTab stores={stores} onOpenStore={setSelectedStore} />}
 
       {selectedStore && <StoreDetailDrawer store={selectedStore} onClose={() => setSelectedStore(null)} />}
+    </div>
+  )
+}
+
+function IntegrationStatusWidget({ onOpenIntegrations }: { onOpenIntegrations: () => void }) {
+  const { lang, t } = useLang()
+  const { data: summary, isLoading } = useIntegrationSummary()
+  const syncNow = useSyncNow()
+
+  return (
+    <div className="border border-[var(--border)] rounded-[var(--radius-app)] bg-[var(--panel)] p-4">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="font-display text-[14px] font-bold">{t({ tr: 'Entegrasyon Durumu', en: 'Integration Status' })}</h3>
+        <button
+          onClick={() => syncNow.mutate(undefined)}
+          disabled={syncNow.isPending}
+          title={t({ tr: 'Tümünü Şimdi Senkronize Et', en: 'Sync All Now' })}
+          className="p-1.5 rounded-md text-[var(--text-faint)] hover:text-brand-dim hover:bg-[var(--panel-2)] disabled:opacity-40"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${syncNow.isPending ? 'animate-spin' : ''}`} />
+        </button>
+      </div>
+      {isLoading && <p className="text-[11.5px] text-[var(--text-faint)] text-center py-4">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</p>}
+      {!isLoading && !summary?.length && (
+        <button onClick={onOpenIntegrations} className="text-[11.5px] text-[var(--text-faint)] hover:text-brand-dim text-left w-full py-2">
+          {t({ tr: 'Henüz entegrasyon tanımlanmadı. Kurmak için tıklayın →', en: 'No integrations set up yet. Click to configure →' })}
+        </button>
+      )}
+      <div className="flex flex-col gap-1.5">
+        {summary?.map((s) => {
+          const Icon = s.last_status === 'success' ? CheckCircle2 : s.last_status === 'error' ? XCircle : Clock
+          const cls = s.last_status === 'success' ? 'text-ok' : s.last_status === 'error' ? 'text-p1' : 'text-[var(--text-faint)]'
+          return (
+            <button key={s.site_id} onClick={onOpenIntegrations} className="flex items-center gap-2 text-left px-2 py-1.5 rounded-lg hover:bg-[var(--row-hover)]">
+              <Icon className={`w-3.5 h-3.5 shrink-0 ${cls}`} />
+              <span className="text-[12px] flex-1 min-w-0 truncate">{s.site_name}</span>
+              <span className="text-[10px] text-[var(--text-faint)] shrink-0">
+                {s.last_synced_at ? new Date(s.last_synced_at).toLocaleTimeString(lang === 'tr' ? 'tr-TR' : 'en-US', { hour: '2-digit', minute: '2-digit' }) : '—'}
+              </span>
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }

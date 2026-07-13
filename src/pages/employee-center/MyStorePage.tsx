@@ -1,4 +1,4 @@
-import { Store, AlertTriangle, Ticket, Package, Monitor, Tag, ShoppingCart, Wifi, Headphones } from 'lucide-react'
+import { Store, AlertTriangle, Ticket, Package, Monitor, Tag, ShoppingCart, Wifi, Headphones, CheckCircle2, XCircle, Clock } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import {
   useMySite,
@@ -7,6 +7,7 @@ import {
   useMyStoreIncidents,
   useMyStoreAssets,
   useMyStoreConsumables,
+  useMyStoreIntegrationStatus,
 } from './useMyStore'
 
 const GRADE_STYLE: Record<string, string> = {
@@ -23,13 +24,14 @@ const PRIORITY_STYLE: Record<string, string> = {
 }
 
 export function MyStorePage() {
-  const { t } = useLang()
+  const { lang, t } = useLang()
   const { data: site, isLoading: siteLoading } = useMySite()
   const { data: health } = useMyStoreHealthScore()
   const { data: history } = useMyStoreHealthHistory()
   const { data: incidents } = useMyStoreIncidents()
   const { data: assets } = useMyStoreAssets()
   const { data: consumables } = useMyStoreConsumables()
+  const { data: integrationStatus } = useMyStoreIntegrationStatus()
 
   if (siteLoading) {
     return <div className="py-16 text-center text-[13px] text-[var(--text-faint)]">{t({ tr: 'Yükleniyor…', en: 'Loading…', fr: 'Chargement…', it: 'Caricamento…', ar: 'جارٍ التحميل…' })}</div>
@@ -56,14 +58,34 @@ export function MyStorePage() {
 
   return (
     <div>
-      <div className="flex items-center gap-3 mb-6">
+      <div className="flex items-center gap-3 mb-6 flex-wrap">
         <div className="w-11 h-11 rounded-xl bg-brand-tint flex items-center justify-center shrink-0">
           <Store className="w-5 h-5 text-brand-dim" />
         </div>
-        <div>
+        <div className="flex-1 min-w-0">
           <h1 className="font-display text-[20px] font-bold tracking-tight">{site.name}</h1>
           <p className="text-[12.5px] text-[var(--text-faint)]">{site.city}</p>
         </div>
+        {integrationStatus && integrationStatus.active_endpoints > 0 && (
+          <div className="flex items-center gap-1.5 bg-[var(--panel)] border border-[var(--border)] rounded-full px-3 py-1.5">
+            {integrationStatus.last_status === 'success' ? (
+              <CheckCircle2 className="w-3.5 h-3.5 text-ok" />
+            ) : integrationStatus.last_status === 'error' ? (
+              <XCircle className="w-3.5 h-3.5 text-p1" />
+            ) : (
+              <Clock className="w-3.5 h-3.5 text-[var(--text-faint)]" />
+            )}
+            <span className="text-[11px] font-semibold text-[var(--text-sub)]">
+              {t({ tr: 'Canlı izleme', en: 'Live monitoring' })}
+              {integrationStatus.last_synced_at && (
+                <>
+                  {' · '}
+                  {new Date(integrationStatus.last_synced_at).toLocaleTimeString(lang === 'tr' ? 'tr-TR' : 'en-US', { hour: '2-digit', minute: '2-digit' })}
+                </>
+              )}
+            </span>
+          </div>
+        )}
       </div>
 
       {(criticalOpen > 0 || lowStockConsumables.length > 0) && (
