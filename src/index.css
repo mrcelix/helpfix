@@ -71,32 +71,93 @@
 }
 
 /* ------------------------------------------------------------
-   Takım Temaları (Çalışan Merkezi > Hesabım'dan seçilir) — sadece
-   marka vurgu rengini (--color-brand ailesi) değiştirir, tüm buton/
-   rozet/aktif-menü stilleri zaten bu değişkenleri referans aldığı
-   için otomatik uyum sağlar. "Kurumsal" varsayılan, ek kural gerekmez.
-   Metin okunabilirliği için brand rengi her zaman koyu/doygun seçildi
-   (üzerine beyaz yazı biniyor) — takımın ikinci rengi tint'te yaşıyor.
+   Takım Temaları (Çalışan Merkezi > Hesabım'dan seçilir) — artık
+   sadece marka vurgu rengini değil, TÜM yüzey paletini (arka plan,
+   panel, kenarlık, satır hover) takıma göre inceltilmiş biçimde
+   değiştiriyor — NovaPort mockup'ındaki katmanlı --bg/--surface/
+   --brand sisteminin aynı mantığı. "Kurumsal" varsayılan (mevcut
+   nötr teal palet), hiç ek kural gerekmez. Metin okunabilirliği için
+   brand rengi her zaman koyu/doygun seçildi (üzerine beyaz yazı
+   biniyor); yüzey tonları ise göze batmayacak kadar hafif kaydırıldı
+   — okunabilirlik ve profesyonellik korunuyor, sadece "atmosfer"
+   takıma göre değişiyor. Her kombinasyon (koyu/açık mod × takım) ayrı
+   tanımlı.
    ------------------------------------------------------------ */
+
+/* Fenerbahçe — Sarı Lacivert */
 [data-team="fenerbahce"] {
-  --color-brand: #00285C;
-  --color-brand-dim: #001B3D;
+  --color-brand: #0A3A7A;
+  --color-brand-dim: #062552;
   --color-brand-tint: #FFF6D2;
+  --bg: #0A0E1E;
+  --panel: #121B33;
+  --panel-2: #182448;
+  --border: #29365C;
+  --row-hover: #182448;
 }
+[data-theme="light"][data-team="fenerbahce"] {
+  --bg: #F2F5FB;
+  --panel: #FFFFFF;
+  --panel-2: #F6F8FD;
+  --border: #DCE3F0;
+  --row-hover: #EEF2FA;
+}
+
+/* Galatasaray — Sarı Kırmızı */
 [data-team="galatasaray"] {
-  --color-brand: #A6192E;
+  --color-brand: #B31B34;
   --color-brand-dim: #7A1220;
   --color-brand-tint: #FFF6D2;
+  --bg: #180D0E;
+  --panel: #241416;
+  --panel-2: #2E1A1C;
+  --border: #4A2529;
+  --row-hover: #2E1A1C;
 }
+[data-theme="light"][data-team="galatasaray"] {
+  --bg: #FBF4F4;
+  --panel: #FFFFFF;
+  --panel-2: #FDF7F7;
+  --border: #F0DEDF;
+  --row-hover: #F9EEEE;
+}
+
+/* Beşiktaş — Siyah Beyaz */
 [data-team="besiktas"] {
-  --color-brand: #1A1A1A;
+  --color-brand: #0D0D0D;
   --color-brand-dim: #000000;
-  --color-brand-tint: #EDEDED;
+  --color-brand-tint: #ECECEC;
+  --bg: #0A0A0A;
+  --panel: #171717;
+  --panel-2: #202020;
+  --border: #363636;
+  --row-hover: #202020;
 }
+[data-theme="light"][data-team="besiktas"] {
+  --bg: #F6F6F6;
+  --panel: #FFFFFF;
+  --panel-2: #FAFAFA;
+  --border: #E5E5E5;
+  --row-hover: #EFEFEF;
+}
+
+/* Trabzonspor — Bordo Mavi */
 [data-team="trabzonspor"] {
   --color-brand: #7A1128;
   --color-brand-dim: #4D0A1A;
   --color-brand-tint: #E3F6FC;
+  --bg: #150810;
+  --panel: #201019;
+  --panel-2: #2A1522;
+  --border: #452537;
+  --row-hover: #2A1522;
+}
+[data-theme="light"][data-team="trabzonspor"] {
+  --bg: #FBF4F6;
+  --panel: #FFFFFF;
+  --panel-2: #FDF7F8;
+  --border: #F0DFE4;
+  --row-hover: #F9EEF0;
 }
 
 html, body, #root {
