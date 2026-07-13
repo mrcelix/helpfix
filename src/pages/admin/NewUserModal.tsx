@@ -4,6 +4,7 @@ import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { useLang, pickLang} from '@/contexts/LangContext'
 import { useCreateUser, useDepartments, generateTempPassword } from './useAdmin'
+import { useSites } from './useSites'
 import type { UserRole } from '@/types/database'
 
 const ROLE_LABEL: Record<UserRole, { tr: string; en: string }> = {
@@ -17,11 +18,13 @@ export function NewUserModal({ onClose }: { onClose: () => void }) {
   const { lang, t } = useLang()
   const createUser = useCreateUser()
   const { data: departments } = useDepartments()
+  const { data: sites } = useSites()
 
   const [email, setEmail] = useState('')
   const [fullName, setFullName] = useState('')
   const [role, setRole] = useState<UserRole>('requester')
   const [departmentId, setDepartmentId] = useState('')
+  const [siteId, setSiteId] = useState('')
   const [password, setPassword] = useState(generateTempPassword())
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
@@ -31,7 +34,7 @@ export function NewUserModal({ onClose }: { onClose: () => void }) {
     if (!email.trim() || !fullName.trim()) return
     setError(null)
     try {
-      await createUser.mutateAsync({ email: email.trim(), password, fullName: fullName.trim(), role, departmentId: departmentId || null })
+      await createUser.mutateAsync({ email: email.trim(), password, fullName: fullName.trim(), role, departmentId: departmentId || null, siteId: siteId || null })
       setDone(true)
     } catch (e) {
       setError(e instanceof Error ? e.message : t({ tr: 'Bilinmeyen hata', en: 'Unknown error' }))
@@ -108,7 +111,7 @@ export function NewUserModal({ onClose }: { onClose: () => void }) {
             className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-[13px]"
           />
         </div>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           <div>
             <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">
               {t({ tr: 'Rol', en: 'Role' })}
@@ -138,6 +141,23 @@ export function NewUserModal({ onClose }: { onClose: () => void }) {
               {departments?.map((d) => (
                 <option key={d.id} value={d.id}>
                   {d.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">
+              {t({ tr: 'Mağaza / Site', en: 'Store / Site' })}
+            </label>
+            <select
+              value={siteId}
+              onChange={(e) => setSiteId(e.target.value)}
+              className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-2.5 py-2.5 text-[13px]"
+            >
+              <option value="">{t({ tr: 'Yok', en: 'None' })}</option>
+              {sites?.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
                 </option>
               ))}
             </select>

@@ -50,7 +50,7 @@ Deno.serve(async (req: Request) => {
     if (profileError || !callerProfile) throw new Error('Çağıranın profili bulunamadı')
     if (callerProfile.role !== 'tenant_admin') throw new Error('Sadece Tenant Admin yeni kullanıcı oluşturabilir')
 
-    const { email, password, fullName, role, departmentId } = await req.json()
+    const { email, password, fullName, role, departmentId, siteId } = await req.json()
     if (!email || !password || !fullName || !role) {
       throw new Error('Eksik alan: email, password, fullName ve role zorunludur')
     }
@@ -82,6 +82,7 @@ Deno.serve(async (req: Request) => {
       email,
       role,
       department_id: departmentId || null,
+      site_id: siteId || null,
       avatar_initials: initials,
       is_active: true,
     })

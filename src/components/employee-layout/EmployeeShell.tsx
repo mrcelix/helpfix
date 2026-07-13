@@ -85,7 +85,7 @@ export function EmployeeShell() {
 
       {/* Mobil alt gezinme çubuğu — md ve üzerinde gizli */}
       <nav
-        className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-[var(--panel)] border-t border-[var(--border)] flex items-stretch"
+        className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-[var(--sidebar-bg)] border-t border-[var(--sidebar-border)] flex items-stretch"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
         {EMPLOYEE_NAV.map((item) => {
@@ -96,8 +96,8 @@ export function EmployeeShell() {
               to={item.path}
               className={({ isActive }) =>
                 cn(
-                  'flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-semibold',
-                  isActive ? 'text-brand-dim' : 'text-[var(--text-faint)]'
+                  'flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-semibold transition-colors',
+                  isActive ? 'text-[var(--sidebar-text-active)]' : 'text-[var(--sidebar-text-inactive)]'
                 )
               }
             >

@@ -169,7 +169,7 @@ export function useAuditLog() {
 export function useCreateUser() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (input: { email: string; password: string; fullName: string; role: UserRole; departmentId: string | null }) => {
+    mutationFn: async (input: { email: string; password: string; fullName: string; role: UserRole; departmentId: string | null; siteId?: string | null }) => {
       const { data, error } = await supabase.functions.invoke('create-user', {
         body: {
           email: input.email,
@@ -177,6 +177,7 @@ export function useCreateUser() {
           fullName: input.fullName,
           role: input.role,
           departmentId: input.departmentId,
+          siteId: input.siteId ?? null,
         },
       })
       if (error) throw error
