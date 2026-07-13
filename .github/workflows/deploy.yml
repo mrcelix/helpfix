@@ -65,6 +65,11 @@ jobs:
           # bir pratiktir.
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          # "Powered By HelpFix" popup'ındaki sürüm/son deploy bilgisi
+          # için — secret değil, GitHub'ın kendi sağladığı bağlam
+          # değerleri, her deploy'da otomatik güncel.
+          VITE_BUILD_SHA: ${{ github.sha }}
+          VITE_BUILD_TIME: ${{ github.event.head_commit.timestamp || '' }}
 
       - name: Deploy klasörünü birleştir (landing kökte, uygulama itsm/ altında)
         run: |

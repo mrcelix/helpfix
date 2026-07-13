@@ -5,6 +5,7 @@ import { useLang, pickLang} from '@/contexts/LangContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { useFeatureFlags } from '@/pages/admin/useAdmin'
 import { useNavBadgeCounts } from './useNavBadgeCounts'
+import { PoweredByFooter } from './PoweredByFooter'
 import { cn } from '@/lib/utils'
 
 function SidebarContent({ onNavigate, collapsed = false }: { onNavigate?: () => void; collapsed?: boolean }) {
@@ -104,22 +105,7 @@ function SidebarContent({ onNavigate, collapsed = false }: { onNavigate?: () => 
         )}
       </nav>
 
-      <div className={cn('border-t border-[var(--border)] p-3 flex items-center gap-2.5', collapsed && 'justify-center')}>
-        <div
-          title={collapsed ? profile?.fullName : undefined}
-          className="w-[30px] h-[30px] rounded-lg bg-brand text-white flex items-center justify-center text-xs font-bold shrink-0"
-        >
-          {profile?.avatarInitials ?? profile?.fullName?.slice(0, 2).toUpperCase() ?? '—'}
-        </div>
-        {!collapsed && (
-          <div className="min-w-0">
-            <div className="text-[12.5px] font-semibold truncate">{profile?.fullName ?? '—'}</div>
-            <div className="text-[11px] text-[var(--text-faint)] truncate">
-              {profile ? t(ROLE_LABEL[profile.role]) : ''}
-            </div>
-          </div>
-        )}
-      </div>
+      <PoweredByFooter collapsed={collapsed} />
     </>
   )
 }
@@ -165,11 +151,4 @@ export function MobileSidebarDrawer({ open, onClose }: { open: boolean; onClose:
       </aside>
     </div>
   )
-}
-
-const ROLE_LABEL: Record<string, { tr: string; en: string }> = {
-  tenant_admin: { tr: 'Tenant Admin', en: 'Tenant Admin' },
-  manager: { tr: 'Ekip Yöneticisi', en: 'Team Manager' },
-  agent: { tr: 'Teknisyen', en: 'Agent' },
-  requester: { tr: 'Son Kullanıcı', en: 'Requester' },
 }

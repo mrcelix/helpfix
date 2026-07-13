@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { Topbar } from '@/components/layout/Topbar'
 import { CommandPalette } from '@/components/command-palette/CommandPalette'
 import { ChatWidget } from '@/pages/employee-center/ChatWidget'
+import { PoweredByFooter } from '@/components/layout/PoweredByFooter'
 import { cn } from '@/lib/utils'
 
 const EMPLOYEE_NAV_BASE = [
@@ -72,15 +73,7 @@ export function EmployeeShell() {
           })}
         </nav>
 
-        <div className="border-t border-[var(--border)] p-3 flex items-center gap-2.5">
-          <div className="w-[30px] h-[30px] rounded-lg bg-brand text-white flex items-center justify-center text-xs font-bold shrink-0">
-            {profile?.avatarInitials ?? profile?.fullName?.slice(0, 2).toUpperCase() ?? '—'}
-          </div>
-          <div className="min-w-0">
-            <div className="text-[12.5px] font-semibold truncate">{profile?.fullName ?? '—'}</div>
-            <div className="text-[11px] text-[var(--text-faint)] truncate">{t({ tr: 'Çalışan', en: 'Employee', fr: 'Employé', it: 'Dipendente', ar: 'موظف' })}</div>
-          </div>
-        </div>
+        <PoweredByFooter />
       </aside>
 
       <div className="flex flex-col min-h-screen">
