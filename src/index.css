@@ -72,6 +72,14 @@
   --sidebar-text-active: #ffffff;
   --sidebar-active-bg: var(--color-brand);
   --sidebar-hover-bg: var(--row-hover);
+  /* Logo/başlık alanı — aktif menü metninden AYRI tutuluyor çünkü
+     Kurumsal temada sidebar arka planı açık/koyu moda göre değişir
+     (--panel), o yüzden başlık de tema-duyarlı olmalı (sabit beyaz
+     olursa açık modda görünmez olur — bu bug'ı düzeltiyor). Takım
+     temalarında sidebar arka planı her zaman koyu/renkli olduğu için
+     bunlar override edilip sabit açık renk verilir. */
+  --sidebar-heading-text: var(--text);
+  --sidebar-subtitle-text: var(--text-faint);
 }
 
 [data-theme="light"] {
@@ -116,6 +124,8 @@
   --sidebar-text-active: #FFE800;
   --sidebar-active-bg: rgb(255 232 0 / 0.16);
   --sidebar-hover-bg: rgb(255 255 255 / 0.08);
+  --sidebar-heading-text: #FFFFFF;
+  --sidebar-subtitle-text: rgb(255 255 255 / 0.6);
 }
 [data-theme="light"][data-team="fenerbahce"] {
   --bg: #F2F5FB;
@@ -141,6 +151,8 @@
   --sidebar-text-active: #FFD447;
   --sidebar-active-bg: rgb(255 212 71 / 0.16);
   --sidebar-hover-bg: rgb(255 255 255 / 0.08);
+  --sidebar-heading-text: #FFFFFF;
+  --sidebar-subtitle-text: rgb(255 255 255 / 0.6);
 }
 [data-theme="light"][data-team="galatasaray"] {
   --bg: #FBF4F4;
@@ -166,6 +178,8 @@
   --sidebar-text-active: #FFFFFF;
   --sidebar-active-bg: rgb(255 255 255 / 0.12);
   --sidebar-hover-bg: rgb(255 255 255 / 0.07);
+  --sidebar-heading-text: #FFFFFF;
+  --sidebar-subtitle-text: rgb(255 255 255 / 0.55);
 }
 [data-theme="light"][data-team="besiktas"] {
   --bg: #F6F6F6;
@@ -191,6 +205,8 @@
   --sidebar-text-active: #4FD1F2;
   --sidebar-active-bg: rgb(79 209 242 / 0.16);
   --sidebar-hover-bg: rgb(255 255 255 / 0.08);
+  --sidebar-heading-text: #FFFFFF;
+  --sidebar-subtitle-text: rgb(255 255 255 / 0.6);
 }
 [data-theme="light"][data-team="trabzonspor"] {
   --bg: #FBF4F6;

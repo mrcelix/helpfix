@@ -45,8 +45,8 @@ export function EmployeeShell() {
             </svg>
           </div>
           <div>
-            <div className="font-display font-bold text-[17px] tracking-tight leading-none text-[var(--sidebar-text-active)]">HelpFix</div>
-            <div className="text-[11px] text-[var(--sidebar-text-inactive)] mt-0.5">{t({ tr: 'Çalışan Merkezi', en: 'Employee Center', fr: 'Espace employé', it: 'Centro dipendenti', ar: 'مركز الموظفين' })}</div>
+            <div className="font-display font-bold text-[17px] tracking-tight leading-none text-[var(--sidebar-heading-text)]">HelpFix</div>
+            <div className="text-[11px] text-[var(--sidebar-subtitle-text)] mt-0.5">{t({ tr: 'Çalışan Merkezi', en: 'Employee Center', fr: 'Espace employé', it: 'Centro dipendenti', ar: 'مركز الموظفين' })}</div>
           </div>
         </Link>
 
