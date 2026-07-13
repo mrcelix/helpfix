@@ -9,11 +9,11 @@ import { useArticles, useLogSearch, useKbGapAnalysis, type KbSavedView } from '.
 import { ArticleDrawer } from './ArticleDrawer'
 import { NewArticleModal } from './NewArticleModal'
 
-const SAVED_VIEWS: { key: KbSavedView; label: { tr: string; en: string } }[] = [
-  { key: 'published', label: { tr: 'Yayınlanan', en: 'Published' } },
-  { key: 'drafts', label: { tr: 'Taslaklar', en: 'Drafts' } },
-  { key: 'most_viewed', label: { tr: 'En Çok Görüntülenen', en: 'Most Viewed' } },
-  { key: 'needs_review', label: { tr: 'Gözden Geçirilmeli', en: 'Needs Review' } },
+const SAVED_VIEWS: { key: KbSavedView; label: { tr: string; en: string; fr?: string; it?: string; ar?: string } }[] = [
+  { key: 'published', label: { tr: 'Yayınlanan', en: 'Published', fr: 'Publié', it: 'Pubblicato', ar: 'المنشورة' } },
+  { key: 'drafts', label: { tr: 'Taslaklar', en: 'Drafts', fr: 'Brouillons', it: 'Bozze', ar: 'المسودات' } },
+  { key: 'most_viewed', label: { tr: 'En Çok Görüntülenen', en: 'Most Viewed', fr: 'Les plus consultés', it: 'Più visualizzati', ar: 'الأكثر مشاهدة' } },
+  { key: 'needs_review', label: { tr: 'Gözden Geçirilmeli', en: 'Needs Review', fr: 'À revoir', it: 'Da rivedere', ar: 'بحاجة إلى مراجعة' } },
 ]
 
 export function KnowledgeBasePage() {
@@ -47,16 +47,16 @@ export function KnowledgeBasePage() {
       <div className="flex items-end justify-between mb-5 flex-wrap gap-3">
         <div>
           <h1 className="font-display text-[22px] font-bold tracking-tight">
-            {t({ tr: 'Bilgi Yönetimi', en: 'Knowledge Base' })}
+            {t({ tr: 'Bilgi Yönetimi', en: 'Knowledge Base', fr: 'Base de connaissances', it: 'Base di conoscenza', ar: 'قاعدة المعرفة' })}
           </h1>
           <p className="text-[13px] text-[var(--text-faint)] mt-1">
-            {t({ tr: 'Makaleler, arama ve faydalılık geri bildirimi', en: 'Articles, search, and helpfulness feedback' })}
+            {t({ tr: 'Makaleler, arama ve faydalılık geri bildirimi', en: 'Articles, search, and helpfulness feedback', fr: "Articles, recherche et retours d'utilité", it: "Articoli, ricerca e feedback sull'utilità", ar: 'المقالات والبحث وتقييمات الفائدة' })}
           </p>
         </div>
         {canManage && (
           <Button onClick={() => setShowNewModal(true)}>
             <Plus className="w-[15px] h-[15px]" />
-            {t({ tr: 'Yeni Makale', en: 'New Article' })}
+            {t({ tr: 'Yeni Makale', en: 'New Article', fr: 'Nouvel article', it: 'Nuovo articolo', ar: 'مقالة جديدة' })}
           </Button>
         )}
       </div>
@@ -64,7 +64,7 @@ export function KnowledgeBasePage() {
       {canManage && !!gaps?.length && (
         <div className="bg-p2-tint border border-p2/40 rounded-xl p-3.5 mb-4">
           <div className="text-[11px] font-bold text-p2 uppercase mb-1.5">
-            🔍 {t({ tr: 'Bilgi Boşluğu Analizi — Sonuçsuz Aramalar', en: 'Knowledge Gap Analysis — Searches with No Results' })}
+            🔍 {t({ tr: 'Bilgi Boşluğu Analizi — Sonuçsuz Aramalar', en: 'Knowledge Gap Analysis — Searches with No Results', fr: 'Analyse des lacunes de connaissances — Recherches sans résultat', it: 'Analisi delle lacune di conoscenza — Ricerche senza risultati', ar: 'تحليل الفجوة المعرفية — عمليات بحث بلا نتائج' })}
           </div>
           <div className="flex flex-wrap gap-1.5">
             {gaps.slice(0, 8).map((g) => (
@@ -81,7 +81,7 @@ export function KnowledgeBasePage() {
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder={t({ tr: 'Makale ara…', en: 'Search articles…' })}
+          placeholder={t({ tr: 'Makale ara…', en: 'Search articles…', fr: 'Rechercher des articles…', it: 'Cerca articoli…', ar: 'ابحث في المقالات…' })}
           className="bg-transparent outline-none text-[13px] w-full"
         />
         <VoiceInputButton onResult={(text) => setSearch(text)} />
@@ -108,33 +108,33 @@ export function KnowledgeBasePage() {
         <table className="w-full text-[12.5px] min-w-[720px]">
           <thead>
             <tr className="bg-[var(--panel-2)] border-b border-[var(--border)]">
-              <Th>{t({ tr: 'Başlık', en: 'Title' })}</Th>
-              <Th>{t({ tr: 'Kategori', en: 'Category' })}</Th>
-              <Th>{t({ tr: 'Yazar', en: 'Author' })}</Th>
-              <Th>{t({ tr: 'Görüntülenme', en: 'Views' })}</Th>
-              <Th>{t({ tr: 'Faydalı', en: 'Helpful' })}</Th>
-              <Th>{t({ tr: 'Güncelleme', en: 'Updated' })}</Th>
+              <Th>{t({ tr: 'Başlık', en: 'Title', fr: 'Titre', it: 'Titolo', ar: 'العنوان' })}</Th>
+              <Th>{t({ tr: 'Kategori', en: 'Category', fr: 'Catégorie', it: 'Categoria', ar: 'الفئة' })}</Th>
+              <Th>{t({ tr: 'Yazar', en: 'Author', fr: 'Auteur', it: 'Autore', ar: 'الكاتب' })}</Th>
+              <Th>{t({ tr: 'Görüntülenme', en: 'Views', fr: 'Vues', it: 'Visualizzazioni', ar: 'المشاهدات' })}</Th>
+              <Th>{t({ tr: 'Faydalı', en: 'Helpful', fr: 'Utile', it: 'Utile', ar: 'مفيد' })}</Th>
+              <Th>{t({ tr: 'Güncelleme', en: 'Updated', fr: 'Mis à jour', it: 'Aggiornato', ar: 'تم التحديث' })}</Th>
             </tr>
           </thead>
           <tbody>
             {isLoading && (
               <tr>
                 <td colSpan={6} className="text-center py-10 text-[var(--text-faint)]">
-                  {t({ tr: 'Yükleniyor…', en: 'Loading…' })}
+                  {t({ tr: 'Yükleniyor…', en: 'Loading…', fr: 'Chargement…', it: 'Caricamento…', ar: 'جارٍ التحميل…' })}
                 </td>
               </tr>
             )}
             {error && (
               <tr>
                 <td colSpan={6} className="text-center py-10 text-p1">
-                  {t({ tr: 'Bir hata oluştu.', en: 'Something went wrong.' })}
+                  {t({ tr: 'Bir hata oluştu.', en: 'Something went wrong.', fr: "Une erreur s'est produite.", it: 'Si è verificato un errore.', ar: 'حدث خطأ ما.' })}
                 </td>
               </tr>
             )}
             {!isLoading && !error && articles?.length === 0 && (
               <tr>
                 <td colSpan={6} className="text-center py-14 text-[var(--text-faint)]">
-                  {t({ tr: 'Bu görünümde makale yok.', en: 'No articles in this view.' })}
+                  {t({ tr: 'Bu görünümde makale yok.', en: 'No articles in this view.', fr: 'Aucun article dans cette vue.', it: 'Nessun articolo in questa vista.', ar: 'لا توجد مقالات في هذا العرض.' })}
                 </td>
               </tr>
             )}

@@ -20,10 +20,10 @@ const SLA_STYLE: Record<string, string> = {
   warning: 'text-p2 bg-p2-tint',
   breached: 'text-p1 bg-p1-tint',
 }
-const SLA_LABEL: Record<string, { tr: string; en: string }> = {
-  ok: { tr: 'Zamanında', en: 'On Track' },
-  warning: { tr: 'Riskte', en: 'At Risk' },
-  breached: { tr: 'Gecikti', en: 'Overdue' },
+const SLA_LABEL: Record<string, { tr: string; en: string; fr?: string; it?: string; ar?: string }> = {
+  ok: { tr: 'Zamanında', en: 'On Track', fr: 'Dans les délais', it: 'In tempo', ar: 'في الموعد' },
+  warning: { tr: 'Riskte', en: 'At Risk', fr: 'À risque', it: 'A rischio', ar: 'معرض للخطر' },
+  breached: { tr: 'Gecikti', en: 'Overdue', fr: 'En retard', it: 'In ritardo', ar: 'متأخر' },
 }
 
 export function MyTicketsPage() {
@@ -40,21 +40,21 @@ export function MyTicketsPage() {
     <div>
       <div className="flex items-end justify-between mb-5 flex-wrap gap-3">
         <div>
-          <h1 className="font-display text-[22px] font-bold tracking-tight">{t({ tr: 'Taleplerim', en: 'My Tickets' })}</h1>
+          <h1 className="font-display text-[22px] font-bold tracking-tight">{t({ tr: 'Taleplerim', en: 'My Tickets', fr: 'Mes tickets', it: 'I miei ticket', ar: 'طلباتي' })}</h1>
           <p className="text-[13px] text-[var(--text-faint)] mt-1">
-            {t({ tr: 'Oluşturduğunuz tüm talepler', en: 'All tickets you have created' })}
+            {t({ tr: 'Oluşturduğunuz tüm talepler', en: 'All tickets you have created', fr: 'Tous les tickets que vous avez créés', it: 'Tutti i ticket che hai creato', ar: 'جميع الطلبات التي أنشأتها' })}
           </p>
         </div>
         <Button onClick={() => setShowNewModal(true)}>
           <Plus className="w-[15px] h-[15px]" />
-          {t({ tr: 'Yeni Talep', en: 'New Ticket' })}
+          {t({ tr: 'Yeni Talep', en: 'New Ticket', fr: 'Nouveau ticket', it: 'Nuovo ticket', ar: 'طلب جديد' })}
         </Button>
       </div>
 
-      {isLoading && <p className="text-[var(--text-faint)] text-sm py-8 text-center">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</p>}
+      {isLoading && <p className="text-[var(--text-faint)] text-sm py-8 text-center">{t({ tr: 'Yükleniyor…', en: 'Loading…', fr: 'Chargement…', it: 'Caricamento…', ar: 'جارٍ التحميل…' })}</p>}
       {!isLoading && requests?.length === 0 && (
         <p className="text-[var(--text-faint)] text-sm py-14 text-center">
-          {t({ tr: 'Henüz bir talebiniz yok.', en: "You haven't created any tickets yet." })}
+          {t({ tr: 'Henüz bir talebiniz yok.', en: "You haven't created any tickets yet.", fr: "Vous n'avez encore créé aucun ticket.", it: 'Non hai ancora creato alcun ticket.', ar: 'لم تقم بإنشاء أي طلبات بعد.' })}
         </p>
       )}
 

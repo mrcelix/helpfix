@@ -133,38 +133,38 @@ export function NewTicketModal({ onClose }: { onClose: () => void }) {
   const stepIndex = step === 'category' ? 1 : step === 'subcategory' ? 2 : 3
   const stepLabel =
     step === 'category'
-      ? t({ tr: 'Kategori seçin', en: 'Choose a category' })
+      ? t({ tr: 'Kategori seçin', en: 'Choose a category', fr: 'Choisir une catégorie', it: 'Scegli una categoria', ar: 'اختر فئة' })
       : step === 'subcategory'
-        ? t({ tr: 'Alt kategori seçin', en: 'Choose a subcategory' })
-        : t({ tr: 'Talep detayları', en: 'Ticket details' })
+        ? t({ tr: 'Alt kategori seçin', en: 'Choose a subcategory', fr: 'Choisir une sous-catégorie', it: 'Scegli una sottocategoria', ar: 'اختر فئة فرعية' })
+        : t({ tr: 'Talep detayları', en: 'Ticket details', fr: 'Détails du ticket', it: 'Dettagli del ticket', ar: 'تفاصيل الطلب' })
 
   return (
     <Modal
       open
       onClose={onClose}
-      title={t({ tr: 'Yeni Talep', en: 'New Ticket' })}
+      title={t({ tr: 'Yeni Talep', en: 'New Ticket', fr: 'Nouveau ticket', it: 'Nuovo ticket', ar: 'طلب جديد' })}
       widthClass="max-w-[560px]"
       footer={
         step === 'details' ? (
           <>
             <Button variant="ghost" onClick={goBack}>
               <ChevronLeft className="w-[15px] h-[15px]" />
-              {t({ tr: 'Geri', en: 'Back' })}
+              {t({ tr: 'Geri', en: 'Back', fr: 'Retour', it: 'Indietro', ar: 'رجوع' })}
             </Button>
             <Button onClick={handleSubmit} disabled={createIncident.isPending || !title.trim()}>
               {createIncident.isPending
-                ? t({ tr: 'Gönderiliyor…', en: 'Submitting…' })
-                : t({ tr: 'Talebi Oluştur', en: 'Create Ticket' })}
+                ? t({ tr: 'Gönderiliyor…', en: 'Submitting…', fr: 'Envoi en cours…', it: 'Invio in corso…', ar: 'جارٍ الإرسال…' })
+                : t({ tr: 'Talebi Oluştur', en: 'Create Ticket', fr: 'Créer le ticket', it: 'Crea ticket', ar: 'إنشاء الطلب' })}
             </Button>
           </>
         ) : step === 'subcategory' ? (
           <Button variant="ghost" onClick={goBack}>
             <ChevronLeft className="w-[15px] h-[15px]" />
-            {t({ tr: 'Geri', en: 'Back' })}
+            {t({ tr: 'Geri', en: 'Back', fr: 'Retour', it: 'Indietro', ar: 'رجوع' })}
           </Button>
         ) : (
           <Button variant="ghost" onClick={onClose}>
-            {t({ tr: 'Vazgeç', en: 'Cancel' })}
+            {t({ tr: 'Vazgeç', en: 'Cancel', fr: 'Annuler', it: 'Annulla', ar: 'إلغاء' })}
           </Button>
         )
       }
@@ -177,7 +177,7 @@ export function NewTicketModal({ onClose }: { onClose: () => void }) {
       </div>
       <div className="flex items-center justify-between mb-4">
         <span className="text-[10.5px] font-bold text-[var(--text-faint)] uppercase tracking-wide">
-          {t({ tr: `Adım ${stepIndex}/3`, en: `Step ${stepIndex}/3` })}
+          {t({ tr: `Adım ${stepIndex}/3`, en: `Step ${stepIndex}/3`, fr: `Étape ${stepIndex}/3`, it: `Passaggio ${stepIndex}/3`, ar: `الخطوة ${stepIndex}/3` })}
         </span>
         <span className="text-[12.5px] font-semibold">{stepLabel}</span>
       </div>
@@ -191,7 +191,7 @@ export function NewTicketModal({ onClose }: { onClose: () => void }) {
               autoFocus
               value={categorySearch}
               onChange={(e) => setCategorySearch(e.target.value)}
-              placeholder={t({ tr: 'Kategori ara… (örn. VPN, yazıcı, şifre)', en: 'Search category… (e.g. VPN, printer, password)' })}
+              placeholder={t({ tr: 'Kategori ara… (örn. VPN, yazıcı, şifre)', en: 'Search category… (e.g. VPN, printer, password)', fr: 'Rechercher une catégorie… (ex. VPN, imprimante, mot de passe)', it: 'Cerca categoria… (es. VPN, stampante, password)', ar: 'ابحث عن فئة… (مثال: VPN، طابعة، كلمة المرور)' })}
               className="flex-1 bg-transparent outline-none text-[13px]"
             />
             <VoiceInputButton onResult={(text) => setCategorySearch(text)} />
@@ -201,7 +201,7 @@ export function NewTicketModal({ onClose }: { onClose: () => void }) {
             <div className="flex flex-col gap-1.5">
               {categoryMatches.length === 0 && (
                 <p className="text-[12px] text-[var(--text-faint)] italic text-center py-6">
-                  {t({ tr: 'Eşleşen kategori bulunamadı.', en: 'No matching category found.' })}
+                  {t({ tr: 'Eşleşen kategori bulunamadı.', en: 'No matching category found.', fr: 'Aucune catégorie correspondante trouvée.', it: 'Nessuna categoria corrispondente trovata.', ar: 'لم يتم العثور على فئة مطابقة.' })}
                 </p>
               )}
               {categoryMatches.map(({ category, subcategory }) => {
@@ -271,7 +271,7 @@ export function NewTicketModal({ onClose }: { onClose: () => void }) {
               onClick={() => pickSubcategory(null)}
               className="text-[11.5px] font-semibold text-[var(--text-faint)] mt-1.5 self-start hover:text-brand-dim"
             >
-              {t({ tr: 'Alt kategori belirtmeden devam et', en: 'Continue without a subcategory' })}
+              {t({ tr: 'Alt kategori belirtmeden devam et', en: 'Continue without a subcategory', fr: 'Continuer sans sous-catégorie', it: 'Continua senza sottocategoria', ar: 'المتابعة بدون فئة فرعية' })}
             </button>
           </div>
         </div>
@@ -282,8 +282,8 @@ export function NewTicketModal({ onClose }: { onClose: () => void }) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex items-center justify-between bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2">
             <span className="text-[12px] text-[var(--text-sub)]">
-              <span className="text-[var(--text-faint)]">{t({ tr: 'Kategori: ', en: 'Category: ' })}</span>
-              <span className="font-semibold">{finalCategory || t({ tr: 'Belirtilmedi', en: 'Not set' })}</span>
+              <span className="text-[var(--text-faint)]">{t({ tr: 'Kategori: ', en: 'Category: ', fr: 'Catégorie : ', it: 'Categoria: ', ar: 'الفئة: ' })}</span>
+              <span className="font-semibold">{finalCategory || t({ tr: 'Belirtilmedi', en: 'Not set', fr: 'Non défini', it: 'Non impostato', ar: 'غير محدد' })}</span>
             </span>
             <button
               type="button"
@@ -294,20 +294,20 @@ export function NewTicketModal({ onClose }: { onClose: () => void }) {
               className="flex items-center gap-1 text-[11px] font-bold text-brand-dim"
             >
               <Pencil className="w-3 h-3" />
-              {t({ tr: 'Değiştir', en: 'Change' })}
+              {t({ tr: 'Değiştir', en: 'Change', fr: 'Modifier', it: 'Modifica', ar: 'تغيير' })}
             </button>
           </div>
 
           <div>
             <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">
-              {t({ tr: 'Konu', en: 'Subject' })}
+              {t({ tr: 'Konu', en: 'Subject', fr: 'Sujet', it: 'Oggetto', ar: 'الموضوع' })}
             </label>
             <div className="flex items-center gap-1.5 bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 focus-within:border-brand">
               <input
                 autoFocus
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder={t({ tr: 'Kısaca sorunu özetleyin…', en: 'Briefly summarize the issue…' })}
+                placeholder={t({ tr: 'Kısaca sorunu özetleyin…', en: 'Briefly summarize the issue…', fr: 'Résumez brièvement le problème…', it: 'Riassumi brevemente il problema…', ar: 'لخّص المشكلة باختصار…' })}
                 className="flex-1 bg-transparent py-2.5 text-[13px] outline-none"
               />
               <VoiceInputButton onResult={(text) => setTitle((prev) => (prev.trim() ? `${prev.trim()} ${text}` : text))} />
@@ -318,7 +318,7 @@ export function NewTicketModal({ onClose }: { onClose: () => void }) {
             <div className="bg-brand-tint/60 border border-brand/30 rounded-lg px-3 py-2.5">
               <div className="flex items-center gap-1.5 text-[11px] font-bold text-brand-dim uppercase tracking-wide mb-2">
                 <BookOpen className="w-3.5 h-3.5" />
-                {t({ tr: 'Bu sorunla ilgili olabilir', en: 'This might be related' })}
+                {t({ tr: 'Bu sorunla ilgili olabilir', en: 'This might be related', fr: 'Cela pourrait être lié', it: 'Potrebbe essere correlato', ar: 'قد يكون هذا ذا صلة' })}
               </div>
               <div className="flex flex-col gap-1">
                 {suggestedArticles.map((a) => (
@@ -344,13 +344,13 @@ export function NewTicketModal({ onClose }: { onClose: () => void }) {
 
           <div>
             <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">
-              {t({ tr: 'Açıklama', en: 'Description' })}
+              {t({ tr: 'Açıklama', en: 'Description', fr: 'Description', it: 'Descrizione', ar: 'الوصف' })}
             </label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={4}
-              placeholder={t({ tr: 'Detaylandırın…', en: 'Add detail…' })}
+              placeholder={t({ tr: 'Detaylandırın…', en: 'Add detail…', fr: 'Ajouter des détails…', it: 'Aggiungi dettagli…', ar: 'أضف التفاصيل…' })}
               className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-[13px] outline-none focus:border-brand resize-none"
             />
           </div>
@@ -363,7 +363,7 @@ export function NewTicketModal({ onClose }: { onClose: () => void }) {
               className="flex items-center gap-1.5 text-[11.5px] font-bold text-brand-dim disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {suggestTriage.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-              {t({ tr: 'AI ile Kategori & Öncelik Öner', en: 'Suggest Category & Priority with AI' })}
+              {t({ tr: 'AI ile Kategori & Öncelik Öner', en: 'Suggest Category & Priority with AI', fr: "Suggérer catégorie et priorité avec l'IA", it: "Suggerisci categoria e priorità con l'IA", ar: 'اقتراح الفئة والأولوية بالذكاء الاصطناعي' })}
             </button>
           </div>
           {suggestion && (
@@ -378,7 +378,7 @@ export function NewTicketModal({ onClose }: { onClose: () => void }) {
 
           <div>
             <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">
-              {t({ tr: 'Öncelik', en: 'Priority' })}
+              {t({ tr: 'Öncelik', en: 'Priority', fr: 'Priorité', it: 'Priorità', ar: 'الأولوية' })}
             </label>
             <div className="flex gap-1.5">
               {PRIORITIES.map((p) => (
@@ -402,14 +402,14 @@ export function NewTicketModal({ onClose }: { onClose: () => void }) {
           {!!services?.length && (
             <div>
               <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">
-                {t({ tr: 'Etkilenen Hizmet (opsiyonel)', en: 'Impacted Service (optional)' })}
+                {t({ tr: 'Etkilenen Hizmet (opsiyonel)', en: 'Impacted Service (optional)', fr: 'Service impacté (facultatif)', it: 'Servizio interessato (facoltativo)', ar: 'الخدمة المتأثرة (اختياري)' })}
               </label>
               <select
                 value={businessServiceId}
                 onChange={(e) => setBusinessServiceId(e.target.value)}
                 className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-[13px]"
               >
-                <option value="">{t({ tr: 'Belirtilmedi', en: 'Not specified' })}</option>
+                <option value="">{t({ tr: 'Belirtilmedi', en: 'Not specified', fr: 'Non précisé', it: 'Non specificato', ar: 'غير محدد' })}</option>
                 {services.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.name}
@@ -444,7 +444,7 @@ export function NewTicketModal({ onClose }: { onClose: () => void }) {
           {!!dynamicFields?.length && (
             <div className="space-y-3.5 pt-1 border-t border-[var(--border)] mt-1">
               <p className="text-[10.5px] font-bold text-[var(--text-faint)] uppercase tracking-wide pt-3">
-                {t({ tr: 'Kategoriye Özel Bilgiler', en: 'Category-Specific Details' })}
+                {t({ tr: 'Kategoriye Özel Bilgiler', en: 'Category-Specific Details', fr: 'Détails spécifiques à la catégorie', it: 'Dettagli specifici della categoria', ar: 'تفاصيل خاصة بالفئة' })}
               </p>
               <DynamicFieldsRenderer
                 fields={dynamicFields}

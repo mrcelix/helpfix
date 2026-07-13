@@ -19,20 +19,20 @@ import {
 } from './useCatalog'
 import { RequestServiceModal } from './RequestServiceModal'
 
-const STATUS_LABEL: Record<string, { tr: string; en: string }> = {
-  submitted: { tr: 'Gönderildi', en: 'Submitted' },
-  pending_approval: { tr: 'Onay Bekliyor', en: 'Pending Approval' },
-  approved: { tr: 'Onaylandı', en: 'Approved' },
-  in_procurement: { tr: 'Tedarik Aşamasında', en: 'In Procurement' },
-  fulfilled: { tr: 'Karşılandı', en: 'Fulfilled' },
-  rejected: { tr: 'Reddedildi', en: 'Rejected' },
+const STATUS_LABEL: Record<string, { tr: string; en: string; fr?: string; it?: string; ar?: string }> = {
+  submitted: { tr: 'Gönderildi', en: 'Submitted', fr: 'Soumis', it: 'Inviato', ar: 'تم الإرسال' },
+  pending_approval: { tr: 'Onay Bekliyor', en: 'Pending Approval', fr: "En attente d'approbation", it: 'In attesa di approvazione', ar: 'بانتظار الموافقة' },
+  approved: { tr: 'Onaylandı', en: 'Approved', fr: 'Approuvé', it: 'Approvato', ar: 'تمت الموافقة' },
+  in_procurement: { tr: 'Tedarik Aşamasında', en: 'In Procurement', fr: "En cours d'achat", it: 'In fase di approvvigionamento', ar: 'قيد الشراء' },
+  fulfilled: { tr: 'Karşılandı', en: 'Fulfilled', fr: 'Satisfait', it: 'Evaso', ar: 'تم التنفيذ' },
+  rejected: { tr: 'Reddedildi', en: 'Rejected', fr: 'Rejeté', it: 'Rifiutato', ar: 'مرفوض' },
 }
 
-const SAVED_VIEWS: { key: CatalogSavedView; label: { tr: string; en: string } }[] = [
-  { key: 'all', label: { tr: 'Tümü', en: 'All' } },
-  { key: 'mine', label: { tr: 'Benim Taleplerim', en: 'My Requests' } },
-  { key: 'pending_approval', label: { tr: 'Onay Bekleyen', en: 'Pending Approval' } },
-  { key: 'fulfilled_this_month', label: { tr: 'Bu Ay Karşılanan', en: 'Fulfilled This Month' } },
+const SAVED_VIEWS: { key: CatalogSavedView; label: { tr: string; en: string; fr?: string; it?: string; ar?: string } }[] = [
+  { key: 'all', label: { tr: 'Tümü', en: 'All', fr: 'Tous', it: 'Tutti', ar: 'الكل' } },
+  { key: 'mine', label: { tr: 'Benim Taleplerim', en: 'My Requests', fr: 'Mes demandes', it: 'Le mie richieste', ar: 'طلباتي' } },
+  { key: 'pending_approval', label: { tr: 'Onay Bekleyen', en: 'Pending Approval', fr: "En attente d'approbation", it: 'In attesa di approvazione', ar: 'بانتظار الموافقة' } },
+  { key: 'fulfilled_this_month', label: { tr: 'Bu Ay Karşılanan', en: 'Fulfilled This Month', fr: 'Satisfaites ce mois-ci', it: 'Evase questo mese', ar: 'تم تنفيذها هذا الشهر' } },
 ]
 
 export function CatalogPage() {
@@ -58,10 +58,10 @@ export function CatalogPage() {
     <div>
       <div className="mb-5">
         <h1 className="font-display text-[22px] font-bold tracking-tight">
-          {t({ tr: 'Servis Kataloğu', en: 'Service Catalog' })}
+          {t({ tr: 'Servis Kataloğu', en: 'Service Catalog', fr: 'Catalogue de services', it: 'Catalogo servizi', ar: 'كتالوج الخدمات' })}
         </h1>
         <p className="text-[13px] text-[var(--text-faint)] mt-1">
-          {t({ tr: 'Hizmet talep edin ve onay sürecini takip edin', en: 'Request services and track approvals' })}
+          {t({ tr: 'Hizmet talep edin ve onay sürecini takip edin', en: 'Request services and track approvals', fr: 'Demandez des services et suivez les approbations', it: 'Richiedi servizi e monitora le approvazioni', ar: 'اطلب الخدمات وتابع الموافقات' })}
         </p>
       </div>
 
@@ -70,13 +70,13 @@ export function CatalogPage() {
           onClick={() => setTab('browse')}
           className={`px-1 py-2.5 text-[13.5px] font-semibold mr-5 border-b-2 ${tab === 'browse' ? 'border-brand text-brand-dim' : 'border-transparent text-[var(--text-faint)]'}`}
         >
-          {t({ tr: 'Kataloğ', en: 'Catalog' })}
+          {t({ tr: 'Kataloğ', en: 'Catalog', fr: 'Catalogue', it: 'Catalogo', ar: 'الكتالوج' })}
         </button>
         <button
           onClick={() => setTab('requests')}
           className={`px-1 py-2.5 text-[13.5px] font-semibold mr-5 border-b-2 ${tab === 'requests' ? 'border-brand text-brand-dim' : 'border-transparent text-[var(--text-faint)]'}`}
         >
-          {t({ tr: 'Talepler', en: 'Requests' })}
+          {t({ tr: 'Talepler', en: 'Requests', fr: 'Demandes', it: 'Richieste', ar: 'الطلبات' })}
         </button>
       </div>
 
@@ -85,7 +85,7 @@ export function CatalogPage() {
           {!!bundles?.length && (
             <div className="mb-5">
               <div className="text-[10.5px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-2.5">
-                {t({ tr: 'Hizmet Paketleri', en: 'Service Bundles' })}
+                {t({ tr: 'Hizmet Paketleri', en: 'Service Bundles', fr: 'Offres groupées de services', it: 'Pacchetti di servizi', ar: 'حزم الخدمات' })}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {bundles.map((b) => (
@@ -103,14 +103,14 @@ export function CatalogPage() {
                       disabled={requestBundle.isPending}
                       className="w-full text-[11.5px] font-bold py-2 rounded-lg bg-purple text-white disabled:opacity-50"
                     >
-                      {t({ tr: 'Paketi Talep Et', en: 'Request Bundle' })}
+                      {t({ tr: 'Paketi Talep Et', en: 'Request Bundle', fr: 'Demander le pack', it: 'Richiedi pacchetto', ar: 'طلب الحزمة' })}
                     </button>
                   </div>
                 ))}
               </div>
               {bundleSuccess !== null && (
                 <p className="text-[11.5px] text-ok mt-2">
-                  ✓ {t({ tr: `${bundleSuccess} hizmet için ayrı talep oluşturuldu.`, en: `${bundleSuccess} separate requests created.` })}
+                  ✓ {t({ tr: `${bundleSuccess} hizmet için ayrı talep oluşturuldu.`, en: `${bundleSuccess} separate requests created.`, fr: `${bundleSuccess} demandes distinctes créées.`, it: `${bundleSuccess} richieste separate create.`, ar: `تم إنشاء ${bundleSuccess} طلبات منفصلة.` })}
                 </p>
               )}
             </div>
@@ -121,7 +121,7 @@ export function CatalogPage() {
               onClick={() => setActiveCategory(null)}
               className={`text-[12px] font-bold px-3.5 py-2 rounded-full border ${!activeCategory ? 'bg-brand border-brand text-white' : 'bg-[var(--panel)] border-[var(--border)] text-[var(--text-sub)]'}`}
             >
-              {t({ tr: 'Tümü', en: 'All' })}
+              {t({ tr: 'Tümü', en: 'All', fr: 'Tous', it: 'Tutti', ar: 'الكل' })}
             </button>
             {categories?.map((c) => (
               <button
@@ -134,7 +134,7 @@ export function CatalogPage() {
             ))}
           </div>
 
-          {itemsLoading && <p className="text-[var(--text-faint)] text-sm py-8 text-center">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</p>}
+          {itemsLoading && <p className="text-[var(--text-faint)] text-sm py-8 text-center">{t({ tr: 'Yükleniyor…', en: 'Loading…', fr: 'Chargement…', it: 'Caricamento…', ar: 'جارٍ التحميل…' })}</p>}
           {!itemsLoading && items?.length === 0 && (
             <p className="text-[var(--text-faint)] text-sm py-14 text-center">
               {t({
@@ -158,8 +158,8 @@ export function CatalogPage() {
                   {item.estimated_days != null && (
                     <span>
                       {item.estimated_days === 0
-                        ? t({ tr: 'Anında', en: 'Instant' })
-                        : `${item.estimated_days} ${t({ tr: 'gün', en: 'days' })}`}
+                        ? t({ tr: 'Anında', en: 'Instant', fr: 'Instantané', it: 'Istantaneo', ar: 'فوري' })
+                        : `${item.estimated_days} ${t({ tr: 'gün', en: 'days', fr: 'jours', it: 'giorni', ar: 'أيام' })}`}
                     </span>
                   )}
                   {item.estimated_cost != null && (
@@ -191,9 +191,9 @@ export function CatalogPage() {
               <thead>
                 <tr className="bg-[var(--panel-2)] border-b border-[var(--border)]">
                   <Th>Ref</Th>
-                  <Th>{t({ tr: 'Hizmet', en: 'Service' })}</Th>
-                  <Th>{t({ tr: 'Talep Eden', en: 'Requester' })}</Th>
-                  <Th>{t({ tr: 'Durum', en: 'Status' })}</Th>
+                  <Th>{t({ tr: 'Hizmet', en: 'Service', fr: 'Service', it: 'Servizio', ar: 'الخدمة' })}</Th>
+                  <Th>{t({ tr: 'Talep Eden', en: 'Requester', fr: 'Demandeur', it: 'Richiedente', ar: 'مقدم الطلب' })}</Th>
+                  <Th>{t({ tr: 'Durum', en: 'Status', fr: 'Statut', it: 'Stato', ar: 'الحالة' })}</Th>
                   <Th></Th>
                 </tr>
               </thead>
@@ -201,14 +201,14 @@ export function CatalogPage() {
                 {requestsLoading && (
                   <tr>
                     <td colSpan={5} className="text-center py-10 text-[var(--text-faint)]">
-                      {t({ tr: 'Yükleniyor…', en: 'Loading…' })}
+                      {t({ tr: 'Yükleniyor…', en: 'Loading…', fr: 'Chargement…', it: 'Caricamento…', ar: 'جارٍ التحميل…' })}
                     </td>
                   </tr>
                 )}
                 {!requestsLoading && requests?.length === 0 && (
                   <tr>
                     <td colSpan={5} className="text-center py-14 text-[var(--text-faint)]">
-                      {t({ tr: 'Bu görünümde kayıt yok.', en: 'Nothing in this view.' })}
+                      {t({ tr: 'Bu görünümde kayıt yok.', en: 'Nothing in this view.', fr: 'Aucun élément dans cette vue.', it: 'Nessun elemento in questa vista.', ar: 'لا توجد عناصر في هذا العرض.' })}
                     </td>
                   </tr>
                 )}
@@ -257,7 +257,7 @@ function RequestRow({
         {request.status === 'pending_approval' && currentStage && (
           <span className="ml-1.5 inline-flex items-center gap-1 text-[10px] font-bold bg-p2-tint text-p2 rounded-full px-1.5 py-0.5">
             <ShieldCheck className="w-2.5 h-2.5" />
-            {t({ tr: 'Aşama', en: 'Stage' })} {currentStage.stage}: {approverTypeLabel(currentStage.approver_type, lang)}
+            {t({ tr: 'Aşama', en: 'Stage', fr: 'Étape', it: 'Fase', ar: 'المرحلة' })} {currentStage.stage}: {approverTypeLabel(currentStage.approver_type, lang)}
           </span>
         )}
       </td>
@@ -269,20 +269,20 @@ function RequestRow({
               className="flex items-center gap-1 text-[10.5px] font-bold px-2 py-1 rounded-md bg-ok text-white"
             >
               <Check className="w-3 h-3" />
-              {t({ tr: 'Onayla', en: 'Approve' })}
+              {t({ tr: 'Onayla', en: 'Approve', fr: 'Approuver', it: 'Approva', ar: 'الموافقة' })}
             </button>
             <button
               onClick={() => decideApproval.mutate({ approvalId: currentStage.id, stage: currentStage.stage, decision: 'rejected' })}
               className="flex items-center gap-1 text-[10.5px] font-bold px-2 py-1 rounded-md bg-[var(--panel-2)] border border-[var(--border)]"
             >
               <X className="w-3 h-3" />
-              {t({ tr: 'Reddet', en: 'Reject' })}
+              {t({ tr: 'Reddet', en: 'Reject', fr: 'Rejeter', it: 'Rifiuta', ar: 'رفض' })}
             </button>
           </div>
         )}
         {request.status === 'pending_approval' && !canDecideStage && (
           <span className="text-[10.5px] text-[var(--text-faint)] italic">
-            {t({ tr: 'Başka bir onaylayıcı bekleniyor', en: 'Waiting on another approver' })}
+            {t({ tr: 'Başka bir onaylayıcı bekleniyor', en: 'Waiting on another approver', fr: "En attente d'un autre approbateur", it: 'In attesa di un altro approvatore', ar: 'بانتظار موافق آخر' })}
           </span>
         )}
         {request.status === 'approved' && (
@@ -290,7 +290,7 @@ function RequestRow({
             onClick={() => updateRequest.mutate({ status: 'fulfilled' })}
             className="text-[10.5px] font-bold px-2 py-1 rounded-md bg-brand text-white"
           >
-            {t({ tr: 'Karşılandı Olarak İşaretle', en: 'Mark Fulfilled' })}
+            {t({ tr: 'Karşılandı Olarak İşaretle', en: 'Mark Fulfilled', fr: 'Marquer comme satisfait', it: 'Segna come evaso', ar: 'وضع علامة كمكتمل' })}
           </button>
         )}
       </td>

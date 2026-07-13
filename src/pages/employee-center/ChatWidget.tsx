@@ -46,8 +46,8 @@ export function ChatWidget() {
           <div className="flex items-center gap-2 px-4 py-3 border-b border-[var(--border)] bg-brand-tint">
             <Sparkles className="w-4 h-4 text-brand-dim shrink-0" />
             <div>
-              <div className="text-[13px] font-bold">{t({ tr: 'AI Destek Asistanı', en: 'AI Support Assistant' })}</div>
-              <div className="text-[10.5px] text-[var(--text-faint)]">{t({ tr: 'Sorunuzu yazın, yardımcı olayım', en: 'Ask me anything about your issue' })}</div>
+              <div className="text-[13px] font-bold">{t({ tr: 'AI Destek Asistanı', en: 'AI Support Assistant', fr: 'Assistant IA', it: 'Assistente IA', ar: 'مساعد الدعم بالذكاء الاصطناعي' })}</div>
+              <div className="text-[10.5px] text-[var(--text-faint)]">{t({ tr: 'Sorunuzu yazın, yardımcı olayım', en: 'Ask me anything about your issue', fr: 'Posez-moi une question sur votre problème', it: 'Chiedimi qualcosa sul tuo problema', ar: 'اسألني عن مشكلتك' })}</div>
             </div>
           </div>
 
@@ -78,7 +78,7 @@ export function ChatWidget() {
                       className="flex items-center gap-1 mt-2 text-[11px] font-bold text-brand-dim bg-[var(--panel)] rounded-lg px-2.5 py-1.5 border border-brand/30"
                     >
                       <Ticket className="w-3 h-3" />
-                      {t({ tr: 'Talebi Görüntüle', en: 'View Ticket' })}
+                      {t({ tr: 'Talebi Görüntüle', en: 'View Ticket', fr: 'Voir le ticket', it: 'Visualizza ticket', ar: 'عرض الطلب' })}
                     </button>
                   )}
                 </div>
@@ -99,7 +99,7 @@ export function ChatWidget() {
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-              placeholder={t({ tr: 'Mesajınızı yazın…', en: 'Type your message…' })}
+              placeholder={t({ tr: 'Mesajınızı yazın…', en: 'Type your message…', fr: 'Écrivez votre message…', it: 'Scrivi il tuo messaggio…', ar: 'اكتب رسالتك…' })}
               className="flex-1 bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2 text-[13px] outline-none focus:border-brand"
             />
             <button
