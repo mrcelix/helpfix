@@ -69,6 +69,28 @@ export type SlaTier = 'sla' | 'ola' | 'uc'
 export interface Database {
   public: {
     Tables: {
+      ai_events: {
+        Row: {
+          id: string
+          tenant_id: string
+          incident_id: string | null
+          actor_id: string | null
+          event_type: string
+          output: Record<string, unknown> | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          tenant_id?: string
+          incident_id?: string | null
+          actor_id?: string | null
+          event_type: string
+          output?: Record<string, unknown> | null
+          created_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['ai_events']['Insert']>
+        Relationships: []
+      }
       tenants: {
         Row: {
           id: string
@@ -1516,6 +1538,18 @@ export interface Database {
     }
     Views: Record<string, never>
     Functions: {
+      find_similar_incidents: {
+        Args: { p_incident_id: string; p_limit?: number }
+        Returns: {
+          id: string
+          ref: string
+          title: string
+          status: TicketStatus
+          priority: Priority
+          similarity: number
+          created_at: string
+        }[]
+      }
       get_incident_cluster_candidates: {
         Args: { p_tenant_id: string }
         Returns: {

@@ -18,6 +18,8 @@ import {
 } from './useIncidents'
 import { WarRoomPanel } from './WarRoomPanel'
 import { LinkedIncidentsSection } from './LinkedIncidentsSection'
+import { SimilarIncidentsSection } from './SimilarIncidentsSection'
+import { logAiEvent } from './useAiEvents'
 import {
   useTicketPresence,
   useCannedResponses,
@@ -80,6 +82,7 @@ export function TicketDrawer({ id, onClose }: { id: string; onClose: () => void 
         comments: threadForAi(),
       })
       setAiSummary(result.summary)
+      logAiEvent({ eventType: 'summary_run', incidentId: currentId })
     } catch {
       // sessizce yut — buton yeniden denenebilir
     }
@@ -94,6 +97,7 @@ export function TicketDrawer({ id, onClose }: { id: string; onClose: () => void 
         comments: threadForAi(),
       })
       setDraft(result.draft)
+      logAiEvent({ eventType: 'draft_run', incidentId: currentId })
     } catch {
       // sessizce yut
     }
@@ -264,6 +268,10 @@ export function TicketDrawer({ id, onClose }: { id: string; onClose: () => void 
 
           <div>
             <LinkedIncidentsSection incidentId={currentId} onOpen={(newId) => setCurrentId(newId)} />
+          </div>
+
+          <div>
+            <SimilarIncidentsSection incidentId={currentId} onOpen={(newId) => setCurrentId(newId)} />
           </div>
 
           <div>

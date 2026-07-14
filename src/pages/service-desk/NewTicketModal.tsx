@@ -8,6 +8,7 @@ import { useCreateIncident, useDistinctCategories, useTicketCategoryFields } fro
 import { useBusinessServicesList, useBusinessServiceHealth } from '@/pages/cmdb/useBusinessServices'
 import { DynamicFieldsRenderer } from '@/components/ui/DynamicFields'
 import { useSuggestTriage, type TriageSuggestion } from './useAiAssist'
+import { logAiEvent } from './useAiEvents'
 import { useSuggestedArticles } from '@/pages/knowledge-base/useKnowledgeBase'
 import { TICKET_CATEGORIES, resolveCategoryLabel, type TicketCategory, type TicketSubcategory } from './ticket-categories'
 import { priorityLabel } from '@/lib/priority'
@@ -110,6 +111,7 @@ export function NewTicketModal({ onClose }: { onClose: () => void }) {
       setCategoryOverride(result.category)
       setPriority(result.priority)
       setSuggestion(result)
+      logAiEvent({ eventType: 'triage_run', output: result as unknown as Record<string, unknown> })
     } catch {
       // Sessizce yut — AI önerisi başarısız olursa kullanıcı zaten
       // sihirbazdan seçtiği kategoriyle devam edebilir.
