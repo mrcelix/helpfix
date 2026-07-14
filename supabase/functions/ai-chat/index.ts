@@ -214,6 +214,20 @@ Deno.serve(async (req: Request) => {
     // Kullanım logu (service_role ile — ai-assist ile aynı desen)
     await supabaseAdmin.from('ai_usage_log').insert({ tenant_id: profile.tenant_id, user_id: profile.id, action: 'chat_message' })
 
+    // Faz 3 — deflection metriği: asistan gerçek bir talep açtıysa
+    // ai_events'e (0061) yükseltme kaydı düş. (Deflection tarafı,
+    // kullanıcının "Sorunum çözüldü" onayıyla istemciden loglanır.)
+    if (createdIncident) {
+      const { error: evError } = await supabaseAdmin.from('ai_events').insert({
+        tenant_id: profile.tenant_id,
+        incident_id: createdIncident.id,
+        actor_id: profile.id,
+        event_type: 'chat_escalated',
+        output: { conversation_id: convoId },
+      })
+      if (evError) console.error('ai_events insert hatası:', evError.message)
+    }
+
     return new Response(
       JSON.stringify({ conversationId: convoId, reply: replyText, createdIncident }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }

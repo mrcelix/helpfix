@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react'
 import { Sparkles, Save } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import { Button } from '@/components/ui/Button'
-import { useAiQuota, useAiUsageThisMonth, useSetAiQuota, getActionLabel } from './useAdmin'
+import { useAiQuota, useAiUsageThisMonth, useSetAiQuota, getActionLabel, useRecentAiEvents, AI_EVENT_LABEL } from './useAdmin'
 
 export function AiUsageTab() {
   const { lang, t } = useLang()
   const { data: quota, isLoading: quotaLoading } = useAiQuota()
   const { data: usage, isLoading: usageLoading } = useAiUsageThisMonth()
   const setQuota = useSetAiQuota()
+  const { data: recentEvents } = useRecentAiEvents(25)
 
   const [limitInput, setLimitInput] = useState<number | null>(null)
 
@@ -108,6 +109,41 @@ export function AiUsageTab() {
         </div>
         {setQuota.isSuccess && (
           <p className="text-[11px] text-ok font-semibold mt-2">{t({ tr: 'Kota güncellendi.', en: 'Quota updated.' })}</p>
+        )}
+      </div>
+    
+      {/* Faz 3 — AI Denetim İzi (ai_events) */}
+      <div className="col-span-2 border border-[var(--border)] rounded-[var(--radius-app)] bg-[var(--panel)] p-4">
+        <div className="flex items-center gap-2 mb-1">
+          <Sparkles className="w-4 h-4 text-brand-dim" />
+          <h3 className="font-display text-[15px] font-bold">{t({ tr: 'AI Denetim İzi', en: 'AI Audit Trail' })}</h3>
+        </div>
+        <p className="text-[11.5px] text-[var(--text-faint)] mb-3">
+          {t({ tr: 'Son 25 AI olayı — kim, hangi kayıtta, ne yaptı', en: 'Last 25 AI events — who did what, on which record' })}
+        </p>
+        {!recentEvents?.length ? (
+          <p className="text-[11.5px] text-[var(--text-faint)] italic">
+            {t({ tr: 'Henüz AI olayı yok.', en: 'No AI events yet.' })}
+          </p>
+        ) : (
+          <div className="flex flex-col divide-y divide-[var(--border)]">
+            {recentEvents.map((ev) => (
+              <div key={ev.id} className="flex items-center gap-3 py-2 text-[11.5px]">
+                <span className="font-mono text-[10px] text-[var(--text-faint)] shrink-0 w-[70px]">
+                  {ev.incidents?.ref ?? '—'}
+                </span>
+                <span className="flex-1 text-[var(--text-sub)] truncate">
+                  {t(AI_EVENT_LABEL[ev.event_type] ?? { tr: ev.event_type, en: ev.event_type })}
+                </span>
+                <span className="text-[var(--text-faint)] truncate max-w-[140px]">
+                  {ev.user_profiles?.full_name ?? t({ tr: 'Sistem', en: 'System' })}
+                </span>
+                <span className="text-[var(--text-faint)] shrink-0">
+                  {new Date(ev.created_at).toLocaleString(lang === 'tr' ? 'tr-TR' : 'en-US', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </div>
+            ))}
+          </div>
         )}
       </div>
     </div>

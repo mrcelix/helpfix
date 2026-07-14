@@ -1538,6 +1538,21 @@ export interface Database {
     }
     Views: Record<string, never>
     Functions: {
+      get_ai_adoption_stats: {
+        Args: { p_tenant_id: string; p_days?: number }
+        Returns: {
+          triage_runs: number
+          triage_accepted: number
+          triage_rejected: number
+          accept_rate: number | null
+          summary_runs: number
+          draft_runs: number
+          chat_deflected: number
+          chat_escalated: number
+          deflection_rate: number | null
+          total_events: number
+        }[]
+      }
       find_similar_incidents: {
         Args: { p_incident_id: string; p_limit?: number }
         Returns: {

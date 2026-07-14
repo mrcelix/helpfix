@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { MessageCircle, X, Send, Sparkles, Loader2, Ticket } from 'lucide-react'
+import { logAiEvent } from '@/pages/service-desk/useAiEvents'
 import { useLang } from '@/contexts/LangContext'
 import { useNavigate } from 'react-router-dom'
 import { useChatMessages, useSendChatMessage } from './useChat'
@@ -10,6 +11,7 @@ export function ChatWidget() {
   const [open, setOpen] = useState(false)
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [draft, setDraft] = useState('')
+  const [deflectionLogged, setDeflectionLogged] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   const { data: messages } = useChatMessages(conversationId)
@@ -92,6 +94,27 @@ export function ChatWidget() {
               </div>
             )}
             {sendMessage.isError && <div className="text-[11.5px] text-p1 text-center px-4">{(sendMessage.error as Error).message}</div>}
+            {/* Faz 3 — deflection onayı: asistan yanıt verdi, talep açılmadı */}
+            {!!messages?.length &&
+              messages.some((m) => m.role === 'assistant') &&
+              !messages.some((m) => m.created_incident_id) &&
+              !sendMessage.isPending && (
+                deflectionLogged ? (
+                  <div className="text-[11px] text-ok text-center py-1">
+                    {t({ tr: 'Harika! İyi çalışmalar 🎉', en: 'Great! Have a nice day 🎉' })}
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => {
+                      logAiEvent({ eventType: 'chat_deflected' })
+                      setDeflectionLogged(true)
+                    }}
+                    className="self-center text-[11px] font-bold text-ok border border-ok/30 bg-ok/10 rounded-full px-3 py-1.5 hover:bg-ok/20"
+                  >
+                    {t({ tr: '✓ Sorunum çözüldü', en: '✓ My issue is resolved' })}
+                  </button>
+                )
+              )}
           </div>
 
           <div className="flex items-center gap-1.5 p-2.5 border-t border-[var(--border)]">

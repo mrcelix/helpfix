@@ -110,6 +110,7 @@ export const AVAILABLE_WIDGETS = [
   'open_records',
   'weekly_trend',
   'priority_chart',
+  'ai_insights',
 ] as const
 export type WidgetType = (typeof AVAILABLE_WIDGETS)[number]
 
@@ -152,5 +153,55 @@ export function useSaveDashboardLayout() {
       if (error) throw error
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['dashboard-widgets'] }),
+  })
+}
+
+
+// ---------------------------------------------------------------------------
+// Faz 3 — AI Insights: 0062'deki get_ai_adoption_stats + haftalık özet
+// ---------------------------------------------------------------------------
+
+export interface AiAdoptionStats {
+  triage_runs: number
+  triage_accepted: number
+  triage_rejected: number
+  accept_rate: number | null
+  summary_runs: number
+  draft_runs: number
+  chat_deflected: number
+  chat_escalated: number
+  deflection_rate: number | null
+  total_events: number
+}
+
+export function useAiAdoptionStats(days = 30) {
+  const { profile } = useAuth()
+  return useQuery({
+    queryKey: ['analytics-ai-adoption', profile?.tenantId, days],
+    enabled: !!profile,
+    queryFn: async (): Promise<AiAdoptionStats | null> => {
+      const { data, error } = await supabase.rpc('get_ai_adoption_stats', {
+        p_tenant_id: profile!.tenantId,
+        p_days: days,
+      })
+      if (error) throw error
+      return (data?.[0] as AiAdoptionStats) ?? null
+    },
+  })
+}
+
+// Haftalık yönetici özeti — ai-assist'in 'weekly-digest' action'ı
+// (Edge Function güncellemesi gerektirir, bkz. Faz 3 notları).
+export function useWeeklyDigest() {
+  return useMutation({
+    mutationFn: async (): Promise<string> => {
+      const { data, error } = await supabase.functions.invoke('ai-assist', {
+        body: { action: 'weekly-digest' },
+      })
+      if (error) throw error
+      if (data?.error) throw new Error(data.error)
+      return data.digest as string
+    },
+    meta: { silent: true },
   })
 }

@@ -380,3 +380,44 @@ export function useSetAiQuota() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['ai-quota'] }),
   })
 }
+
+
+// ---------------------------------------------------------------------------
+// Faz 3 — AI Denetim İzi: ai_events'ten (0061) son olaylar.
+// select RLS'i tenant bazlı; incidents(ref) join'i FK üzerinden gelir.
+// ---------------------------------------------------------------------------
+
+export interface AiEventRow {
+  id: string
+  event_type: string
+  created_at: string
+  incidents: { ref: string } | null
+  user_profiles: { full_name: string } | null
+}
+
+export function useRecentAiEvents(limit = 25) {
+  const { profile } = useAuth()
+  return useQuery({
+    queryKey: ['ai-events-recent', profile?.tenantId, limit],
+    enabled: !!profile,
+    queryFn: async (): Promise<AiEventRow[]> => {
+      const { data, error } = await supabase
+        .from('ai_events')
+        .select('id, event_type, created_at, incidents(ref), user_profiles(full_name)')
+        .order('created_at', { ascending: false })
+        .limit(limit)
+      if (error) throw error
+      return (data ?? []) as unknown as AiEventRow[]
+    },
+  })
+}
+
+export const AI_EVENT_LABEL: Record<string, { tr: string; en: string }> = {
+  triage_run: { tr: 'Triyaj önerisi üretildi', en: 'Triage suggestion generated' },
+  triage_accepted: { tr: 'Triyaj önerisi kabul edildi', en: 'Triage suggestion accepted' },
+  triage_rejected: { tr: 'Triyaj önerisi değiştirildi', en: 'Triage suggestion overridden' },
+  summary_run: { tr: 'Özet üretildi', en: 'Summary generated' },
+  draft_run: { tr: 'Yanıt taslağı üretildi', en: 'Reply draft generated' },
+  chat_deflected: { tr: 'AI asistan çözdü (talep açılmadı)', en: 'AI assistant resolved (no ticket)' },
+  chat_escalated: { tr: 'AI asistan talep açtı', en: 'AI assistant opened a ticket' },
+}

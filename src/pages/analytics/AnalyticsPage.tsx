@@ -5,6 +5,7 @@ import { useLang, pickLang} from '@/contexts/LangContext'
 import { priorityLabel } from '@/lib/priority'
 import type { Priority } from '@/types/database'
 import { ReportBuilderTab } from './ReportBuilderTab'
+import { AiInsightsWidget } from './AiInsightsWidget'
 import { TodoWidget } from '@/components/widgets/TodoWidget'
 import {
   useWeeklyTrend,
@@ -25,6 +26,7 @@ const WIDGET_LABEL: Record<WidgetType, { tr: string; en: string }> = {
   open_records: { tr: 'Toplam Açık Kayıt', en: 'Total Open Records' },
   weekly_trend: { tr: 'Haftalık Olay Trendi', en: 'Weekly Incident Trend' },
   priority_chart: { tr: 'Önceliğe Göre Açık Kayıtlar', en: 'Open Records by Priority' },
+  ai_insights: { tr: 'AI Benimseme & Haftalık Özet', en: 'AI Adoption & Weekly Digest' },
 }
 
 export function AnalyticsPage() {
@@ -212,6 +214,14 @@ export function AnalyticsPage() {
                 </ResponsiveContainer>
               ))}
           </div>
+        )
+      case 'ai_insights':
+        return (
+          <AiInsightsWidget
+            key={w}
+            collapsed={collapsedWidgets.has(w)}
+            onToggleCollapse={() => toggleCollapse(w)}
+          />
         )
     }
   }

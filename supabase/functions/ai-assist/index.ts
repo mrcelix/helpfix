@@ -14,6 +14,11 @@
 //   'draft-reply'     — {title, description, comments, instruction?}
 //                        → {draft}
 //                        Sadece agent/manager/tenant_admin.
+//   'weekly-digest'   — {} (Faz 3)
+//                        → {digest}
+//                        Sadece manager/tenant_admin. Son 7 günün ITSM
+//                        verilerini (hacim, SLA, AI benimseme, top
+//                        kategoriler) toplayıp Türkçe yönetici özeti üretir.
 //
 // KOTA: Her başarılı çağrı öncesi, tenant'ın bu ayki kullanımı
 // ai_quota.monthly_limit ile karşılaştırılır. Kota dolmuşsa Claude API
@@ -161,6 +166,65 @@ SADECE şu JSON formatında yanıt ver: {"draft": "..."}`
 
       const result = await callClaude(anthropicKey, prompt)
       await logUsage(supabaseAdmin, profile.tenant_id, profile.id, 'draft-reply')
+      return ok(parseJsonResponse(result))
+    }
+
+    if (action === 'weekly-digest') {
+      if (!['tenant_admin', 'manager'].includes(profile.role)) {
+        throw new Error('Bu işlem sadece yöneticiler için kullanılabilir')
+      }
+
+      const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+
+      // Son 7 günün verilerini paralel topla (service_role — RLS'ten bağımsız,
+      // ama her sorgu tenant_id ile daraltılıyor)
+      const [createdRes, resolvedRes, openP1Res, slaRes, aiRes, catRes] = await Promise.all([
+        supabaseAdmin.from('incidents').select('id', { count: 'exact', head: true })
+          .eq('tenant_id', profile.tenant_id).gte('created_at', since),
+        supabaseAdmin.from('incidents').select('id', { count: 'exact', head: true })
+          .eq('tenant_id', profile.tenant_id).gte('resolved_at', since),
+        supabaseAdmin.from('incidents').select('id', { count: 'exact', head: true })
+          .eq('tenant_id', profile.tenant_id).eq('priority', 'P1')
+          .in('status', ['new', 'open', 'in_progress', 'on_hold']),
+        supabaseAdmin.rpc('get_sla_compliance', { p_tenant_id: profile.tenant_id }),
+        supabaseAdmin.rpc('get_ai_adoption_stats', { p_tenant_id: profile.tenant_id, p_days: 7 }),
+        supabaseAdmin.from('incidents').select('category')
+          .eq('tenant_id', profile.tenant_id).gte('created_at', since)
+          .not('category', 'is', null).limit(500),
+      ])
+
+      const topCategories = Object.entries(
+        (catRes.data ?? []).reduce((acc: Record<string, number>, r: { category: string | null }) => {
+          if (r.category) acc[r.category] = (acc[r.category] ?? 0) + 1
+          return acc
+        }, {})
+      )
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([cat, n]) => `${cat} (${n})`)
+        .join(', ') || '(veri yok)'
+
+      const sla = slaRes.data?.[0] ?? slaRes.data
+      const ai = aiRes.data?.[0]
+
+      const prompt = `Sen bir BT servis yönetimi (ITSM) platformunun yönetici özeti asistanısın. Aşağıdaki son 7 günlük verilerden, BT yöneticisine e-postayla gönderilebilecek kısa bir Türkçe yönetici özeti yaz.
+
+Kurallar: 4-6 cümle, madde işareti YOK, akıcı paragraf. Önce genel gidişat, sonra dikkat gerektiren nokta (varsa açık P1'ler veya düşük SLA), sonra AI benimseme durumu. Sayıları metne doğal biçimde göm. Abartılı övgü veya panik dili kullanma; veri azsa bunu dürüstçe belirt.
+
+VERİLER (son 7 gün):
+- Açılan talep: ${createdRes.count ?? 0}
+- Çözülen talep: ${resolvedRes.count ?? 0}
+- Şu an açık P1 (kritik) sayısı: ${openP1Res.count ?? 0}
+- SLA uyumluluğu (30 gün): %${sla?.compliance_percent ?? 'bilinmiyor'}
+- En çok talep gelen kategoriler: ${topCategories}
+- AI triyaj çalıştırma: ${ai?.triage_runs ?? 0}, isabet oranı: ${ai?.accept_rate != null ? '%' + ai.accept_rate : 'henüz veri yok'}
+- AI asistan deflection: ${ai?.deflection_rate != null ? '%' + ai.deflection_rate : 'henüz veri yok'} (${ai?.chat_deflected ?? 0} sorun talep açılmadan çözüldü)
+- AI özet/taslak kullanımı: ${(ai?.summary_runs ?? 0) + (ai?.draft_runs ?? 0)}
+
+SADECE şu JSON formatında yanıt ver: {"digest": "..."}`
+
+      const result = await callClaude(anthropicKey, prompt)
+      await logUsage(supabaseAdmin, profile.tenant_id, profile.id, 'weekly-digest')
       return ok(parseJsonResponse(result))
     }
 

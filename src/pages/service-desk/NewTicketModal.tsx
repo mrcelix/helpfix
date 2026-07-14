@@ -129,6 +129,20 @@ export function NewTicketModal({ onClose }: { onClose: () => void }) {
       customFields: Object.keys(customFieldValues).length ? customFieldValues : undefined,
       businessServiceId: businessServiceId || null,
     })
+    // Faz 3 — isabet metriği: öneri alınmışsa, gönderilen değerlerle
+    // karşılaştırıp kabul/ret olarak logla (agent değiştirdiyse "ret").
+    if (suggestion) {
+      const accepted =
+        suggestion.priority === priority &&
+        suggestion.category.trim().toLowerCase() === finalCategory.trim().toLowerCase()
+      logAiEvent({
+        eventType: accepted ? 'triage_accepted' : 'triage_rejected',
+        output: {
+          suggested: { category: suggestion.category, priority: suggestion.priority },
+          submitted: { category: finalCategory.trim(), priority },
+        },
+      })
+    }
     onClose()
   }
 
