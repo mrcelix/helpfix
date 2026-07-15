@@ -23,12 +23,10 @@ export function Topbar({
   crumb,
   onMenuClick,
   homePath = '/service-desk',
-  showThemeSelector = false,
 }: {
   crumb: string
   onMenuClick?: () => void
   homePath?: string
-  showThemeSelector?: boolean
 }) {
   const { lang, t } = useLang()
   const { theme, toggleTheme } = useTheme()
@@ -176,7 +174,7 @@ export function Topbar({
             </>
           )}
         </div>
-        <AccountMenu showThemeSelector={showThemeSelector} />
+        <AccountMenu />
       </div>
     </header>
   )

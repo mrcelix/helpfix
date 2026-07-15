@@ -58,22 +58,32 @@ function SidebarContent({ onNavigate, collapsed = false }: { onNavigate?: () => 
                 )
               }
             >
-              <Icon className="w-[17px] h-[17px] shrink-0" />
-              {collapsed && count > 0 && (
-                <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-p1 border border-[var(--panel)]" />
-              )}
-              {!collapsed && (
+              {({ isActive }) => (
                 <>
-                  <span>{pickLang(mod.name, lang)}</span>
-                  {count > 0 && (
-                    <span className="ml-auto text-[9.5px] font-bold bg-p1 text-white rounded-full min-w-[16px] h-[16px] px-1 flex items-center justify-center">
-                      {count > 99 ? '99+' : count}
-                    </span>
+                  {isActive && (
+                    <span
+                      className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full"
+                      style={{ background: 'var(--color-accent)' }}
+                    />
                   )}
-                  {mod.badge === 'beta' && count === 0 && (
-                    <span className="ml-auto text-[9px] font-mono font-bold bg-purple-tint text-purple rounded-full px-1.5 py-0.5">
-                      BETA
-                    </span>
+                  <Icon className="w-[17px] h-[17px] shrink-0" />
+                  {collapsed && count > 0 && (
+                    <span className="absolute top-0.5 right-0.5 w-2 h-2 rounded-full bg-p1 border border-[var(--panel)]" />
+                  )}
+                  {!collapsed && (
+                    <>
+                      <span>{pickLang(mod.name, lang)}</span>
+                      {count > 0 && (
+                        <span className="ml-auto text-[9.5px] font-bold bg-p1 text-white rounded-full min-w-[16px] h-[16px] px-1 flex items-center justify-center">
+                          {count > 99 ? '99+' : count}
+                        </span>
+                      )}
+                      {mod.badge === 'beta' && count === 0 && (
+                        <span className="ml-auto text-[9px] font-mono font-bold bg-purple-tint text-purple rounded-full px-1.5 py-0.5">
+                          BETA
+                        </span>
+                      )}
+                    </>
                   )}
                 </>
               )}
@@ -90,7 +100,7 @@ function SidebarContent({ onNavigate, collapsed = false }: { onNavigate?: () => 
               title={collapsed ? t({ tr: 'Yönetim Paneli', en: 'Admin Panel', fr: "Panneau d'administration", it: 'Pannello di amministrazione', ar: 'لوحة الإدارة' }) : undefined}
               className={({ isActive }) =>
                 cn(
-                  'flex items-center gap-2.5 py-2 rounded-lg text-[13.5px] font-medium mb-0.5 transition-colors',
+                  'flex items-center gap-2.5 py-2 rounded-lg text-[13.5px] font-medium mb-0.5 transition-colors relative',
                   collapsed ? 'px-2 justify-center' : 'px-2.5',
                   isActive
                     ? 'bg-brand text-white font-semibold'
@@ -98,8 +108,18 @@ function SidebarContent({ onNavigate, collapsed = false }: { onNavigate?: () => 
                 )
               }
             >
-              <Settings className="w-[17px] h-[17px] shrink-0" />
-              {!collapsed && <span>{t({ tr: 'Yönetim Paneli', en: 'Admin Panel', fr: "Panneau d'administration", it: 'Pannello di amministrazione', ar: 'لوحة الإدارة' })}</span>}
+              {({ isActive }) => (
+                <>
+                  {isActive && (
+                    <span
+                      className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-full"
+                      style={{ background: 'var(--color-accent)' }}
+                    />
+                  )}
+                  <Settings className="w-[17px] h-[17px] shrink-0" />
+                  {!collapsed && <span>{t({ tr: 'Yönetim Paneli', en: 'Admin Panel', fr: "Panneau d'administration", it: 'Pannello di amministrazione', ar: 'لوحة الإدارة' })}</span>}
+                </>
+              )}
             </NavLink>
           </>
         )}

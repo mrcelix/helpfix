@@ -77,7 +77,7 @@ export function EmployeeShell() {
       </aside>
 
       <div className="flex flex-col min-h-screen">
-        <Topbar crumb={crumb} homePath="/home" showThemeSelector />
+        <Topbar crumb={crumb} homePath="/home" />
         <main className="flex-1 px-4 py-5 md:px-6 md:py-6 pb-24 md:pb-6">
           <Outlet />
         </main>
