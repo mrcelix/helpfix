@@ -98,11 +98,19 @@ export interface Database {
           slug: string
           plan: 'starter' | 'growth' | 'enterprise'
           inbound_email: string
+          theme_preset: 'kurumsal' | 'fenerbahce' | 'galatasaray' | 'besiktas' | 'trabzonspor' | 'custom'
+          brand_color: string | null
+          brand_deep: string | null
+          accent_color: string | null
           created_at: string
         }
-        Insert: Omit<Database['public']['Tables']['tenants']['Row'], 'id' | 'created_at'> & {
+        Insert: Omit<Database['public']['Tables']['tenants']['Row'], 'id' | 'created_at' | 'theme_preset' | 'brand_color' | 'brand_deep' | 'accent_color'> & {
           id?: string
           created_at?: string
+          theme_preset?: Database['public']['Tables']['tenants']['Row']['theme_preset']
+          brand_color?: string | null
+          brand_deep?: string | null
+          accent_color?: string | null
         }
         Update: Partial<Database['public']['Tables']['tenants']['Insert']>
         Relationships: []
@@ -1538,6 +1546,15 @@ export interface Database {
     }
     Views: Record<string, never>
     Functions: {
+      set_tenant_branding: {
+        Args: {
+          p_theme_preset: string
+          p_brand_color?: string | null
+          p_brand_deep?: string | null
+          p_accent_color?: string | null
+        }
+        Returns: undefined
+      }
       get_ai_adoption_stats: {
         Args: { p_tenant_id: string; p_days?: number }
         Returns: {

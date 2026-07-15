@@ -11,6 +11,7 @@ import { ConfigMissingPage } from '@/pages/ConfigMissing'
 import { NAV_MODULES } from '@/components/layout/nav-modules'
 import { useFeatureFlags } from '@/pages/admin/useAdmin'
 import { useAuth } from '@/contexts/AuthContext'
+import { useTenantBrandingSync } from '@/components/layout/useTenantBranding'
 import { isSupabaseConfigured } from '@/lib/supabase'
 import { getPanelFromUrl, getStoredPanelChoice, type PanelChoice } from '@/lib/panelPreference'
 
@@ -143,6 +144,10 @@ function AgentPanelRoutes() {
 function RoleBasedShell() {
   const { profile, loading } = useAuth()
   const [panelOverride, setPanelOverride] = useState<PanelChoice | null>(null)
+
+  // Giriş yapan kullanıcının tenant'ının varsayılan markasını uygula
+  // (kişisel override yoksa). Tüm paneller bu shell'den geçtiği için tek yer yeterli.
+  useTenantBrandingSync()
 
   if (loading || !profile) return null
 

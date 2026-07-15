@@ -16,6 +16,10 @@
   --color-brand-dim: #0E7D76;
   --color-brand-tint: #E4F7F5;
 
+  /* Vurgu (accent) — presetlerde nötr mor; "custom" temada logoya göre
+     ThemeContext tarafından inline değişkenle ezilir (bkz. applyCustomVars). */
+  --color-accent: #A78BFA;
+
   /* Priority / status */
   --color-p1: #EF4444;
   --color-p1-tint: #3A1A1B;

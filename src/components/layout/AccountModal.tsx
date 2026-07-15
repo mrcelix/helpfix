@@ -4,6 +4,7 @@ import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { useLang } from '@/contexts/LangContext'
 import { useAuth } from '@/contexts/AuthContext'
+import { AppearanceSettings } from './AppearanceSettings'
 
 const ROLE_LABEL: Record<string, { tr: string; en: string }> = {
   tenant_admin: { tr: 'Tenant Admin', en: 'Tenant Admin' },
@@ -15,7 +16,7 @@ const ROLE_LABEL: Record<string, { tr: string; en: string }> = {
 export function AccountModal({ onClose }: { onClose: () => void }) {
   const { t } = useLang()
   const { profile, updateFullName, updatePassword } = useAuth()
-  const [tab, setTab] = useState<'profile' | 'security'>('profile')
+  const [tab, setTab] = useState<'profile' | 'security' | 'appearance'>('profile')
 
   const [fullName, setFullName] = useState(profile?.fullName ?? '')
   const [nameSaved, setNameSaved] = useState(false)
@@ -83,7 +84,15 @@ export function AccountModal({ onClose }: { onClose: () => void }) {
         >
           {t({ tr: 'Güvenlik', en: 'Security' })}
         </button>
+        <button
+          onClick={() => setTab('appearance')}
+          className={`px-1 py-2 text-[13px] font-semibold mr-4 border-b-2 ${tab === 'appearance' ? 'border-brand text-brand-dim' : 'border-transparent text-[var(--text-faint)]'}`}
+        >
+          {t({ tr: 'Görünüm', en: 'Appearance' })}
+        </button>
       </div>
+
+      {tab === 'appearance' && <AppearanceSettings />}
 
       {tab === 'profile' && (
         <div className="space-y-4">
