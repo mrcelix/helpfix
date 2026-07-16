@@ -1,0 +1,134 @@
+-- ============================================================================
+-- 0066 — Faz MP-2 küçük ek: get_store_availability'ye p_uncategorized
+--
+-- "Envanter SLA" sekmesi (çalışana zimmetli, store_health_category NULL
+-- olan CI'lar — laptop/desktop/mobile vb.) için AYNI zaman-ağırlıklı
+-- availability hesaplamasını (0065) kullanabilmek gerekiyor. device_status_
+-- events tetikleyicisi (0052) her CI'da is_online değiştiğinde çalışır —
+-- kategori atanmış olsun olmasın — yani envanterde de anlamlı bir metrik.
+--
+-- 0065'teki get_store_availability, store_health_category IS NOT NULL
+-- şartını hardcode ediyordu (yalnızca hat/3.parti cihaz senaryosu için
+-- tasarlanmıştı). Burada geriye dönük UYUMLU şekilde YENİ bir parametre
+-- ekleniyor: p_uncategorized=true iken store_health_category IS NULL
+-- CI'lar döner (p_category bu modda yok sayılır). Mevcut çağrılar (ör.
+-- get_store_category_summary) parametreyi hiç bilmediği için varsayılan
+-- (false) ile eskisi gibi çalışmaya devam eder.
+-- ============================================================================
+
+create or replace function get_store_availability(
+  p_tenant_id uuid,
+  p_site_id uuid,
+  p_period text,
+  p_category store_health_category default null,
+  p_uncategorized boolean default false
+)
+returns table (
+  ci_id uuid,
+  name text,
+  ci_type ci_type,
+  line_type text,
+  availability_percent numeric,
+  availability_target numeric,
+  is_currently_online boolean,
+  downtime_minutes numeric,
+  event_count int
+)
+language sql
+stable
+as $$
+  with bounds as (
+    select
+      case p_period
+        when 'day' then date_trunc('day', now()) when 'week' then date_trunc('week', now())
+        when 'month' then date_trunc('month', now()) when 'year' then date_trunc('year', now())
+      end as period_start,
+      now() as period_end
+  ),
+  cis as (
+    select ci.id, ci.name, ci.ci_type, ci.line_type, ci.is_online, ci.availability_target
+    from configuration_items ci
+    where ci.tenant_id = p_tenant_id
+      and ci.site_id = p_site_id
+      and (
+        case
+          when p_uncategorized then ci.store_health_category is null
+          else ci.store_health_category is not null and (p_category is null or ci.store_health_category = p_category)
+        end
+      )
+      and ci.status <> 'retired'
+      and caller_can_access_site(p_site_id)
+  ),
+  seed as (
+    select distinct on (e.ci_id) e.ci_id, e.is_online as seed_state, e.occurred_at as seed_at
+    from device_status_events e, bounds
+    where e.occurred_at <= bounds.period_start
+    order by e.ci_id, e.occurred_at desc
+  ),
+  first_in_period as (
+    select distinct on (e.ci_id) e.ci_id, e.is_online as seed_state, e.occurred_at as seed_at
+    from device_status_events e, bounds
+    where e.occurred_at > bounds.period_start and e.occurred_at < bounds.period_end
+    order by e.ci_id, e.occurred_at asc
+  ),
+  effective_seed as (
+    select
+      cis.id as ci_id,
+      coalesce(seed.seed_at, first_in_period.seed_at) as eff_start,
+      coalesce(seed.seed_state, first_in_period.seed_state) as eff_state,
+      (seed.ci_id is not null or first_in_period.ci_id is not null) as has_data
+    from cis
+    left join seed on seed.ci_id = cis.id
+    left join first_in_period on first_in_period.ci_id = cis.id
+  ),
+  timeline as (
+    select es.ci_id, es.eff_start as occurred_at, es.eff_state as is_online
+    from effective_seed es
+    where es.has_data
+    union all
+    select e.ci_id, e.occurred_at, e.is_online
+    from device_status_events e
+    join effective_seed es on es.ci_id = e.ci_id
+    where es.has_data and e.occurred_at > es.eff_start and e.occurred_at < (select period_end from bounds)
+  ),
+  segments as (
+    select
+      t.ci_id,
+      t.is_online,
+      t.occurred_at as seg_start,
+      coalesce(lead(t.occurred_at) over (partition by t.ci_id order by t.occurred_at), (select period_end from bounds)) as seg_end
+    from timeline t
+  ),
+  downtime as (
+    select
+      s.ci_id,
+      sum(extract(epoch from (s.seg_end - s.seg_start))) filter (where not s.is_online) as offline_seconds,
+      sum(extract(epoch from (s.seg_end - s.seg_start))) as measured_seconds
+    from segments s
+    group by s.ci_id
+  ),
+  event_counts as (
+    select e.ci_id, count(*) as cnt
+    from device_status_events e, bounds
+    where e.occurred_at >= bounds.period_start and e.occurred_at < bounds.period_end
+    group by e.ci_id
+  )
+  select
+    cis.id,
+    cis.name,
+    cis.ci_type,
+    cis.line_type,
+    case when es.has_data
+      then round((100 - (coalesce(d.offline_seconds, 0) / nullif(d.measured_seconds, 0) * 100))::numeric, 1)
+      else null
+    end,
+    cis.availability_target,
+    cis.is_online,
+    case when es.has_data then round((coalesce(d.offline_seconds, 0) / 60)::numeric, 1) else null end,
+    coalesce(ec.cnt, 0)::int
+  from cis
+  join effective_seed es on es.ci_id = cis.id
+  left join downtime d on d.ci_id = cis.id
+  left join event_counts ec on ec.ci_id = cis.id
+  order by cis.name;
+$$;

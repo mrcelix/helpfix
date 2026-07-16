@@ -3,17 +3,55 @@ import { Camera, AlertTriangle, Wifi, ChevronRight, Store as StoreIcon, RefreshC
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from 'recharts'
 import { useLang } from '@/contexts/LangContext'
 import { Button } from '@/components/ui/Button'
-import { useStoreScorecard, useCaptureSnapshot, useStoreScoreHistory, scoreLevel, type StoreScorecard } from './useStorePerformance'
+import {
+  useStoreScorecard,
+  useCaptureSnapshot,
+  useStoreScoreTrend,
+  useStorePeriod,
+  scoreLevel,
+  type StoreScorecard,
+  type StorePeriod,
+} from './useStorePerformance'
 import { useIntegrationSummary, useSyncNow } from './useIntegrations'
 import { StoreDetailDrawer } from './StoreDetailDrawer'
 import { HealthScoreTab } from './HealthScoreTab'
 import { IntegrationsTab } from './IntegrationsTab'
+import { LinesDevicesTab } from './LinesDevicesTab'
+import { InventorySlaTab } from './InventorySlaTab'
+
+const PERIOD_LABEL: Record<StorePeriod, { tr: string; en: string }> = {
+  day: { tr: 'Günlük', en: 'Daily' },
+  week: { tr: 'Haftalık', en: 'Weekly' },
+  month: { tr: 'Aylık', en: 'Monthly' },
+  year: { tr: 'Yıllık', en: 'Yearly' },
+}
+const ALL_PERIODS: StorePeriod[] = ['day', 'week', 'month', 'year']
+
+function PeriodSelector({ period, onChange }: { period: StorePeriod; onChange: (p: StorePeriod) => void }) {
+  const { t } = useLang()
+  return (
+    <div className="flex items-center bg-[var(--panel-2)] border border-[var(--border)] rounded-lg p-0.5 shrink-0">
+      {ALL_PERIODS.map((p) => (
+        <button
+          key={p}
+          onClick={() => onChange(p)}
+          className={`px-2.5 py-1.5 text-[11.5px] font-bold rounded-md transition-colors ${
+            period === p ? 'bg-brand text-white' : 'text-[var(--text-faint)] hover:text-[var(--text)]'
+          }`}
+        >
+          {t(PERIOD_LABEL[p])}
+        </button>
+      ))}
+    </div>
+  )
+}
 
 export function StorePerformancePage() {
   const { t } = useLang()
-  const [pageTab, setPageTab] = useState<'dashboard' | 'health-score' | 'history' | 'integrations'>('dashboard')
+  const [pageTab, setPageTab] = useState<'dashboard' | 'health-score' | 'history' | 'lines-devices' | 'inventory-sla' | 'integrations'>('dashboard')
   const [selectedStore, setSelectedStore] = useState<StoreScorecard | null>(null)
   const [sortBy, setSortBy] = useState<'score' | 'name'>('score')
+  const [period, setPeriod] = useStorePeriod()
 
   const { data: scorecard, isLoading } = useStoreScorecard()
   const captureSnapshot = useCaptureSnapshot()
@@ -35,10 +73,13 @@ export function StorePerformancePage() {
             {t({ tr: 'BT hizmet skoru, SLA takibi ve envanter durumu — mağaza bazlı', en: 'IT service score, SLA tracking, and inventory status — by store' })}
           </p>
         </div>
-        <Button onClick={() => captureSnapshot.mutate()} disabled={captureSnapshot.isPending}>
-          <Camera className="w-[15px] h-[15px]" />
-          {captureSnapshot.isPending ? t({ tr: 'Alınıyor…', en: 'Capturing…' }) : t({ tr: 'Anlık Görüntü Al', en: 'Take Snapshot' })}
-        </Button>
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <PeriodSelector period={period} onChange={setPeriod} />
+          <Button onClick={() => captureSnapshot.mutate()} disabled={captureSnapshot.isPending}>
+            <Camera className="w-[15px] h-[15px]" />
+            {captureSnapshot.isPending ? t({ tr: 'Alınıyor…', en: 'Capturing…' }) : t({ tr: 'Anlık Görüntü Al', en: 'Take Snapshot' })}
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
@@ -83,6 +124,18 @@ export function StorePerformancePage() {
           {t({ tr: 'Geçmiş', en: 'History' })}
         </button>
         <button
+          onClick={() => setPageTab('lines-devices')}
+          className={`shrink-0 whitespace-nowrap px-1 py-2.5 text-[13.5px] font-semibold mr-5 border-b-2 ${pageTab === 'lines-devices' ? 'border-brand text-brand-dim' : 'border-transparent text-[var(--text-faint)]'}`}
+        >
+          {t({ tr: 'Hatlar & Cihazlar', en: 'Lines & Devices' })}
+        </button>
+        <button
+          onClick={() => setPageTab('inventory-sla')}
+          className={`shrink-0 whitespace-nowrap px-1 py-2.5 text-[13.5px] font-semibold mr-5 border-b-2 ${pageTab === 'inventory-sla' ? 'border-brand text-brand-dim' : 'border-transparent text-[var(--text-faint)]'}`}
+        >
+          {t({ tr: 'Envanter SLA', en: 'Inventory SLA' })}
+        </button>
+        <button
           onClick={() => setPageTab('integrations')}
           className={`shrink-0 whitespace-nowrap px-1 py-2.5 text-[13.5px] font-semibold mr-5 border-b-2 ${pageTab === 'integrations' ? 'border-brand text-brand-dim' : 'border-transparent text-[var(--text-faint)]'}`}
         >
@@ -91,6 +144,8 @@ export function StorePerformancePage() {
       </div>
 
       {pageTab === 'health-score' && <HealthScoreTab />}
+      {pageTab === 'lines-devices' && <LinesDevicesTab stores={stores} period={period} />}
+      {pageTab === 'inventory-sla' && <InventorySlaTab stores={stores} period={period} />}
       {pageTab === 'integrations' && <IntegrationsTab />}
 
       {pageTab === 'dashboard' && (
@@ -156,9 +211,9 @@ export function StorePerformancePage() {
         </div>
       )}
 
-      {pageTab === 'history' && <StoreHistoryTab stores={stores} onOpenStore={setSelectedStore} />}
+      {pageTab === 'history' && <StoreHistoryTab stores={stores} period={period} onOpenStore={setSelectedStore} />}
 
-      {selectedStore && <StoreDetailDrawer store={selectedStore} onClose={() => setSelectedStore(null)} />}
+      {selectedStore && <StoreDetailDrawer store={selectedStore} period={period} onClose={() => setSelectedStore(null)} />}
     </div>
   )
 }
@@ -206,22 +261,23 @@ function IntegrationStatusWidget({ onOpenIntegrations }: { onOpenIntegrations: (
   )
 }
 
-function StoreHistoryTab({ stores, onOpenStore }: { stores: StoreScorecard[]; onOpenStore: (s: StoreScorecard) => void }) {
+/** Faz MP-2: bu sekme artık sabit 90 günlük değil, sayfa başlığındaki
+ * G/H/A/Y periyot seçicisine göre get_store_score_trend'ten besleniyor —
+ * day→son 7 gün, week→son 8 hafta, month→son 12 hafta, year→son 12 ay. */
+function StoreHistoryTab({ stores, period, onOpenStore }: { stores: StoreScorecard[]; period: StorePeriod; onOpenStore: (s: StoreScorecard) => void }) {
   const { t } = useLang()
   const [compareSiteId, setCompareSiteId] = useState<string | null>(stores[0]?.site_id ?? null)
-  const { data: history } = useStoreScoreHistory(compareSiteId, 90)
+  const { data: trend } = useStoreScoreTrend(compareSiteId, period)
 
-  const chartData = history?.map((h) => ({
-    date: new Date(h.snapshot_date).toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit' }),
-    [t({ tr: 'Skor', en: 'Score' })]: h.score,
-    [t({ tr: 'SLA %', en: 'SLA %' })]: h.sla_compliant_pct,
-    [t({ tr: 'Online %', en: 'Online %' })]: h.online_pct,
+  const chartData = trend?.map((p) => ({
+    date: p.period_label,
+    [t({ tr: 'Skor', en: 'Score' })]: p.score,
   }))
 
   return (
     <div className="border border-[var(--border)] rounded-[var(--radius-app)] bg-[var(--panel)] p-4">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-display text-[14px] font-bold">{t({ tr: 'Mağaza Geçmiş Trendi (90 gün)', en: 'Store History Trend (90d)' })}</h3>
+        <h3 className="font-display text-[14px] font-bold">{t({ tr: 'Mağaza Geçmiş Trendi', en: 'Store History Trend' })}</h3>
         <select value={compareSiteId ?? ''} onChange={(e) => setCompareSiteId(e.target.value)} className="text-[11.5px] font-semibold bg-[var(--panel-2)] border border-[var(--border)] rounded-md px-2 py-1.5">
           {stores.map((s) => (
             <option key={s.site_id} value={s.site_id}>
@@ -233,7 +289,10 @@ function StoreHistoryTab({ stores, onOpenStore }: { stores: StoreScorecard[]; on
 
       {!chartData?.length && (
         <p className="text-[12px] text-[var(--text-faint)] py-12 text-center">
-          {t({ tr: 'Bu mağaza için henüz anlık görüntü alınmadı. Üstteki "Anlık Görüntü Al" butonuyla ilk kaydı oluşturun.', en: 'No snapshots taken for this store yet. Use "Take Snapshot" above to create the first record.' })}
+          {t({
+            tr: 'Bu periyot için henüz veri yok. Günlük görünüm "Anlık Görüntü Al" butonuna, haftalık/aylık/yıllık görünüm ise Sağlık Skoru sekmesindeki "Haftalık Skor Üret" butonuna bağlıdır.',
+            en: 'No data for this period yet. The daily view depends on "Take Snapshot"; weekly/monthly/yearly views depend on "Generate Weekly Score" in the Health Score tab.',
+          })}
         </p>
       )}
 
@@ -246,8 +305,6 @@ function StoreHistoryTab({ stores, onOpenStore }: { stores: StoreScorecard[]; on
             <Tooltip contentStyle={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} />
             <Legend wrapperStyle={{ fontSize: 11 }} />
             <Line type="monotone" dataKey={t({ tr: 'Skor', en: 'Score' })} stroke="#17B0A7" strokeWidth={2} dot={false} />
-            <Line type="monotone" dataKey={t({ tr: 'SLA %', en: 'SLA %' })} stroke="#8CA3FF" strokeWidth={1.5} dot={false} />
-            <Line type="monotone" dataKey={t({ tr: 'Online %', en: 'Online %' })} stroke="#EFA013" strokeWidth={1.5} dot={false} />
           </LineChart>
         </ResponsiveContainer>
       )}

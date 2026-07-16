@@ -1576,7 +1576,13 @@ export interface Database {
         }[]
       }
       get_store_availability: {
-        Args: { p_tenant_id: string; p_site_id: string; p_period: string; p_category?: 'esl' | 'kiosk_pos' | 'network' | 'other' | null }
+        Args: {
+          p_tenant_id: string
+          p_site_id: string
+          p_period: string
+          p_category?: 'esl' | 'kiosk_pos' | 'network' | 'other' | null
+          p_uncategorized?: boolean
+        }
         Returns: {
           ci_id: string
           name: string
