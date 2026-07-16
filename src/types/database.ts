@@ -652,6 +652,8 @@ export interface Database {
           is_online: boolean
           last_seen_at: string
           store_health_category: 'esl' | 'kiosk_pos' | 'network' | 'other' | null
+          availability_target: number | null
+          line_type: 'dsl' | 'mpls' | '3g' | 'fiber' | 'other' | null
           model_id: string | null
           custom_fields: Record<string, string>
           created_at: string
@@ -659,7 +661,7 @@ export interface Database {
         }
         Insert: Omit<
           Database['public']['Tables']['configuration_items']['Row'],
-          'id' | 'tag' | 'created_at' | 'updated_at' | 'site_id' | 'is_online' | 'last_seen_at' | 'store_health_category' | 'model_id' | 'custom_fields'
+          'id' | 'tag' | 'created_at' | 'updated_at' | 'site_id' | 'is_online' | 'last_seen_at' | 'store_health_category' | 'availability_target' | 'line_type' | 'model_id' | 'custom_fields'
         > & {
           id?: string
           tag?: string
@@ -669,6 +671,8 @@ export interface Database {
           is_online?: boolean
           last_seen_at?: string
           store_health_category?: 'esl' | 'kiosk_pos' | 'network' | 'other' | null
+          availability_target?: number | null
+          line_type?: 'dsl' | 'mpls' | '3g' | 'fiber' | 'other' | null
           model_id?: string | null
           custom_fields?: Record<string, string>
         }
@@ -1546,6 +1550,61 @@ export interface Database {
     }
     Views: Record<string, never>
     Functions: {
+      caller_can_access_site: {
+        Args: { p_site_id: string }
+        Returns: boolean
+      }
+      get_store_ticket_stats: {
+        Args: { p_tenant_id: string; p_site_id: string; p_period: string }
+        Returns: {
+          status_new: number
+          status_open: number
+          status_in_progress: number
+          status_on_hold: number
+          status_resolved: number
+          status_closed: number
+          status_merged: number
+          priority_p1: number
+          priority_p2: number
+          priority_p3: number
+          priority_p4: number
+          opened_count: number
+          resolved_count: number
+          avg_resolution_hours: number | null
+          prev_period_opened: number
+          prev_period_resolved: number
+        }[]
+      }
+      get_store_availability: {
+        Args: { p_tenant_id: string; p_site_id: string; p_period: string; p_category?: 'esl' | 'kiosk_pos' | 'network' | 'other' | null }
+        Returns: {
+          ci_id: string
+          name: string
+          ci_type: CiType
+          line_type: 'dsl' | 'mpls' | '3g' | 'fiber' | 'other' | null
+          availability_percent: number | null
+          availability_target: number | null
+          is_currently_online: boolean
+          downtime_minutes: number | null
+          event_count: number
+        }[]
+      }
+      get_store_category_summary: {
+        Args: { p_tenant_id: string; p_site_id: string; p_period: string }
+        Returns: {
+          category: 'esl' | 'kiosk_pos' | 'network' | 'other'
+          avg_availability_percent: number | null
+          below_target_count: number
+          total_count: number
+        }[]
+      }
+      get_store_score_trend: {
+        Args: { p_tenant_id: string; p_site_id: string; p_period: string }
+        Returns: {
+          period_label: string
+          score: number
+        }[]
+      }
       set_tenant_branding: {
         Args: {
           p_theme_preset: string
