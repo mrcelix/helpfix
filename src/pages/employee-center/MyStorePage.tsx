@@ -1,14 +1,26 @@
-import { Store, AlertTriangle, Ticket, Package, Monitor, Tag, ShoppingCart, Wifi, Headphones, CheckCircle2, XCircle, Clock } from 'lucide-react'
+import { useState } from 'react'
+import { Store, AlertTriangle, Ticket, Package, Monitor, Tag, ShoppingCart, Wifi, Headphones, CheckCircle2, XCircle, Clock, HelpCircle } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import {
   useMySite,
   useMyStoreHealthScore,
-  useMyStoreHealthHistory,
   useMyStoreIncidents,
   useMyStoreAssets,
   useMyStoreConsumables,
   useMyStoreIntegrationStatus,
 } from './useMyStore'
+import {
+  useStorePeriod,
+  useStoreAvailability,
+  useStoreCategorySummary,
+  useStoreScoreTrend,
+  useDeviceStatusRealtime,
+  type StoreHealthCategory,
+  type StoreAvailabilityRow,
+} from '@/pages/store-performance/useStorePerformance'
+import { PeriodSelector } from '@/pages/store-performance/PeriodSelector'
+import { CiAvailabilityTable } from '@/pages/store-performance/CiAvailabilityTable'
+import { CiAvailabilityDrawer } from '@/pages/store-performance/CiAvailabilityDrawer'
 
 const GRADE_STYLE: Record<string, string> = {
   A: 'bg-ok/15 text-ok border-ok/40',
@@ -23,15 +35,35 @@ const PRIORITY_STYLE: Record<string, string> = {
   P4: 'bg-[var(--panel-2)] text-[var(--text-faint)]',
 }
 
+const THIRD_PARTY_CATEGORIES: StoreHealthCategory[] = ['esl', 'kiosk_pos', 'other']
+const CATEGORY_META: Record<StoreHealthCategory, { label: { tr: string; en: string }; icon: typeof Tag }> = {
+  network: { label: { tr: 'Network', en: 'Network' }, icon: Wifi },
+  esl: { label: { tr: 'ESL', en: 'ESL' }, icon: Tag },
+  kiosk_pos: { label: { tr: 'Kiosk & POS', en: 'Kiosk & POS' }, icon: ShoppingCart },
+  other: { label: { tr: 'Diğer', en: 'Other' }, icon: HelpCircle },
+}
+
 export function MyStorePage() {
   const { lang, t } = useLang()
   const { data: site, isLoading: siteLoading } = useMySite()
   const { data: health } = useMyStoreHealthScore()
-  const { data: history } = useMyStoreHealthHistory()
   const { data: incidents } = useMyStoreIncidents()
   const { data: assets } = useMyStoreAssets()
   const { data: consumables } = useMyStoreConsumables()
   const { data: integrationStatus } = useMyStoreIntegrationStatus()
+
+  // Faz MP-3 — G/H/A periyot seçici (Yıllık'a gerek yok, çalışan görünümü
+  // için kısa vadeli görünüm yeterli). Salt-okunur: yönetici aksiyonları
+  // (Anlık Görüntü Al, Haftalık Skor Üret vb.) burada YOK.
+  const [period, setPeriod] = useStorePeriod('week')
+  const siteId = site?.id ?? null
+  useDeviceStatusRealtime(siteId)
+  const { data: scoreTrend } = useStoreScoreTrend(siteId, period)
+  const { data: lineRows, isLoading: linesLoading } = useStoreAvailability(siteId, period, { category: 'network' })
+  const { data: categorySummary } = useStoreCategorySummary(siteId, period)
+  const [selectedCi, setSelectedCi] = useState<StoreAvailabilityRow | null>(null)
+
+  const thirdPartySummary = categorySummary?.filter((s) => THIRD_PARTY_CATEGORIES.includes(s.category)) ?? []
 
   if (siteLoading) {
     return <div className="py-16 text-center text-[13px] text-[var(--text-faint)]">{t({ tr: 'Yükleniyor…', en: 'Loading…', fr: 'Chargement…', it: 'Caricamento…', ar: 'جارٍ التحميل…' })}</div>
@@ -66,6 +98,7 @@ export function MyStorePage() {
           <h1 className="font-display text-[20px] font-bold tracking-tight">{site.name}</h1>
           <p className="text-[12.5px] text-[var(--text-faint)]">{site.city}</p>
         </div>
+        <PeriodSelector period={period} onChange={setPeriod} periods={['day', 'week', 'month']} />
         {integrationStatus && integrationStatus.active_endpoints > 0 && (
           <div className="flex items-center gap-1.5 bg-[var(--panel)] border border-[var(--border)] rounded-full px-3 py-1.5">
             {integrationStatus.last_status === 'success' ? (
@@ -128,13 +161,13 @@ export function MyStorePage() {
               <Pillar icon={Wifi} label={t({ tr: 'Network', en: 'Network', fr: 'Réseau', it: 'Rete', ar: 'الشبكة' })} score={health.network_score} detail={`${health.network_downtime_minutes} ${t({ tr: 'dk kesinti', en: 'min down', fr: "min d'arrêt", it: 'min di inattività', ar: 'دقيقة توقف' })}`} />
               <Pillar icon={Headphones} label={t({ tr: 'Yardım Masası', en: 'Help Desk', fr: "Service d'assistance", it: 'Help desk', ar: 'مكتب المساعدة' })} score={health.helpdesk_score} detail={`${health.helpdesk_call_count} ${t({ tr: 'çağrı', en: 'calls', fr: 'appels', it: 'chiamate', ar: 'مكالمات' })}`} />
             </div>
-            {!!history?.length && (
+            {!!scoreTrend?.length && (
               <div className="flex items-end gap-1.5 h-16 pt-2 border-t border-[var(--border)]">
-                {history.map((h) => (
-                  <div key={h.week_start} className="flex-1 flex flex-col items-center justify-end gap-1" title={`${h.week_start}: ${h.composite_score}`}>
+                {scoreTrend.map((p) => (
+                  <div key={p.period_label} className="flex-1 flex flex-col items-center justify-end gap-1" title={`${p.period_label}: ${p.score}`}>
                     <div
-                      className={`w-full rounded-t-sm ${h.letter_grade === 'A' ? 'bg-ok' : h.letter_grade === 'B' ? 'bg-p2' : 'bg-p1'}`}
-                      style={{ height: `${Math.max(h.composite_score, 6)}%` }}
+                      className={`w-full rounded-t-sm ${p.score >= 85 ? 'bg-ok' : p.score >= 70 ? 'bg-p2' : 'bg-p1'}`}
+                      style={{ height: `${Math.max(p.score, 6)}%` }}
                     />
                   </div>
                 ))}
@@ -143,6 +176,43 @@ export function MyStorePage() {
           </>
         )}
       </div>
+
+      <div className="border border-[var(--border)] rounded-[var(--radius-app)] bg-[var(--panel)] overflow-hidden mb-5">
+        <div className="flex items-center gap-1.5 px-4 py-3 border-b border-[var(--border)]">
+          <Wifi className="w-3.5 h-3.5 text-brand-dim" />
+          <h3 className="font-display text-[14px] font-bold">{t({ tr: 'Hat Durumları', en: 'Line Status' })}</h3>
+        </div>
+        <CiAvailabilityTable rows={lineRows} isLoading={linesLoading} onSelectCi={setSelectedCi} />
+      </div>
+
+      {!!thirdPartySummary.length && (
+        <div className="mb-5">
+          <div className="text-[10.5px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-2">
+            {t({ tr: '3. Parti Cihaz Özeti', en: 'Third-Party Device Summary' })}
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            {thirdPartySummary.map((s) => {
+              const Icon = CATEGORY_META[s.category].icon
+              return (
+                <div key={s.category} className="bg-[var(--panel)] border border-[var(--border)] rounded-xl p-3.5">
+                  <div className="flex items-center gap-1.5 mb-1.5">
+                    <Icon className="w-3.5 h-3.5 text-[var(--text-faint)] shrink-0" />
+                    <span className="text-[10.5px] font-bold text-[var(--text-faint)] uppercase tracking-wide truncate">{t(CATEGORY_META[s.category].label)}</span>
+                  </div>
+                  <div className="font-display text-[18px] font-bold">{s.avg_availability_percent != null ? `%${s.avg_availability_percent}` : '—'}</div>
+                  <div className="text-[10px] text-[var(--text-faint)] mt-0.5">
+                    {s.below_target_count > 0 ? (
+                      <span className="text-p1 font-bold">{s.below_target_count} {t({ tr: 'hedef altı', en: 'below target' })}</span>
+                    ) : (
+                      `${s.total_count} ${t({ tr: 'cihaz', en: 'devices' })}`
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-3 gap-3 mb-5">
         <div className="bg-[var(--panel)] border border-[var(--border)] rounded-2xl p-4">
@@ -196,6 +266,8 @@ export function MyStorePage() {
           </div>
         </div>
       </div>
+
+      {selectedCi && <CiAvailabilityDrawer ci={selectedCi} onClose={() => setSelectedCi(null)} />}
     </div>
   )
 }

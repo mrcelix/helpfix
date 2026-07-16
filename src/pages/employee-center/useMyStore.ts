@@ -70,24 +70,6 @@ export function useMyStoreHealthScore() {
   })
 }
 
-export function useMyStoreHealthHistory() {
-  const { profile } = useAuth()
-  return useQuery({
-    queryKey: ['my-store-health-history', profile?.siteId],
-    enabled: !!profile?.siteId,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('store_health_scores')
-        .select('week_start, composite_score, letter_grade')
-        .eq('site_id', profile!.siteId!)
-        .order('week_start', { ascending: true })
-        .limit(12)
-      if (error) throw error
-      return data as { week_start: string; composite_score: number; letter_grade: string }[]
-    },
-  })
-}
-
 export interface MyStoreIncident {
   id: string
   ref: string

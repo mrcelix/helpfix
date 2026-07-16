@@ -18,33 +18,7 @@ import { HealthScoreTab } from './HealthScoreTab'
 import { IntegrationsTab } from './IntegrationsTab'
 import { LinesDevicesTab } from './LinesDevicesTab'
 import { InventorySlaTab } from './InventorySlaTab'
-
-const PERIOD_LABEL: Record<StorePeriod, { tr: string; en: string }> = {
-  day: { tr: 'Günlük', en: 'Daily' },
-  week: { tr: 'Haftalık', en: 'Weekly' },
-  month: { tr: 'Aylık', en: 'Monthly' },
-  year: { tr: 'Yıllık', en: 'Yearly' },
-}
-const ALL_PERIODS: StorePeriod[] = ['day', 'week', 'month', 'year']
-
-function PeriodSelector({ period, onChange }: { period: StorePeriod; onChange: (p: StorePeriod) => void }) {
-  const { t } = useLang()
-  return (
-    <div className="flex items-center bg-[var(--panel-2)] border border-[var(--border)] rounded-lg p-0.5 shrink-0">
-      {ALL_PERIODS.map((p) => (
-        <button
-          key={p}
-          onClick={() => onChange(p)}
-          className={`px-2.5 py-1.5 text-[11.5px] font-bold rounded-md transition-colors ${
-            period === p ? 'bg-brand text-white' : 'text-[var(--text-faint)] hover:text-[var(--text)]'
-          }`}
-        >
-          {t(PERIOD_LABEL[p])}
-        </button>
-      ))}
-    </div>
-  )
-}
+import { PeriodSelector } from './PeriodSelector'
 
 export function StorePerformancePage() {
   const { t } = useLang()
