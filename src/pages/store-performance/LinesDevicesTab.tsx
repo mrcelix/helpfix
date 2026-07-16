@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowDown, Wifi, Tag, ShoppingCart, HelpCircle } from 'lucide-react'
+import { ArrowDown, Wifi, Tag, ShoppingCart, HelpCircle, Plug } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import {
   useStoreAvailability,
@@ -10,8 +10,10 @@ import {
   type StoreAvailabilityRow,
   type StoreScorecard,
 } from './useStorePerformance'
+import { useIntegrationEndpoints } from './useIntegrations'
 import { CiAvailabilityTable } from './CiAvailabilityTable'
 import { CiAvailabilityDrawer } from './CiAvailabilityDrawer'
+import { NewTicketModal } from '@/pages/service-desk/NewTicketModal'
 
 const CATEGORY_META: Record<StoreHealthCategory, { label: { tr: string; en: string }; icon: typeof Wifi }> = {
   network: { label: { tr: 'Network (Hatlar)', en: 'Network (Lines)' }, icon: Wifi },
@@ -20,22 +22,55 @@ const CATEGORY_META: Record<StoreHealthCategory, { label: { tr: string; en: stri
   other: { label: { tr: 'Diğer', en: 'Other' }, icon: HelpCircle },
 }
 const CATEGORY_ORDER: StoreHealthCategory[] = ['network', 'esl', 'kiosk_pos', 'other']
+const LINE_TYPE_LABEL: Record<string, string> = { dsl: 'DSL', mpls: 'MPLS', '3g': '3G', fiber: 'Fiber', other: 'Diğer' }
+const CATEGORY_TICKET_LABEL: Record<StoreHealthCategory, { tr: string; en: string }> = {
+  network: { tr: 'Ağ & VPN', en: 'Network & VPN' },
+  esl: { tr: 'Donanım', en: 'Hardware' },
+  kiosk_pos: { tr: 'Donanım', en: 'Hardware' },
+  other: { tr: 'Donanım', en: 'Hardware' },
+}
 
 /** Faz MP-2 — Hatlar & Cihazlar sekmesi. Seçilen mağazanın network/esl/
  * kiosk_pos/other kategorilerini özetler, karta tıklayınca tabloyu o
  * kategoriye süzer. Realtime: device_status_events insert'i ile anlık
- * durum noktası otomatik güncellenir. */
-export function LinesDevicesTab({ stores, period }: { stores: StoreScorecard[]; period: StorePeriod }) {
+ * durum noktası otomatik güncellenir.
+ * Faz MP-4: hedef altı satırlarda "Talep Aç" hızlı aksiyonu + entegrasyon
+ * tanımlı değilse Entegrasyonlar sekmesine yönlendiren boş durum. */
+export function LinesDevicesTab({
+  stores,
+  period,
+  onGoToIntegrations,
+}: {
+  stores: StoreScorecard[]
+  period: StorePeriod
+  onGoToIntegrations: () => void
+}) {
   const { t } = useLang()
   const [siteId, setSiteId] = useState<string | null>(stores[0]?.site_id ?? null)
   const [filterCategory, setFilterCategory] = useState<StoreHealthCategory | null>(null)
   const [selectedCi, setSelectedCi] = useState<StoreAvailabilityRow | null>(null)
+  const [ticketPrefill, setTicketPrefill] = useState<{ title: string; category: string } | null>(null)
 
   useDeviceStatusRealtime(siteId)
   const { data: summary } = useStoreCategorySummary(siteId, period)
   const { data: rows, isLoading } = useStoreAvailability(siteId, period, { category: filterCategory })
+  const { data: endpoints } = useIntegrationEndpoints()
 
   const summaryByCategory = new Map(summary?.map((s) => [s.category, s]))
+  const hasIntegration = endpoints?.some((e) => e.site_id === siteId) ?? false
+  const storeName = stores.find((s) => s.site_id === siteId)?.site_name ?? ''
+
+  function quickCreateTicket(row: StoreAvailabilityRow) {
+    const pct = row.availability_percent != null ? `%${row.availability_percent}` : t({ tr: 'veri yok', en: 'no data' })
+    const category = t(CATEGORY_TICKET_LABEL[row.line_type ? 'network' : (filterCategory ?? 'other')])
+    const subject = row.line_type
+      ? `${LINE_TYPE_LABEL[row.line_type] ?? row.line_type} ${t({ tr: 'hattı', en: 'line' })}`
+      : row.name
+    setTicketPrefill({
+      title: `[${storeName}] ${subject} ${t({ tr: 'hedef altı', en: 'below target' })} — ${pct}`,
+      category,
+    })
+  }
 
   return (
     <div>
@@ -97,10 +132,30 @@ export function LinesDevicesTab({ stores, period }: { stores: StoreScorecard[]; 
       </div>
 
       <div className="border border-[var(--border)] rounded-[var(--radius-app)] bg-[var(--panel)] overflow-hidden">
-        <CiAvailabilityTable rows={rows} isLoading={isLoading} onSelectCi={setSelectedCi} />
+        {!isLoading && !rows?.length && !hasIntegration ? (
+          <div className="text-[12px] text-[var(--text-faint)] py-10 text-center px-6">
+            <Plug className="w-6 h-6 mx-auto mb-2 text-[var(--text-faint)]" />
+            {t({
+              tr: 'Cihaz durumu için Entegrasyonlar sekmesinden endpoint tanımlayın.',
+              en: 'Define an endpoint in the Integrations tab to get device status.',
+            })}
+            <button onClick={onGoToIntegrations} className="block mx-auto mt-2 text-[11.5px] font-bold text-brand-dim">
+              {t({ tr: 'Entegrasyonlar sekmesine git →', en: 'Go to Integrations tab →' })}
+            </button>
+          </div>
+        ) : (
+          <CiAvailabilityTable rows={rows} isLoading={isLoading} onSelectCi={setSelectedCi} onQuickCreateTicket={quickCreateTicket} />
+        )}
       </div>
 
       {selectedCi && <CiAvailabilityDrawer ci={selectedCi} onClose={() => setSelectedCi(null)} />}
+      {ticketPrefill && (
+        <NewTicketModal
+          initialTitle={ticketPrefill.title}
+          initialCategory={ticketPrefill.category}
+          onClose={() => setTicketPrefill(null)}
+        />
+      )}
     </div>
   )
 }

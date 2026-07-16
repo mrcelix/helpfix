@@ -9,6 +9,7 @@ import {
 } from './useStorePerformance'
 import { CiAvailabilityTable } from './CiAvailabilityTable'
 import { CiAvailabilityDrawer } from './CiAvailabilityDrawer'
+import { NewTicketModal } from '@/pages/service-desk/NewTicketModal'
 
 const STATUS_LABEL: Record<string, { tr: string; en: string }> = {
   active: { tr: 'Aktif', en: 'Active' },
@@ -30,11 +31,21 @@ export function InventorySlaTab({ stores, period }: { stores: StoreScorecard[]; 
   const { t } = useLang()
   const [siteId, setSiteId] = useState<string | null>(stores[0]?.site_id ?? null)
   const [selectedCi, setSelectedCi] = useState<StoreAvailabilityRow | null>(null)
+  const [ticketPrefill, setTicketPrefill] = useState<{ title: string; category: string } | null>(null)
 
   const { data: rows, isLoading } = useStoreAvailability(siteId, period, { uncategorized: true })
   const { data: statusBreakdown } = useInventoryStatusBreakdown(siteId)
 
   const statusTotal = statusBreakdown ? Object.values(statusBreakdown).reduce((s, n) => s + n, 0) : 0
+  const storeName = stores.find((s) => s.site_id === siteId)?.site_name ?? ''
+
+  function quickCreateTicket(row: StoreAvailabilityRow) {
+    const pct = row.availability_percent != null ? `%${row.availability_percent}` : t({ tr: 'veri yok', en: 'no data' })
+    setTicketPrefill({
+      title: `[${storeName}] ${row.name} ${t({ tr: 'hedef altı', en: 'below target' })} — ${pct}`,
+      category: t({ tr: 'Donanım', en: 'Hardware' }),
+    })
+  }
 
   return (
     <div>
@@ -77,10 +88,17 @@ export function InventorySlaTab({ stores, period }: { stores: StoreScorecard[]; 
       )}
 
       <div className="border border-[var(--border)] rounded-[var(--radius-app)] bg-[var(--panel)] overflow-hidden">
-        <CiAvailabilityTable rows={rows} isLoading={isLoading} onSelectCi={setSelectedCi} />
+        <CiAvailabilityTable rows={rows} isLoading={isLoading} onSelectCi={setSelectedCi} onQuickCreateTicket={quickCreateTicket} />
       </div>
 
       {selectedCi && <CiAvailabilityDrawer ci={selectedCi} onClose={() => setSelectedCi(null)} />}
+      {ticketPrefill && (
+        <NewTicketModal
+          initialTitle={ticketPrefill.title}
+          initialCategory={ticketPrefill.category}
+          onClose={() => setTicketPrefill(null)}
+        />
+      )}
     </div>
   )
 }

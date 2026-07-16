@@ -1,4 +1,4 @@
-import { Wifi, WifiOff } from 'lucide-react'
+import { Wifi, WifiOff, Ticket } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import type { StoreAvailabilityRow } from './useStorePerformance'
 
@@ -29,10 +29,15 @@ export function CiAvailabilityTable({
   rows,
   isLoading,
   onSelectCi,
+  onQuickCreateTicket,
 }: {
   rows: StoreAvailabilityRow[] | undefined
   isLoading: boolean
   onSelectCi: (row: StoreAvailabilityRow) => void
+  /** Faz MP-4 — verilirse hedef altı satırlarda "Talep Aç" hızlı aksiyonu
+   * gösterilir (yönetici sekmeleri). MyStorePage bunu kasıtlı olarak
+   * geçmez — Çalışan Merkezi salt-okunur kalır. */
+  onQuickCreateTicket?: (row: StoreAvailabilityRow) => void
 }) {
   const { t } = useLang()
 
@@ -54,10 +59,13 @@ export function CiAvailabilityTable({
         const deviation = r.availability_percent != null && r.availability_target != null ? r.availability_percent - r.availability_target : null
         const belowTarget = deviation != null && deviation < 0
         return (
-          <button
+          <div
             key={r.ci_id}
+            role="button"
+            tabIndex={0}
             onClick={() => onSelectCi(r)}
-            className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-[var(--row-hover)]"
+            onKeyDown={(e) => e.key === 'Enter' && onSelectCi(r)}
+            className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-[var(--row-hover)] cursor-pointer"
           >
             <span className={`w-2 h-2 rounded-full shrink-0 ${r.is_currently_online ? 'bg-ok' : 'bg-p1'}`} title={r.is_currently_online ? 'online' : 'offline'} />
             <div className="flex-1 min-w-0">
@@ -95,7 +103,20 @@ export function CiAvailabilityTable({
                 )}
               </div>
             </div>
-          </button>
+            {belowTarget && onQuickCreateTicket && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onQuickCreateTicket(r)
+                }}
+                title={t({ tr: 'Talep Aç', en: 'Open Ticket' })}
+                className="shrink-0 flex items-center gap-1 text-[10.5px] font-bold text-p1 bg-p1-tint rounded-full px-2 py-1 hover:opacity-80"
+              >
+                <Ticket className="w-3 h-3" />
+                {t({ tr: 'Talep Aç', en: 'Open Ticket' })}
+              </button>
+            )}
+          </div>
         )
       })}
     </div>

@@ -82,6 +82,22 @@ Yeni bir modül eklerken izlenecek desen:
 3. `src/pages/<modul>/` — liste/detay/form bileşenleri
 4. `src/App.tsx` — `ComingSoonPage` yerine gerçek route bileşenini bağla
 
+## Operasyonel Notlar (Zamanlanmış Görevler)
+
+**`capture_store_score_snapshots(p_tenant_id)`** (0051, Mağaza Performansı) — Mağaza Performansı > Geçmiş sekmesindeki "Günlük" periyot görünümü (`get_store_score_trend`, `p_period='day'`) bu fonksiyonun HER GÜN çalıştığını varsayar. Şu an sadece Mağaza Performansı sayfasındaki **"Anlık Görüntü Al"** butonuyla MANUEL tetikleniyor — otomatik bir zamanlayıcı yok.
+
+Otomatik günlük çalıştırma için önerilen yöntem: Supabase Dashboard → **Database → Extensions**'tan `pg_cron` uzantısını etkinleştirip SQL Editor'den aşağıdakine benzer bir zamanlama eklemek (bu adım **migration'lara dahil edilmedi** — proje kapsamı `pg_cron` kurulumunu otomatikleştirmiyor, elle yapılmalı):
+
+```sql
+select cron.schedule(
+  'capture-store-score-snapshots-daily',
+  '0 1 * * *', -- her gün 01:00 (UTC)
+  $$select capture_store_score_snapshots(t.id) from tenants t$$
+);
+```
+
+Bu adım atılmazsa "Günlük" periyot görünümü, sadece butona elle basılan günler için veri gösterir (diğer günler için "veri yok").
+
 ## GitHub'a Aktarma & Hostinger'a Otomatik Deploy
 
 Bu proje **statik bir SPA** üretir (`npm run build` sonucu sadece HTML/CSS/JS dosyaları çıkar). Supabase bulutta ayrı çalıştığı için **Hostinger'da Node.js sunucusu gerekmez** — paylaşımlı hosting planı bile yeterlidir.

@@ -17,16 +17,27 @@ import type { Priority } from '@/types/database'
 const PRIORITIES: Priority[] = ['P1', 'P2', 'P3', 'P4']
 type Step = 'category' | 'subcategory' | 'details'
 
-export function NewTicketModal({ onClose }: { onClose: () => void }) {
+export function NewTicketModal({
+  onClose,
+  initialTitle,
+  initialCategory,
+}: {
+  onClose: () => void
+  /** Faz MP-4 — Mağaza Performansı'ndaki "Talep Aç" hızlı aksiyonu gibi
+   * dışarıdan ön-dolu açılış senaryoları için. Verilirse sihirbaz kategori/
+   * alt kategori adımlarını atlayıp doğrudan "detaylar" adımından başlar. */
+  initialTitle?: string
+  initialCategory?: string
+}) {
   const { lang, t } = useLang()
   const createIncident = useCreateIncident()
   const { data: existingCategories } = useDistinctCategories()
   const suggestTriage = useSuggestTriage()
 
-  const [step, setStep] = useState<Step>('category')
+  const [step, setStep] = useState<Step>(initialTitle ? 'details' : 'category')
   const [selectedCategory, setSelectedCategory] = useState<TicketCategory | null>(null)
   const [selectedSubcategory, setSelectedSubcategory] = useState<TicketSubcategory | null>(null)
-  const [categoryOverride, setCategoryOverride] = useState<string | null>(null)
+  const [categoryOverride, setCategoryOverride] = useState<string | null>(initialCategory ?? null)
   const [categorySearch, setCategorySearch] = useState('')
 
   const categoryMatches =
@@ -44,7 +55,7 @@ export function NewTicketModal({ onClose }: { onClose: () => void }) {
         })
       : []
 
-  const [title, setTitle] = useState('')
+  const [title, setTitle] = useState(initialTitle ?? '')
   const [description, setDescription] = useState('')
   const [priority, setPriority] = useState<Priority>('P3')
   const [suggestion, setSuggestion] = useState<TriageSuggestion | null>(null)

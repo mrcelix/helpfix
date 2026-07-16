@@ -118,7 +118,9 @@ export function StorePerformancePage() {
       </div>
 
       {pageTab === 'health-score' && <HealthScoreTab />}
-      {pageTab === 'lines-devices' && <LinesDevicesTab stores={stores} period={period} />}
+      {pageTab === 'lines-devices' && (
+        <LinesDevicesTab stores={stores} period={period} onGoToIntegrations={() => setPageTab('integrations')} />
+      )}
       {pageTab === 'inventory-sla' && <InventorySlaTab stores={stores} period={period} />}
       {pageTab === 'integrations' && <IntegrationsTab />}
 
