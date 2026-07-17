@@ -1,5 +1,24 @@
-import { useState } from 'react'
-import { Plus, Pencil, KeyRound, Trash2, Star } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import {
+  Plus,
+  Pencil,
+  KeyRound,
+  Trash2,
+  Star,
+  LayoutDashboard,
+  Users as UsersIcon,
+  Building2,
+  ToggleLeft,
+  Package,
+  ScrollText,
+  Sparkles,
+  Mail,
+  ListChecks,
+  Store,
+  ChevronLeft,
+  ChevronRight,
+  type LucideIcon,
+} from 'lucide-react'
 import { useLang, pickLang} from '@/contexts/LangContext'
 import { NAV_MODULES } from '@/components/layout/nav-modules'
 import { AdminCatalogTab } from './AdminCatalogTab'
@@ -29,64 +48,103 @@ import type { UserRole } from '@/types/database'
 
 const ROLE_OPTIONS: UserRole[] = ['tenant_admin', 'manager', 'agent', 'requester']
 
+type AdminTab = 'overview' | 'users' | 'departments' | 'modules' | 'catalog' | 'audit' | 'ai' | 'email' | 'ticket-fields' | 'sites'
+
+const ADMIN_TABS: { key: AdminTab; label: { tr: string; en: string }; icon: LucideIcon }[] = [
+  { key: 'overview', label: { tr: 'Genel Bakış', en: 'Overview' }, icon: LayoutDashboard },
+  { key: 'users', label: { tr: 'Kullanıcılar', en: 'Users' }, icon: UsersIcon },
+  { key: 'departments', label: { tr: 'Departmanlar', en: 'Departments' }, icon: Building2 },
+  { key: 'modules', label: { tr: 'Modüller', en: 'Modules' }, icon: ToggleLeft },
+  { key: 'catalog', label: { tr: 'Kataloğ', en: 'Catalog' }, icon: Package },
+  { key: 'audit', label: { tr: 'Denetim Günlüğü', en: 'Audit Log' }, icon: ScrollText },
+  { key: 'ai', label: { tr: 'AI Kullanımı', en: 'AI Usage' }, icon: Sparkles },
+  { key: 'email', label: { tr: 'E-posta Ayarları', en: 'Email Settings' }, icon: Mail },
+  { key: 'ticket-fields', label: { tr: 'Talep Alanları', en: 'Ticket Fields' }, icon: ListChecks },
+  { key: 'sites', label: { tr: 'Siteler', en: 'Sites' }, icon: Store },
+]
+
+const MENU_COLLAPSED_KEY = 'helpfix-admin-menu-collapsed'
+
 export function AdminPage() {
   const { t } = useLang()
-  const [tab, setTab] = useState<'overview' | 'users' | 'departments' | 'modules' | 'catalog' | 'audit' | 'ai' | 'email' | 'ticket-fields' | 'sites'>('overview')
+  const [tab, setTab] = useState<AdminTab>('overview')
+  // Masaüstünde (lg+) yatay sekme çubuğu yerine daraltılabilir yan menü —
+  // durumu localStorage'da hatırlar (Sidebar.tsx'teki desenle aynı mantık).
+  // Mobilde eski yatay kaydırılabilir çubuk aynen korunur.
+  const [menuCollapsed, setMenuCollapsed] = useState(() => window.localStorage.getItem(MENU_COLLAPSED_KEY) === '1')
+
+  useEffect(() => {
+    window.localStorage.setItem(MENU_COLLAPSED_KEY, menuCollapsed ? '1' : '0')
+  }, [menuCollapsed])
 
   return (
     <div>
-      <div className="mb-5">
-        <h1 className="font-display text-[22px] font-bold tracking-tight">
-          {t({ tr: 'Yönetim Paneli', en: 'Admin Panel' })}
-        </h1>
-        <p className="text-[13px] text-[var(--text-faint)] mt-1">
-          {t({ tr: 'Kullanıcılar, departmanlar ve modül yönetimi', en: 'Users, departments, and module management' })}
-        </p>
+      <div className="mb-5 flex items-center justify-between gap-3">
+        <div>
+          <h1 className="font-display text-[22px] font-bold tracking-tight">
+            {t({ tr: 'Yönetim Paneli', en: 'Admin Panel' })}
+          </h1>
+          <p className="text-[13px] text-[var(--text-faint)] mt-1">
+            {t({ tr: 'Kullanıcılar, departmanlar ve modül yönetimi', en: 'Users, departments, and module management' })}
+          </p>
+        </div>
+        <button
+          onClick={() => setMenuCollapsed((c) => !c)}
+          title={menuCollapsed ? t({ tr: 'Menüyü Genişlet', en: 'Expand Menu' }) : t({ tr: 'Menüyü Daralt', en: 'Collapse Menu' })}
+          className="hidden lg:flex w-8 h-8 shrink-0 rounded-lg border border-[var(--border)] bg-[var(--panel)] items-center justify-center text-[var(--text-faint)] hover:text-brand-dim hover:border-brand/40"
+        >
+          {menuCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+        </button>
       </div>
 
-      <div className="flex gap-1 border-b border-[var(--border)] mb-5 overflow-x-auto">
-        <TabButton active={tab === 'overview'} onClick={() => setTab('overview')}>
-          {t({ tr: 'Genel Bakış', en: 'Overview' })}
-        </TabButton>
-        <TabButton active={tab === 'users'} onClick={() => setTab('users')}>
-          {t({ tr: 'Kullanıcılar', en: 'Users' })}
-        </TabButton>
-        <TabButton active={tab === 'departments'} onClick={() => setTab('departments')}>
-          {t({ tr: 'Departmanlar', en: 'Departments' })}
-        </TabButton>
-        <TabButton active={tab === 'modules'} onClick={() => setTab('modules')}>
-          {t({ tr: 'Modüller', en: 'Modules' })}
-        </TabButton>
-        <TabButton active={tab === 'catalog'} onClick={() => setTab('catalog')}>
-          {t({ tr: 'Kataloğ', en: 'Catalog' })}
-        </TabButton>
-        <TabButton active={tab === 'audit'} onClick={() => setTab('audit')}>
-          {t({ tr: 'Denetim Günlüğü', en: 'Audit Log' })}
-        </TabButton>
-        <TabButton active={tab === 'ai'} onClick={() => setTab('ai')}>
-          {t({ tr: 'AI Kullanımı', en: 'AI Usage' })}
-        </TabButton>
-        <TabButton active={tab === 'email'} onClick={() => setTab('email')}>
-          {t({ tr: 'E-posta Ayarları', en: 'Email Settings' })}
-        </TabButton>
-        <TabButton active={tab === 'ticket-fields'} onClick={() => setTab('ticket-fields')}>
-          {t({ tr: 'Talep Alanları', en: 'Ticket Fields' })}
-        </TabButton>
-        <TabButton active={tab === 'sites'} onClick={() => setTab('sites')}>
-          {t({ tr: 'Siteler', en: 'Sites' })}
-        </TabButton>
+      {/* Mobil (< lg): eski yatay kaydırılabilir sekme çubuğu, değişmedi */}
+      <div className="flex lg:hidden gap-1 border-b border-[var(--border)] mb-5 overflow-x-auto">
+        {ADMIN_TABS.map((item) => (
+          <TabButton key={item.key} active={tab === item.key} onClick={() => setTab(item.key)}>
+            {t(item.label)}
+          </TabButton>
+        ))}
       </div>
 
-      {tab === 'overview' && <OverviewTab onNavigateTab={(t) => setTab(t as typeof tab)} />}
-      {tab === 'users' && <UsersTab />}
-      {tab === 'departments' && <DepartmentsTab />}
-      {tab === 'modules' && <ModulesTab />}
-      {tab === 'catalog' && <AdminCatalogTab />}
-      {tab === 'audit' && <AuditLogTab />}
-      {tab === 'ai' && <AiUsageTab />}
-      {tab === 'email' && <EmailSettingsTab />}
-      {tab === 'ticket-fields' && <TicketFieldsTab />}
-      {tab === 'sites' && <SitesTab />}
+      <div className="flex gap-5 items-start">
+        {/* Masaüstü (lg+): daraltılabilir yan (slide) menü */}
+        <aside
+          className={`hidden lg:flex flex-col gap-0.5 shrink-0 border-r border-[var(--border)] pr-3 transition-[width] duration-200 ${
+            menuCollapsed ? 'w-[52px]' : 'w-[196px]'
+          }`}
+        >
+          {ADMIN_TABS.map((item) => {
+            const Icon = item.icon
+            const active = tab === item.key
+            return (
+              <button
+                key={item.key}
+                onClick={() => setTab(item.key)}
+                title={menuCollapsed ? t(item.label) : undefined}
+                className={`flex items-center gap-2.5 py-2 rounded-lg text-[13px] font-medium transition-colors ${
+                  menuCollapsed ? 'justify-center px-2' : 'px-2.5'
+                } ${active ? 'bg-brand text-white font-semibold' : 'text-[var(--text-sub)] hover:bg-[var(--row-hover)] hover:text-[var(--text)]'}`}
+              >
+                <Icon className="w-[16px] h-[16px] shrink-0" />
+                {!menuCollapsed && <span className="truncate">{t(item.label)}</span>}
+              </button>
+            )
+          })}
+        </aside>
+
+        <div className="flex-1 min-w-0">
+          {tab === 'overview' && <OverviewTab onNavigateTab={(t) => setTab(t as AdminTab)} />}
+          {tab === 'users' && <UsersTab />}
+          {tab === 'departments' && <DepartmentsTab />}
+          {tab === 'modules' && <ModulesTab />}
+          {tab === 'catalog' && <AdminCatalogTab />}
+          {tab === 'audit' && <AuditLogTab />}
+          {tab === 'ai' && <AiUsageTab />}
+          {tab === 'email' && <EmailSettingsTab />}
+          {tab === 'ticket-fields' && <TicketFieldsTab />}
+          {tab === 'sites' && <SitesTab />}
+        </div>
+      </div>
     </div>
   )
 
