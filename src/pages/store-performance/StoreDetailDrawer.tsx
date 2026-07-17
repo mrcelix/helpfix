@@ -24,12 +24,29 @@ const STATUS_LABEL: Record<string, { tr: string; en: string }> = {
   status_merged: { tr: 'Birleştirildi', en: 'Merged' },
 }
 
-function TrendBadge({ current, previous, t }: { current: number; previous: number; t: (d: { tr: string; en: string }) => string }) {
+/** `increaseIsGood`: "Açılan" için artış kötüdür (kırmızı); "Çözülen" için
+ * artış iyidir (yeşil) — ok yönü her zaman gerçek artış/azalışı gösterir,
+ * ama RENK bu iki metrikte TERS anlam taşır, o yüzden dışarıdan verilir. */
+function TrendBadge({
+  current,
+  previous,
+  increaseIsGood,
+  t,
+}: {
+  current: number
+  previous: number
+  increaseIsGood: boolean
+  t: (d: { tr: string; en: string }) => string
+}) {
   const diff = current - previous
   if (diff === 0) return null
   const up = diff > 0
+  const isGood = up === increaseIsGood
   return (
-    <span className={`flex items-center gap-0.5 text-[10px] font-bold rounded-full px-1.5 py-0.5 ${up ? 'bg-p1-tint text-p1' : 'bg-ok/15 text-ok'}`} title={t({ tr: 'Önceki periyoda göre', en: 'vs previous period' })}>
+    <span
+      className={`flex items-center gap-0.5 text-[10px] font-bold rounded-full px-1.5 py-0.5 ${isGood ? 'bg-ok/15 text-ok' : 'bg-p1-tint text-p1'}`}
+      title={t({ tr: 'Önceki periyoda göre', en: 'vs previous period' })}
+    >
       {up ? <ArrowUp className="w-2.5 h-2.5" /> : <ArrowDown className="w-2.5 h-2.5" />}
       {Math.abs(diff)}
     </span>
@@ -99,14 +116,14 @@ export function StoreDetailDrawer({ store, period, onClose }: { store: StoreScor
               <div className="bg-[var(--panel-2)] border border-[var(--border)] rounded-xl p-3 text-center">
                 <div className="flex items-center justify-center gap-1.5">
                   <span className="font-display text-xl font-bold">{ticketStats.opened_count}</span>
-                  <TrendBadge current={ticketStats.opened_count} previous={ticketStats.prev_period_opened} t={t} />
+                  <TrendBadge current={ticketStats.opened_count} previous={ticketStats.prev_period_opened} increaseIsGood={false} t={t} />
                 </div>
                 <div className="text-[10px] text-[var(--text-faint)] mt-1">{t({ tr: 'Açılan', en: 'Opened' })}</div>
               </div>
               <div className="bg-[var(--panel-2)] border border-[var(--border)] rounded-xl p-3 text-center">
                 <div className="flex items-center justify-center gap-1.5">
                   <span className="font-display text-xl font-bold">{ticketStats.resolved_count}</span>
-                  <TrendBadge current={ticketStats.resolved_count} previous={ticketStats.prev_period_resolved} t={t} />
+                  <TrendBadge current={ticketStats.resolved_count} previous={ticketStats.prev_period_resolved} increaseIsGood={true} t={t} />
                 </div>
                 <div className="text-[10px] text-[var(--text-faint)] mt-1">{t({ tr: 'Çözülen', en: 'Resolved' })}</div>
               </div>

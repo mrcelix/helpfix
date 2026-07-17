@@ -3,6 +3,7 @@ import { useLang } from '@/contexts/LangContext'
 import {
   useStoreAvailability,
   useInventoryStatusBreakdown,
+  useDeviceStatusRealtime,
   type StorePeriod,
   type StoreAvailabilityRow,
   type StoreScorecard,
@@ -30,12 +31,16 @@ const STATUS_COLOR: Record<string, string> = {
 export function InventorySlaTab({ stores, period }: { stores: StoreScorecard[]; period: StorePeriod }) {
   const { t } = useLang()
   const [siteId, setSiteId] = useState<string | null>(stores[0]?.site_id ?? null)
-  const [selectedCi, setSelectedCi] = useState<StoreAvailabilityRow | null>(null)
+  // ci_id tutuluyor, tam satır değil — bkz. LinesDevicesTab'daki aynı
+  // yorum: açık drawer'ın Realtime'la tazelenmesi için.
+  const [selectedCiId, setSelectedCiId] = useState<string | null>(null)
   const [ticketPrefill, setTicketPrefill] = useState<{ title: string; category: string } | null>(null)
 
+  useDeviceStatusRealtime(siteId)
   const { data: rows, isLoading } = useStoreAvailability(siteId, period, { uncategorized: true })
   const { data: statusBreakdown } = useInventoryStatusBreakdown(siteId)
 
+  const selectedCi = rows?.find((r) => r.ci_id === selectedCiId) ?? null
   const statusTotal = statusBreakdown ? Object.values(statusBreakdown).reduce((s, n) => s + n, 0) : 0
   const storeName = stores.find((s) => s.site_id === siteId)?.site_name ?? ''
 
@@ -88,10 +93,10 @@ export function InventorySlaTab({ stores, period }: { stores: StoreScorecard[]; 
       )}
 
       <div className="border border-[var(--border)] rounded-[var(--radius-app)] bg-[var(--panel)] overflow-hidden">
-        <CiAvailabilityTable rows={rows} isLoading={isLoading} onSelectCi={setSelectedCi} onQuickCreateTicket={quickCreateTicket} />
+        <CiAvailabilityTable rows={rows} isLoading={isLoading} onSelectCi={(row) => setSelectedCiId(row.ci_id)} onQuickCreateTicket={quickCreateTicket} />
       </div>
 
-      {selectedCi && <CiAvailabilityDrawer ci={selectedCi} onClose={() => setSelectedCi(null)} />}
+      {selectedCi && <CiAvailabilityDrawer ci={selectedCi} onClose={() => setSelectedCiId(null)} />}
       {ticketPrefill && (
         <NewTicketModal
           initialTitle={ticketPrefill.title}

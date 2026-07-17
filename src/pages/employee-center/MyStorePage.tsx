@@ -16,7 +16,6 @@ import {
   useStoreScoreTrend,
   useDeviceStatusRealtime,
   type StoreHealthCategory,
-  type StoreAvailabilityRow,
 } from '@/pages/store-performance/useStorePerformance'
 import { PeriodSelector } from '@/pages/store-performance/PeriodSelector'
 import { CiAvailabilityTable } from '@/pages/store-performance/CiAvailabilityTable'
@@ -61,7 +60,10 @@ export function MyStorePage() {
   const { data: scoreTrend } = useStoreScoreTrend(siteId, period)
   const { data: lineRows, isLoading: linesLoading } = useStoreAvailability(siteId, period, { category: 'network' })
   const { data: categorySummary } = useStoreCategorySummary(siteId, period)
-  const [selectedCi, setSelectedCi] = useState<StoreAvailabilityRow | null>(null)
+  // ci_id tutuluyor, tam satır değil — bkz. LinesDevicesTab'daki aynı
+  // yorum: açık drawer'ın Realtime'la tazelenmesi için.
+  const [selectedCiId, setSelectedCiId] = useState<string | null>(null)
+  const selectedCi = lineRows?.find((r) => r.ci_id === selectedCiId) ?? null
 
   const thirdPartySummary = categorySummary?.filter((s) => THIRD_PARTY_CATEGORIES.includes(s.category)) ?? []
 
@@ -182,7 +184,7 @@ export function MyStorePage() {
           <Wifi className="w-3.5 h-3.5 text-brand-dim" />
           <h3 className="font-display text-[14px] font-bold">{t({ tr: 'Hat Durumları', en: 'Line Status' })}</h3>
         </div>
-        <CiAvailabilityTable rows={lineRows} isLoading={linesLoading} onSelectCi={setSelectedCi} />
+        <CiAvailabilityTable rows={lineRows} isLoading={linesLoading} onSelectCi={(row) => setSelectedCiId(row.ci_id)} />
       </div>
 
       {!!thirdPartySummary.length && (
@@ -267,7 +269,7 @@ export function MyStorePage() {
         </div>
       </div>
 
-      {selectedCi && <CiAvailabilityDrawer ci={selectedCi} onClose={() => setSelectedCi(null)} />}
+      {selectedCi && <CiAvailabilityDrawer ci={selectedCi} onClose={() => setSelectedCiId(null)} />}
     </div>
   )
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowDown, Wifi, Tag, ShoppingCart, HelpCircle, Plug } from 'lucide-react'
+import { AlertTriangle, Wifi, Tag, ShoppingCart, HelpCircle, Plug } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import {
   useStoreAvailability,
@@ -48,7 +48,10 @@ export function LinesDevicesTab({
   const { t } = useLang()
   const [siteId, setSiteId] = useState<string | null>(stores[0]?.site_id ?? null)
   const [filterCategory, setFilterCategory] = useState<StoreHealthCategory | null>(null)
-  const [selectedCi, setSelectedCi] = useState<StoreAvailabilityRow | null>(null)
+  // ci_id tutuluyor, tam satır DEĞİL — böylece Realtime bir olayla `rows`
+  // tazelendiğinde açık drawer'ın "anlık" bilgileri (durum, availability)
+  // donmuş bir kopya göstermek yerine gerçekten güncel kalır.
+  const [selectedCiId, setSelectedCiId] = useState<string | null>(null)
   const [ticketPrefill, setTicketPrefill] = useState<{ title: string; category: string } | null>(null)
 
   useDeviceStatusRealtime(siteId)
@@ -56,13 +59,20 @@ export function LinesDevicesTab({
   const { data: rows, isLoading } = useStoreAvailability(siteId, period, { category: filterCategory })
   const { data: endpoints } = useIntegrationEndpoints()
 
+  const selectedCi = rows?.find((r) => r.ci_id === selectedCiId) ?? null
   const summaryByCategory = new Map(summary?.map((s) => [s.category, s]))
   const hasIntegration = endpoints?.some((e) => e.site_id === siteId) ?? false
   const storeName = stores.find((s) => s.site_id === siteId)?.site_name ?? ''
 
   function quickCreateTicket(row: StoreAvailabilityRow) {
     const pct = row.availability_percent != null ? `%${row.availability_percent}` : t({ tr: 'veri yok', en: 'no data' })
-    const category = t(CATEGORY_TICKET_LABEL[row.line_type ? 'network' : (filterCategory ?? 'other')])
+    // Satırın gerçek kategorisi RPC'nin dönüşünde yok (ci_id/name/ci_type/
+    // line_type var, store_health_category yok) — bu yüzden line_type'a
+    // bakıyoruz (hat mı değil mi kesin bilgi). Hat değilse esl/kiosk_pos/
+    // other'ın hepsi zaten aynı "Donanım" etiketine düşüyor (bkz.
+    // CATEGORY_TICKET_LABEL), dolayısıyla filterCategory'ye güvenmeye
+    // gerek yok — "tümü" görünümünde de doğru sonuç verir.
+    const category = t(CATEGORY_TICKET_LABEL[row.line_type ? 'network' : 'other'])
     const subject = row.line_type
       ? `${LINE_TYPE_LABEL[row.line_type] ?? row.line_type} ${t({ tr: 'hattı', en: 'line' })}`
       : row.name
@@ -117,8 +127,11 @@ export function LinesDevicesTab({
                   {s?.avg_availability_percent != null ? `%${s.avg_availability_percent}` : '—'}
                 </div>
                 {belowTarget && (
-                  <span className="flex items-center gap-0.5 text-[10px] font-bold text-p1">
-                    <ArrowDown className="w-3 h-3" />
+                  <span
+                    className="flex items-center gap-0.5 text-[10px] font-bold text-p1"
+                    title={t({ tr: 'Şu an hedef altında (trend değil, anlık sayım)', en: 'Currently below target (a live count, not a trend)' })}
+                  >
+                    <AlertTriangle className="w-3 h-3" />
                     {s?.below_target_count}
                   </span>
                 )}
@@ -144,11 +157,11 @@ export function LinesDevicesTab({
             </button>
           </div>
         ) : (
-          <CiAvailabilityTable rows={rows} isLoading={isLoading} onSelectCi={setSelectedCi} onQuickCreateTicket={quickCreateTicket} />
+          <CiAvailabilityTable rows={rows} isLoading={isLoading} onSelectCi={(row) => setSelectedCiId(row.ci_id)} onQuickCreateTicket={quickCreateTicket} />
         )}
       </div>
 
-      {selectedCi && <CiAvailabilityDrawer ci={selectedCi} onClose={() => setSelectedCi(null)} />}
+      {selectedCi && <CiAvailabilityDrawer ci={selectedCi} onClose={() => setSelectedCiId(null)} />}
       {ticketPrefill && (
         <NewTicketModal
           initialTitle={ticketPrefill.title}

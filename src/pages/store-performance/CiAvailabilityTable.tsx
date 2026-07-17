@@ -64,7 +64,12 @@ export function CiAvailabilityTable({
             role="button"
             tabIndex={0}
             onClick={() => onSelectCi(r)}
-            onKeyDown={(e) => e.key === 'Enter' && onSelectCi(r)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                onSelectCi(r)
+              }
+            }}
             className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-[var(--row-hover)] cursor-pointer"
           >
             <span className={`w-2 h-2 rounded-full shrink-0 ${r.is_currently_online ? 'bg-ok' : 'bg-p1'}`} title={r.is_currently_online ? 'online' : 'offline'} />
