@@ -26,10 +26,11 @@ export function ReportBuilderTab() {
   const [dateRangeDays, setDateRangeDays] = useState(30)
   const [reportName, setReportName] = useState('')
 
-  const { data: buckets, isLoading } = useReportData(dataSource, groupBy, dateRangeDays)
+  const { data: buckets, isLoading, error } = useReportData(dataSource, groupBy, dateRangeDays, lang)
   const { data: savedReports } = useCustomReports()
   const saveReport = useSaveCustomReport()
   const deleteReport = useDeleteCustomReport()
+  const [saveError, setSaveError] = useState('')
 
   function changeSource(src: ReportDataSource) {
     setDataSource(src)
@@ -46,8 +47,13 @@ export function ReportBuilderTab() {
 
   async function handleSave() {
     if (!reportName.trim()) return
-    await saveReport.mutateAsync({ name: reportName.trim(), dataSource, groupBy, dateRangeDays })
-    setReportName('')
+    setSaveError('')
+    try {
+      await saveReport.mutateAsync({ name: reportName.trim(), dataSource, groupBy, dateRangeDays })
+      setReportName('')
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : String(err))
+    }
   }
 
   const total = buckets?.reduce((sum, b) => sum + b.count, 0) ?? 0
@@ -100,6 +106,7 @@ export function ReportBuilderTab() {
                 <button
                   key={d}
                   onClick={() => setDateRangeDays(d)}
+                  aria-pressed={dateRangeDays === d}
                   className={`flex-1 text-[11px] font-bold py-1.5 rounded-md border ${dateRangeDays === d ? 'bg-brand border-brand text-white' : 'bg-[var(--panel-2)] border-[var(--border)] text-[var(--text-sub)]'}`}
                 >
                   {d}{t({ tr: 'g', en: 'd' })}
@@ -114,10 +121,16 @@ export function ReportBuilderTab() {
                 placeholder={t({ tr: 'Rapor adı…', en: 'Report name…' })}
                 className="flex-1 bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-2.5 py-2 text-[12.5px]"
               />
-              <Button onClick={handleSave} disabled={saveReport.isPending || !reportName.trim()}>
+              <Button
+                onClick={handleSave}
+                disabled={saveReport.isPending || !reportName.trim()}
+                title={t({ tr: 'Raporu Kaydet', en: 'Save Report' })}
+                aria-label={t({ tr: 'Raporu Kaydet', en: 'Save Report' })}
+              >
                 <Save className="w-[15px] h-[15px]" />
               </Button>
             </div>
+            {saveError && <p className="text-[11px] text-p1 mt-1.5">{saveError}</p>}
           </div>
 
           {!!savedReports?.length && (
@@ -129,7 +142,12 @@ export function ReportBuilderTab() {
                     <button onClick={() => loadReport(r.id)} className="text-[12px] font-semibold text-left flex-1 truncate">
                       {r.name}
                     </button>
-                    <button onClick={() => deleteReport.mutate(r.id)} className="opacity-0 group-hover:opacity-100 text-[var(--text-faint)] hover:text-p1 shrink-0">
+                    <button
+                      onClick={() => deleteReport.mutate(r.id)}
+                      title={t({ tr: 'Raporu sil', en: 'Delete report' })}
+                      aria-label={t({ tr: 'Raporu sil', en: 'Delete report' })}
+                      className="opacity-0 group-hover:opacity-100 text-[var(--text-faint)] hover:text-p1 shrink-0"
+                    >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -160,7 +178,8 @@ export function ReportBuilderTab() {
           </div>
 
           {isLoading && <div className="text-[12px] text-[var(--text-faint)] py-10 text-center">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</div>}
-          {!isLoading && !buckets?.length && (
+          {error && <div className="text-[12px] text-p1 py-10 text-center">{t({ tr: 'Rapor verisi yüklenemedi.', en: 'Failed to load report data.' })}</div>}
+          {!isLoading && !error && !buckets?.length && (
             <div className="text-[12px] text-[var(--text-faint)] py-10 text-center">{t({ tr: 'Bu aralıkta veri yok.', en: 'No data in this range.' })}</div>
           )}
 

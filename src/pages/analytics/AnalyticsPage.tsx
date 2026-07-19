@@ -46,10 +46,10 @@ export function AnalyticsPage() {
   }
 
   const { data: trend, isLoading: trendLoading } = useWeeklyTrend()
-  const { data: sla } = useSlaCompliance()
-  const { data: changeSuccess } = useChangeSuccessRate()
-  const { data: priorityData, isLoading: priorityLoading } = useOpenByPriority()
-  const { data: avgFulfillment } = useAvgFulfillmentDays()
+  const { data: sla, error: slaError } = useSlaCompliance()
+  const { data: changeSuccess, error: changeSuccessError } = useChangeSuccessRate()
+  const { data: priorityData, isLoading: priorityLoading, error: priorityError } = useOpenByPriority()
+  const { data: avgFulfillment, error: avgFulfillmentError } = useAvgFulfillmentDays()
   const { data: savedWidgets } = useDashboardWidgets()
   const saveLayout = useSaveDashboardLayout()
 
@@ -107,6 +107,7 @@ export function AnalyticsPage() {
             value={`%${sla?.compliance_percent ?? 0}`}
             sub={`${sla?.breached_count ?? 0} / ${sla?.total_resolved ?? 0} ${t({ tr: 'ihlal', en: 'breached' })}`}
             color={Number(sla?.compliance_percent ?? 100) >= 90 ? 'text-ok' : 'text-p2'}
+            error={!!slaError}
           />
         )
       case 'change_success':
@@ -117,6 +118,7 @@ export function AnalyticsPage() {
             value={`%${changeSuccess?.success_percent ?? 0}`}
             sub={`${changeSuccess?.successful_count ?? 0} / ${changeSuccess?.total_closed ?? 0}`}
             color="text-brand"
+            error={!!changeSuccessError}
           />
         )
       case 'fulfillment_time':
@@ -126,6 +128,7 @@ export function AnalyticsPage() {
             label={t({ tr: 'Ort. Karşılama Süresi', en: 'Avg. Fulfillment Time' })}
             value={`${avgFulfillment ?? 0} ${t({ tr: 'gün', en: 'days' })}`}
             color="text-purple"
+            error={!!avgFulfillmentError}
           />
         )
       case 'open_records':
@@ -135,6 +138,7 @@ export function AnalyticsPage() {
             label={t({ tr: 'Toplam Açık Kayıt', en: 'Total Open Records' })}
             value={String(priorityData?.reduce((s, p) => s + p.count, 0) ?? 0)}
             color="text-p2"
+            error={!!priorityError}
           />
         )
       case 'weekly_trend':
@@ -155,7 +159,13 @@ export function AnalyticsPage() {
                   </span>
                 )}
               </div>
-              <button onClick={() => toggleCollapse(w)} className="text-[var(--text-faint)] hover:text-[var(--text)]">
+              <button
+                onClick={() => toggleCollapse(w)}
+                title={collapsedWidgets.has(w) ? t({ tr: 'Genişlet', en: 'Expand' }) : t({ tr: 'Daralt', en: 'Collapse' })}
+                aria-label={collapsedWidgets.has(w) ? t({ tr: 'Genişlet', en: 'Expand' }) : t({ tr: 'Daralt', en: 'Collapse' })}
+                aria-expanded={!collapsedWidgets.has(w)}
+                className="text-[var(--text-faint)] hover:text-[var(--text)]"
+              >
                 {collapsedWidgets.has(w) ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
               </button>
             </div>
@@ -191,12 +201,20 @@ export function AnalyticsPage() {
           <div key={w} className="bg-[var(--panel)] border border-[var(--border)] rounded-2xl p-5 col-span-2">
             <div className="flex items-center justify-between mb-4">
               <span className="text-[13px] font-bold">{pickLang(WIDGET_LABEL.priority_chart, lang)}</span>
-              <button onClick={() => toggleCollapse(w)} className="text-[var(--text-faint)] hover:text-[var(--text)]">
+              <button
+                onClick={() => toggleCollapse(w)}
+                title={collapsedWidgets.has(w) ? t({ tr: 'Genişlet', en: 'Expand' }) : t({ tr: 'Daralt', en: 'Collapse' })}
+                aria-label={collapsedWidgets.has(w) ? t({ tr: 'Genişlet', en: 'Expand' }) : t({ tr: 'Daralt', en: 'Collapse' })}
+                aria-expanded={!collapsedWidgets.has(w)}
+                className="text-[var(--text-faint)] hover:text-[var(--text)]"
+              >
                 {collapsedWidgets.has(w) ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
               </button>
             </div>
             {!collapsedWidgets.has(w) &&
-              (priorityLoading ? (
+              (priorityError ? (
+                <p className="text-p1 text-sm py-16 text-center">{t({ tr: 'Veri yüklenemedi.', en: 'Failed to load data.' })}</p>
+              ) : priorityLoading ? (
                 <p className="text-[var(--text-faint)] text-sm py-16 text-center">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</p>
               ) : (
                 <ResponsiveContainer width="100%" height={220}>
@@ -277,11 +295,27 @@ export function AnalyticsPage() {
             {t({ tr: 'Widget Seç & Sırala', en: 'Select & Reorder Widgets' })}
           </div>
           <div className="space-y-1.5">
-            {(draftOrder ?? activeOrder).map((w) => (
+            {(draftOrder ?? activeOrder).map((w, i, arr) => (
               <div key={w} className="flex items-center gap-2 bg-[var(--panel)] border border-[var(--border)] rounded-lg px-3 py-2">
                 <span className="flex-1 text-[12px] font-semibold">{pickLang(WIDGET_LABEL[w], lang)}</span>
-                <button onClick={() => move(w, -1)}><ArrowUp className="w-3.5 h-3.5 text-[var(--text-faint)]" /></button>
-                <button onClick={() => move(w, 1)}><ArrowDown className="w-3.5 h-3.5 text-[var(--text-faint)]" /></button>
+                <button
+                  onClick={() => move(w, -1)}
+                  disabled={i === 0}
+                  title={t({ tr: 'Yukarı taşı', en: 'Move up' })}
+                  aria-label={t({ tr: 'Yukarı taşı', en: 'Move up' })}
+                  className="disabled:opacity-30"
+                >
+                  <ArrowUp className="w-3.5 h-3.5 text-[var(--text-faint)]" />
+                </button>
+                <button
+                  onClick={() => move(w, 1)}
+                  disabled={i === arr.length - 1}
+                  title={t({ tr: 'Aşağı taşı', en: 'Move down' })}
+                  aria-label={t({ tr: 'Aşağı taşı', en: 'Move down' })}
+                  className="disabled:opacity-30"
+                >
+                  <ArrowDown className="w-3.5 h-3.5 text-[var(--text-faint)]" />
+                </button>
                 <button onClick={() => toggleWidget(w)} className="text-[10.5px] font-bold text-p1 ml-2">
                   {t({ tr: 'Kaldır', en: 'Remove' })}
                 </button>
@@ -312,12 +346,17 @@ export function AnalyticsPage() {
   )
 }
 
-function KpiCard({ label, value, sub, color }: { label: string; value: string; sub?: string; color: string }) {
+function KpiCard({ label, value, sub, color, error }: { label: string; value: string; sub?: string; color: string; error?: boolean }) {
+  const { t } = useLang()
   return (
     <div className="bg-[var(--panel)] border border-[var(--border)] rounded-xl p-4">
-      <div className={`font-display text-[22px] font-bold ${color}`}>{value}</div>
+      <div className={`font-display text-[22px] font-bold ${error ? 'text-[var(--text-faint)]' : color}`}>{error ? '—' : value}</div>
       <div className="text-[11px] text-[var(--text-faint)] mt-1">{label}</div>
-      {sub && <div className="text-[10px] text-[var(--text-faint)] mt-0.5">{sub}</div>}
+      {error ? (
+        <div className="text-[10px] text-p1 mt-0.5">{t({ tr: 'Yüklenemedi', en: 'Failed to load' })}</div>
+      ) : (
+        sub && <div className="text-[10px] text-[var(--text-faint)] mt-0.5">{sub}</div>
+      )}
     </div>
   )
 }

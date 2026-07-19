@@ -60,6 +60,7 @@ export function useOpenByPriority() {
         .from('incidents')
         .select('priority')
         .not('status', 'in', '(resolved,closed,merged)')
+        .order('created_at', { ascending: false })
         .limit(500)
       if (error) throw error
       const counts: Record<string, number> = { P1: 0, P2: 0, P3: 0, P4: 0 }
@@ -88,6 +89,7 @@ export function useAvgFulfillmentDays() {
         .select('created_at, fulfilled_at')
         .eq('status', 'fulfilled')
         .not('fulfilled_at', 'is', null)
+        .order('fulfilled_at', { ascending: false })
         .limit(200)
       if (error) throw error
       if (!data?.length) return 0

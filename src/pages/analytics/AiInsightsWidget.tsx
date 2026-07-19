@@ -20,25 +20,31 @@ export function AiInsightsWidget({
   onToggleCollapse: () => void
 }) {
   const { t } = useLang()
-  const { data: stats, isLoading } = useAiAdoptionStats(30)
+  const { data: stats, isLoading, error } = useAiAdoptionStats(30)
   const weeklyDigest = useWeeklyDigest()
   const [digest, setDigest] = useState<string | null>(null)
+  const [digestError, setDigestError] = useState('')
   const [copied, setCopied] = useState(false)
 
   async function handleDigest() {
     setDigest(null)
+    setDigestError('')
     try {
       setDigest(await weeklyDigest.mutateAsync())
-    } catch {
-      // sessizce yut — buton yeniden denenebilir
+    } catch (err) {
+      setDigestError(err instanceof Error ? err.message : String(err))
     }
   }
 
   async function handleCopy() {
     if (!digest) return
-    await navigator.clipboard.writeText(digest)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 1500)
+    try {
+      await navigator.clipboard.writeText(digest)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    } catch {
+      // pano izni reddedilmiş olabilir — sessizce yoksay, kullanıcı metni elle seçip kopyalayabilir
+    }
   }
 
   const cells: { label: { tr: string; en: string }; value: string; sub?: string }[] = [
@@ -77,14 +83,22 @@ export function AiInsightsWidget({
             {t({ tr: 'AI Benimseme (30 gün)', en: 'AI Adoption (30d)' })}
           </span>
         </div>
-        <button onClick={onToggleCollapse} className="text-[var(--text-faint)] hover:text-[var(--text)]">
+        <button
+          onClick={onToggleCollapse}
+          title={collapsed ? t({ tr: 'Genişlet', en: 'Expand' }) : t({ tr: 'Daralt', en: 'Collapse' })}
+          aria-label={collapsed ? t({ tr: 'Genişlet', en: 'Expand' }) : t({ tr: 'Daralt', en: 'Collapse' })}
+          aria-expanded={!collapsed}
+          className="text-[var(--text-faint)] hover:text-[var(--text)]"
+        >
           {collapsed ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
         </button>
       </div>
 
       {!collapsed && (
         <>
-          {isLoading ? (
+          {error ? (
+            <p className="text-p1 text-sm py-10 text-center">{t({ tr: 'AI kullanım verileri yüklenemedi.', en: 'Failed to load AI usage data.' })}</p>
+          ) : isLoading ? (
             <p className="text-[var(--text-faint)] text-sm py-10 text-center">
               {t({ tr: 'Yükleniyor…', en: 'Loading…' })}
             </p>
@@ -102,7 +116,7 @@ export function AiInsightsWidget({
             </div>
           )}
 
-          {(stats?.total_events ?? 0) === 0 && !isLoading && (
+          {(stats?.total_events ?? 0) === 0 && !isLoading && !error && (
             <p className="text-[11.5px] text-[var(--text-faint)] italic mb-4">
               {t({
                 tr: 'Henüz veri yok — metrikler, agent\u2019lar AI önerilerini kullandıkça birikir.',
@@ -146,6 +160,9 @@ export function AiInsightsWidget({
               <div className="bg-brand-tint border border-brand/30 rounded-lg px-3.5 py-3 text-[12.5px] leading-relaxed text-[var(--text-sub)] whitespace-pre-wrap">
                 {digest}
               </div>
+            )}
+            {digestError && (
+              <p className="text-[11.5px] text-p1 mt-2">{t({ tr: 'Özet oluşturulamadı, tekrar deneyin.', en: 'Failed to generate digest, please try again.' })}</p>
             )}
           </div>
         </>
