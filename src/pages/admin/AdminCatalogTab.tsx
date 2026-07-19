@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, Fragment } from 'react'
 import { Plus, Trash2, ChevronUp, ChevronDown, Workflow, ListPlus } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import {
@@ -19,9 +19,9 @@ import { FieldSchemaEditor } from '@/components/ui/DynamicFields'
 
 export function AdminCatalogTab() {
   const { lang, t } = useLang()
-  const { data: categories } = useCategories()
+  const { data: categories, error: categoriesError } = useCategories()
   const createCategory = useCreateCategory()
-  const { data: items, isLoading } = useAllCatalogItemsAdmin()
+  const { data: items, isLoading, error: itemsError } = useAllCatalogItemsAdmin()
   const createItem = useCreateCatalogItem()
   const toggleActive = useToggleCatalogItemActive()
 
@@ -66,6 +66,10 @@ export function AdminCatalogTab() {
         <div className="text-[10.5px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-2.5">
           {t({ tr: 'Kategoriler', en: 'Categories' })}
         </div>
+        {categoriesError && <p className="text-[11.5px] text-p1 mb-2">{t({ tr: 'Kategoriler yüklenemedi.', en: 'Failed to load categories.' })}</p>}
+        {!categoriesError && !categories?.length && (
+          <p className="text-[11.5px] text-[var(--text-faint)] italic mb-2.5">{t({ tr: 'Henüz kategori eklenmedi.', en: 'No categories added yet.' })}</p>
+        )}
         <div className="flex flex-wrap gap-1.5 mb-2.5">
           {categories?.map((c) => (
             <span key={c.id} className="text-[11.5px] font-semibold bg-[var(--panel)] border border-[var(--border)] rounded-full px-3 py-1.5">
@@ -81,7 +85,12 @@ export function AdminCatalogTab() {
             placeholder={t({ tr: 'Yeni kategori adı…', en: 'New category name…' })}
             className="flex-1 bg-[var(--panel)] border border-[var(--border)] rounded-lg px-3 py-2 text-[12.5px]"
           />
-          <button onClick={addCategory} className="w-9 h-9 rounded-lg bg-brand text-white flex items-center justify-center shrink-0">
+          <button
+            onClick={addCategory}
+            title={t({ tr: 'Kategori Ekle', en: 'Add Category' })}
+            aria-label={t({ tr: 'Kategori Ekle', en: 'Add Category' })}
+            className="w-9 h-9 rounded-lg bg-brand text-white flex items-center justify-center shrink-0"
+          >
             <Plus className="w-4 h-4" />
           </button>
         </div>
@@ -166,12 +175,15 @@ export function AdminCatalogTab() {
             {isLoading && (
               <tr><td colSpan={6} className="text-center py-8 text-[var(--text-faint)]">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</td></tr>
             )}
-            {!isLoading && items?.length === 0 && (
+            {itemsError && (
+              <tr><td colSpan={6} className="text-center py-10 text-p1">{t({ tr: 'Hizmetler yüklenemedi.', en: 'Failed to load services.' })}</td></tr>
+            )}
+            {!isLoading && !itemsError && items?.length === 0 && (
               <tr><td colSpan={6} className="text-center py-10 text-[var(--text-faint)]">{t({ tr: 'Henüz hizmet eklenmedi.', en: 'No services added yet.' })}</td></tr>
             )}
             {items?.map((i) => (
-              <>
-                <tr key={i.id} className="border-b border-[var(--border)] last:border-0">
+              <Fragment key={i.id}>
+                <tr className="border-b border-[var(--border)] last:border-0">
                   <td className="px-3.5 py-3 font-semibold">{i.name}</td>
                   <td className="px-3.5 py-3 text-[var(--text-sub)]">{i.category?.name ?? '—'}</td>
                   <td className="px-3.5 py-3 text-[var(--text-sub)]">{i.estimated_cost != null ? `₺${i.estimated_cost.toLocaleString(lang === 'tr' ? 'tr-TR' : 'en-US')}` : '—'}</td>
@@ -200,6 +212,9 @@ export function AdminCatalogTab() {
                   <td className="px-3.5 py-3">
                     <button
                       onClick={() => toggleActive.mutate({ id: i.id, isActive: !i.is_active })}
+                      aria-pressed={i.is_active}
+                      title={i.is_active ? t({ tr: 'Aktif — devre dışı bırak', en: 'Active — disable' }) : t({ tr: 'Pasif — etkinleştir', en: 'Inactive — enable' })}
+                      aria-label={i.is_active ? t({ tr: 'Aktif — devre dışı bırak', en: 'Active — disable' }) : t({ tr: 'Pasif — etkinleştir', en: 'Inactive — enable' })}
                       className={`w-9 h-5 rounded-full relative transition-colors ${i.is_active ? 'bg-ok' : 'bg-[var(--border)]'}`}
                     >
                       <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${i.is_active ? 'left-[18px]' : 'left-0.5'}`} />
@@ -220,7 +235,7 @@ export function AdminCatalogTab() {
                     </td>
                   </tr>
                 )}
-              </>
+              </Fragment>
             ))}
           </tbody>
         </table>
@@ -265,7 +280,10 @@ function ApprovalChainEditor({
     setChain((c) => c.map((s, i) => (i === idx ? { ...s, approver_id: approverId } : s)))
   }
 
+  const hasUnassignedApprover = chain.some((s) => s.type === 'specific_user' && !s.approver_id)
+
   async function save() {
+    if (hasUnassignedApprover) return
     await updateChain.mutateAsync({ id: itemId, chain })
     onDone()
   }
@@ -308,13 +326,30 @@ function ApprovalChainEditor({
               </select>
             )}
             <div className="ml-auto flex items-center gap-0.5 shrink-0">
-              <button onClick={() => moveStage(idx, -1)} disabled={idx === 0} className="disabled:opacity-30 text-[var(--text-faint)]">
+              <button
+                onClick={() => moveStage(idx, -1)}
+                disabled={idx === 0}
+                title={t({ tr: 'Yukarı taşı', en: 'Move up' })}
+                aria-label={t({ tr: 'Yukarı taşı', en: 'Move up' })}
+                className="disabled:opacity-30 text-[var(--text-faint)]"
+              >
                 <ChevronUp className="w-3.5 h-3.5" />
               </button>
-              <button onClick={() => moveStage(idx, 1)} disabled={idx === chain.length - 1} className="disabled:opacity-30 text-[var(--text-faint)]">
+              <button
+                onClick={() => moveStage(idx, 1)}
+                disabled={idx === chain.length - 1}
+                title={t({ tr: 'Aşağı taşı', en: 'Move down' })}
+                aria-label={t({ tr: 'Aşağı taşı', en: 'Move down' })}
+                className="disabled:opacity-30 text-[var(--text-faint)]"
+              >
                 <ChevronDown className="w-3.5 h-3.5" />
               </button>
-              <button onClick={() => removeStage(idx)} className="text-[var(--text-faint)] hover:text-p1">
+              <button
+                onClick={() => removeStage(idx)}
+                title={t({ tr: 'Aşamayı sil', en: 'Remove stage' })}
+                aria-label={t({ tr: 'Aşamayı sil', en: 'Remove stage' })}
+                className="text-[var(--text-faint)] hover:text-p1"
+              >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
             </div>
@@ -322,6 +357,9 @@ function ApprovalChainEditor({
         ))}
         {!chain.length && (
           <p className="text-[11px] text-[var(--text-faint)] italic py-1.5">{t({ tr: 'Henüz aşama eklenmedi.', en: 'No stages added yet.' })}</p>
+        )}
+        {hasUnassignedApprover && (
+          <p className="text-[11px] text-p1 py-1">{t({ tr: 'Belirli kişi aşamaları için kişi seçmelisiniz.', en: 'You must select a person for specific-person stages.' })}</p>
         )}
       </div>
       <div className="flex items-center gap-2">
@@ -331,7 +369,7 @@ function ApprovalChainEditor({
         </button>
         <button
           onClick={save}
-          disabled={updateChain.isPending}
+          disabled={updateChain.isPending || hasUnassignedApprover}
           className="ml-auto text-[11px] font-bold px-3 py-1.5 rounded-md bg-brand text-white disabled:opacity-40"
         >
           {updateChain.isPending ? t({ tr: 'Kaydediliyor…', en: 'Saving…' }) : t({ tr: 'Kaydet', en: 'Save' })}

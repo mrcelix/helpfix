@@ -51,6 +51,35 @@ export function useCreateSite() {
   })
 }
 
+export function useUpdateSite() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: {
+      id: string
+      name: string
+      address: string
+      city: string
+      isHeadquarters: boolean
+      parentSiteId: string | null
+      managerId: string | null
+    }) => {
+      const { error } = await supabase
+        .from('sites')
+        .update({
+          name: input.name,
+          address: input.address || null,
+          city: input.city || null,
+          is_headquarters: input.isHeadquarters,
+          parent_site_id: input.parentSiteId,
+          manager_id: input.managerId,
+        })
+        .eq('id', input.id)
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['sites'] }),
+  })
+}
+
 export function useDeleteSite() {
   const qc = useQueryClient()
   return useMutation({

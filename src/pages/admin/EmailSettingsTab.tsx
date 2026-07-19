@@ -5,7 +5,7 @@ import { useTenantInboundEmail } from './useAdmin'
 
 export function EmailSettingsTab() {
   const { t } = useLang()
-  const { data: inboundEmail, isLoading } = useTenantInboundEmail()
+  const { data: inboundEmail, isLoading, error } = useTenantInboundEmail()
   const [copied, setCopied] = useState(false)
 
   function copy() {
@@ -30,10 +30,17 @@ export function EmailSettingsTab() {
         </p>
         {isLoading ? (
           <div className="text-[12px] text-[var(--text-faint)] py-2">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</div>
+        ) : error ? (
+          <div className="text-[12px] text-p1 py-2">{t({ tr: 'Adres yüklenemedi.', en: 'Failed to load address.' })}</div>
         ) : (
           <div className="flex items-center gap-2 bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2.5">
             <code className="flex-1 text-[13px] font-mono">{inboundEmail}</code>
-            <button onClick={copy} className="text-brand-dim shrink-0">
+            <button
+              onClick={copy}
+              title={t({ tr: 'Kopyala', en: 'Copy' })}
+              aria-label={t({ tr: 'Kopyala', en: 'Copy' })}
+              className="text-brand-dim shrink-0"
+            >
               {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
             </button>
           </div>

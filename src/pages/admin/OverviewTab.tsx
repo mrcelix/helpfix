@@ -6,13 +6,14 @@ import { NAV_MODULES } from '@/components/layout/nav-modules'
 
 export function OverviewTab({ onNavigateTab }: { onNavigateTab: (tab: string) => void }) {
   const { lang, t } = useLang()
-  const { data: users } = useTenantUsers()
-  const { data: departments } = useDepartments()
+  const { data: users, error: usersError } = useTenantUsers()
+  const { data: departments, error: departmentsError } = useDepartments()
   const { data: flags } = useFeatureFlags()
-  const { data: sites } = useSites()
-  const { data: auditLog } = useAuditLog()
+  const { data: sites, error: sitesError } = useSites()
+  const { data: auditLog, error: auditError } = useAuditLog()
   const { data: quota } = useAiQuota()
   const { data: aiUsage } = useAiUsageThisMonth()
+  const hasError = usersError || departmentsError || sitesError || auditError
 
   const activeUsers = users?.filter((u) => u.is_active).length ?? 0
   const activeModuleCount = NAV_MODULES.filter((m) => flags?.[m.code] ?? true).length
@@ -21,6 +22,11 @@ export function OverviewTab({ onNavigateTab }: { onNavigateTab: (tab: string) =>
 
   return (
     <div>
+      {hasError && (
+        <div className="text-[12px] text-p1 bg-p1-tint border border-p1/40 rounded-xl px-4 py-2.5 mb-4">
+          {t({ tr: 'Bazı özet veriler yüklenemedi — sayıların bir kısmı eksik olabilir.', en: 'Some summary data failed to load — some numbers may be incomplete.' })}
+        </div>
+      )}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 mb-5">
         <OverviewCard
           icon={Users}

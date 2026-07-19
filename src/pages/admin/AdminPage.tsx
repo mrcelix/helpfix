@@ -20,6 +20,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { useLang, pickLang} from '@/contexts/LangContext'
+import { useAuth } from '@/contexts/AuthContext'
 import { NAV_MODULES } from '@/components/layout/nav-modules'
 import { AdminCatalogTab } from './AdminCatalogTab'
 import { AiUsageTab } from './AiUsageTab'
@@ -42,6 +43,7 @@ import {
   useFeatureFlags,
   useToggleModule,
   useAuditLog,
+  ROLE_LABEL,
   type TenantUser,
 } from './useAdmin'
 import type { UserRole } from '@/types/database'
@@ -55,7 +57,7 @@ const ADMIN_TABS: { key: AdminTab; label: { tr: string; en: string }; icon: Luci
   { key: 'users', label: { tr: 'Kullanıcılar', en: 'Users' }, icon: UsersIcon },
   { key: 'departments', label: { tr: 'Departmanlar', en: 'Departments' }, icon: Building2 },
   { key: 'modules', label: { tr: 'Modüller', en: 'Modules' }, icon: ToggleLeft },
-  { key: 'catalog', label: { tr: 'Kataloğ', en: 'Catalog' }, icon: Package },
+  { key: 'catalog', label: { tr: 'Katalog', en: 'Catalog' }, icon: Package },
   { key: 'audit', label: { tr: 'Denetim Günlüğü', en: 'Audit Log' }, icon: ScrollText },
   { key: 'ai', label: { tr: 'AI Kullanımı', en: 'AI Usage' }, icon: Sparkles },
   { key: 'email', label: { tr: 'E-posta Ayarları', en: 'Email Settings' }, icon: Mail },
@@ -160,16 +162,10 @@ export function AdminPage() {
   }
 }
 
-const ROLE_LABEL: Record<UserRole, { tr: string; en: string }> = {
-  tenant_admin: { tr: 'Tenant Admin', en: 'Tenant Admin' },
-  manager: { tr: 'Ekip Yöneticisi', en: 'Team Manager' },
-  agent: { tr: 'Teknisyen', en: 'Agent' },
-  requester: { tr: 'Son Kullanıcı', en: 'Requester' },
-}
-
 function UsersTab() {
   const { lang, t } = useLang()
-  const { data: users, isLoading } = useTenantUsers()
+  const { profile } = useAuth()
+  const { data: users, isLoading, error } = useTenantUsers()
   const updateRole = useUpdateUserRole()
   const toggleActive = useToggleUserActive()
   const deleteUser = useDeleteUser()
@@ -217,16 +213,30 @@ function UsersTab() {
               </td>
             </tr>
           )}
-          {users?.map((u) => (
+          {error && (
+            <tr>
+              <td colSpan={6} className="text-center py-10 text-p1">
+                {t({ tr: 'Kullanıcılar yüklenemedi.', en: 'Failed to load users.' })}
+              </td>
+            </tr>
+          )}
+          {users?.map((u) => {
+            const isSelf = u.id === profile?.id
+            return (
             <tr key={u.id} className="border-b border-[var(--border)] last:border-0">
-              <td className="px-3.5 py-3 font-semibold">{u.full_name}</td>
+              <td className="px-3.5 py-3 font-semibold">
+                {u.full_name}
+                {isSelf && <span className="ml-1.5 text-[9px] font-bold text-[var(--text-faint)]">({t({ tr: 'siz', en: 'you' })})</span>}
+              </td>
               <td className="px-3.5 py-3 text-[var(--text-sub)]">{u.email}</td>
               <td className="px-3.5 py-3 text-[var(--text-sub)]">{u.department?.name ?? '—'}</td>
               <td className="px-3.5 py-3">
                 <select
                   value={u.role}
                   onChange={(e) => updateRole.mutate({ id: u.id, role: e.target.value as UserRole })}
-                  className="bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-2 py-1 text-[11.5px]"
+                  disabled={isSelf}
+                  title={isSelf ? t({ tr: 'Kendi rolünüzü değiştiremezsiniz', en: "You can't change your own role" }) : undefined}
+                  className="bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-2 py-1 text-[11.5px] disabled:opacity-50"
                 >
                   {ROLE_OPTIONS.map((r) => (
                     <option key={r} value={r}>
@@ -238,7 +248,10 @@ function UsersTab() {
               <td className="px-3.5 py-3">
                 <button
                   onClick={() => toggleActive.mutate({ id: u.id, is_active: !u.is_active })}
-                  className={`w-9 h-5 rounded-full relative transition-colors ${u.is_active ? 'bg-ok' : 'bg-[var(--border)]'}`}
+                  disabled={isSelf}
+                  aria-pressed={u.is_active}
+                  title={isSelf ? t({ tr: 'Kendi hesabınızı devre dışı bırakamazsınız', en: "You can't deactivate your own account" }) : undefined}
+                  className={`w-9 h-5 rounded-full relative transition-colors disabled:opacity-50 ${u.is_active ? 'bg-ok' : 'bg-[var(--border)]'}`}
                 >
                   <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${u.is_active ? 'left-[18px]' : 'left-0.5'}`} />
                 </button>
@@ -268,29 +281,31 @@ function UsersTab() {
                   </button>
                   <button
                     onClick={() => handleDelete(u)}
-                    title={t({ tr: 'Sil', en: 'Delete' })}
-                    className="p-1.5 rounded-md text-[var(--text-faint)] hover:text-p1 hover:bg-[var(--panel-2)]"
+                    disabled={isSelf}
+                    title={isSelf ? t({ tr: 'Kendi hesabınızı silemezsiniz', en: "You can't delete your own account" }) : t({ tr: 'Sil', en: 'Delete' })}
+                    className="p-1.5 rounded-md text-[var(--text-faint)] hover:text-p1 hover:bg-[var(--panel-2)] disabled:opacity-30 disabled:hover:text-[var(--text-faint)]"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </td>
             </tr>
-          ))}
+            )
+          })}
           </tbody>
         </table>
       </div>
       {showNewUserModal && <NewUserModal onClose={() => setShowNewUserModal(false)} />}
-      {editingUser && <EditUserModal user={editingUser} onClose={() => setEditingUser(null)} />}
-      {resettingUser && <ResetPasswordModal user={resettingUser} onClose={() => setResettingUser(null)} />}
-      {skillsForUser && <UserSkillsModal user={skillsForUser} onClose={() => setSkillsForUser(null)} />}
+      {editingUser && <EditUserModal key={editingUser.id} user={editingUser} onClose={() => setEditingUser(null)} />}
+      {resettingUser && <ResetPasswordModal key={resettingUser.id} user={resettingUser} onClose={() => setResettingUser(null)} />}
+      {skillsForUser && <UserSkillsModal key={skillsForUser.id} user={skillsForUser} onClose={() => setSkillsForUser(null)} />}
     </div>
   )
 }
 
 function DepartmentsTab() {
   const { t } = useLang()
-  const { data: departments, isLoading } = useDepartments()
+  const { data: departments, isLoading, error } = useDepartments()
   const createDepartment = useCreateDepartment()
   const [newName, setNewName] = useState('')
 
@@ -310,7 +325,12 @@ function DepartmentsTab() {
           placeholder={t({ tr: 'Yeni departman adı…', en: 'New department name…' })}
           className="flex-1 bg-[var(--panel)] border border-[var(--border)] rounded-lg px-3 py-2 text-[12.5px]"
         />
-        <button onClick={add} className="w-9 h-9 rounded-lg bg-brand text-white flex items-center justify-center shrink-0">
+        <button
+          onClick={add}
+          title={t({ tr: 'Departman Ekle', en: 'Add Department' })}
+          aria-label={t({ tr: 'Departman Ekle', en: 'Add Department' })}
+          className="w-9 h-9 rounded-lg bg-brand text-white flex items-center justify-center shrink-0"
+        >
           <Plus className="w-4 h-4" />
         </button>
       </div>
@@ -322,7 +342,12 @@ function DepartmentsTab() {
                 <td className="text-center py-10 text-[var(--text-faint)]">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</td>
               </tr>
             )}
-            {!isLoading && departments?.length === 0 && (
+            {error && (
+              <tr>
+                <td className="text-center py-10 text-p1">{t({ tr: 'Departmanlar yüklenemedi.', en: 'Failed to load departments.' })}</td>
+              </tr>
+            )}
+            {!isLoading && !error && departments?.length === 0 && (
               <tr>
                 <td className="text-center py-10 text-[var(--text-faint)]">{t({ tr: 'Henüz departman yok.', en: 'No departments yet.' })}</td>
               </tr>
@@ -341,7 +366,7 @@ function DepartmentsTab() {
 
 function ModulesTab() {
   const { lang, t } = useLang()
-  const { data: flags, isLoading } = useFeatureFlags()
+  const { data: flags, isLoading, error } = useFeatureFlags()
   const toggleModule = useToggleModule()
 
   return (
@@ -354,6 +379,8 @@ function ModulesTab() {
       </p>
       {isLoading ? (
         <p className="text-[var(--text-faint)] text-sm py-8 text-center">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</p>
+      ) : error ? (
+        <p className="text-p1 text-sm py-8 text-center">{t({ tr: 'Modül ayarları yüklenemedi.', en: 'Failed to load module settings.' })}</p>
       ) : (
         <div className="space-y-2">
           {NAV_MODULES.map((m) => {
@@ -368,6 +395,9 @@ function ModulesTab() {
                 )}
                 <button
                   onClick={() => toggleModule.mutate({ moduleCode: m.code, isEnabled: !enabled })}
+                  aria-pressed={enabled}
+                  title={enabled ? t({ tr: 'Aktif — devre dışı bırak', en: 'Active — disable' }) : t({ tr: 'Pasif — etkinleştir', en: 'Inactive — enable' })}
+                  aria-label={enabled ? t({ tr: 'Aktif — devre dışı bırak', en: 'Active — disable' }) : t({ tr: 'Pasif — etkinleştir', en: 'Inactive — enable' })}
                   className={`w-9 h-5 rounded-full relative transition-colors shrink-0 ${enabled ? 'bg-ok' : 'bg-[var(--border)]'}`}
                 >
                   <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${enabled ? 'left-[18px]' : 'left-0.5'}`} />
@@ -397,7 +427,7 @@ const ACTION_LABEL: Record<string, { tr: string; en: string }> = {
 
 function AuditLogTab() {
   const { lang, t } = useLang()
-  const { data: entries, isLoading } = useAuditLog()
+  const { data: entries, isLoading, error } = useAuditLog()
 
   return (
     <div>
@@ -421,7 +451,10 @@ function AuditLogTab() {
             {isLoading && (
               <tr><td colSpan={4} className="text-center py-10 text-[var(--text-faint)]">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</td></tr>
             )}
-            {!isLoading && entries?.length === 0 && (
+            {error && (
+              <tr><td colSpan={4} className="text-center py-10 text-p1">{t({ tr: 'Denetim günlüğü yüklenemedi.', en: 'Failed to load audit log.' })}</td></tr>
+            )}
+            {!isLoading && !error && entries?.length === 0 && (
               <tr><td colSpan={4} className="text-center py-10 text-[var(--text-faint)]">{t({ tr: 'Henüz kayıt yok.', en: 'No entries yet.' })}</td></tr>
             )}
             {entries?.map((e) => (

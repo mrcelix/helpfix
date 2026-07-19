@@ -6,10 +6,10 @@ import { useAiQuota, useAiUsageThisMonth, useSetAiQuota, getActionLabel, useRece
 
 export function AiUsageTab() {
   const { lang, t } = useLang()
-  const { data: quota, isLoading: quotaLoading } = useAiQuota()
-  const { data: usage, isLoading: usageLoading } = useAiUsageThisMonth()
+  const { data: quota, isLoading: quotaLoading, error: quotaError } = useAiQuota()
+  const { data: usage, isLoading: usageLoading, error: usageError } = useAiUsageThisMonth()
   const setQuota = useSetAiQuota()
-  const { data: recentEvents } = useRecentAiEvents(25)
+  const { data: recentEvents, isLoading: eventsLoading, error: eventsError } = useRecentAiEvents(25)
 
   const [limitInput, setLimitInput] = useState<number | null>(null)
 
@@ -42,8 +42,11 @@ export function AiUsageTab() {
         {(quotaLoading || usageLoading) && (
           <div className="text-[12px] text-[var(--text-faint)] py-4 text-center">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</div>
         )}
+        {(quotaError || usageError) && !quotaLoading && !usageLoading && (
+          <div className="text-[12px] text-p1 py-4 text-center">{t({ tr: 'Kullanım verileri yüklenemedi.', en: 'Failed to load usage data.' })}</div>
+        )}
 
-        {!quotaLoading && !usageLoading && (
+        {!quotaLoading && !usageLoading && !quotaError && !usageError && (
           <>
             <div className="flex items-end justify-between mb-1.5">
               <span className="font-display text-2xl font-bold">
@@ -121,7 +124,11 @@ export function AiUsageTab() {
         <p className="text-[11.5px] text-[var(--text-faint)] mb-3">
           {t({ tr: 'Son 25 AI olayı — kim, hangi kayıtta, ne yaptı', en: 'Last 25 AI events — who did what, on which record' })}
         </p>
-        {!recentEvents?.length ? (
+        {eventsLoading ? (
+          <p className="text-[11.5px] text-[var(--text-faint)] italic">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</p>
+        ) : eventsError ? (
+          <p className="text-[11.5px] text-p1">{t({ tr: 'AI olayları yüklenemedi.', en: 'Failed to load AI events.' })}</p>
+        ) : !recentEvents?.length ? (
           <p className="text-[11.5px] text-[var(--text-faint)] italic">
             {t({ tr: 'Henüz AI olayı yok.', en: 'No AI events yet.' })}
           </p>

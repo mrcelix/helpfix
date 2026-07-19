@@ -49,7 +49,12 @@ export function ResetPasswordModal({ user, onClose }: { user: TenantUser; onClos
           </p>
           <div className="flex items-center gap-2 bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2.5 mb-4">
             <code className="flex-1 text-[13px] font-mono text-left">{password}</code>
-            <button onClick={copyPassword} className="text-brand-dim">
+            <button
+              onClick={copyPassword}
+              title={t({ tr: 'Şifreyi Kopyala', en: 'Copy Password' })}
+              aria-label={t({ tr: 'Şifreyi Kopyala', en: 'Copy Password' })}
+              className="text-brand-dim"
+            >
               {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
             </button>
           </div>

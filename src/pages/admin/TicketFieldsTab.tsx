@@ -6,7 +6,7 @@ import { TICKET_CATEGORIES } from '@/pages/service-desk/ticket-categories'
 
 export function TicketFieldsTab() {
   const { lang, t } = useLang()
-  const { data: allFields } = useAllTicketCategoryFields()
+  const { data: allFields, isLoading, error } = useAllTicketCategoryFields()
   const setFields = useSetTicketCategoryFields()
   const [expandedKey, setExpandedKey] = useState<string | null>(null)
 
@@ -20,6 +20,9 @@ export function TicketFieldsTab() {
           en: 'When a category is selected in the New Ticket wizard, the custom fields defined here are shown in addition to the standard Subject/Description fields (e.g. an "Asset Tag" field for the Hardware category).',
         })}
       </p>
+      {isLoading && <p className="text-[12px] text-[var(--text-faint)] py-4 text-center">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</p>}
+      {error && <p className="text-[12px] text-p1 py-4 text-center">{t({ tr: 'Alan tanımları yüklenemedi.', en: 'Failed to load field definitions.' })}</p>}
+      {!isLoading && !error && (
       <div className="flex flex-col gap-2">
         {TICKET_CATEGORIES.map((cat) => {
           const Icon = cat.icon
@@ -50,6 +53,7 @@ export function TicketFieldsTab() {
           )
         })}
       </div>
+      )}
     </div>
   )
 }

@@ -1,18 +1,19 @@
 import { useState } from 'react'
-import { Plus, Trash2, Building2, Plug, Copy, Check, RefreshCw } from 'lucide-react'
+import { Plus, Trash2, Pencil, Building2, Plug, Copy, Check, RefreshCw } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import { Button } from '@/components/ui/Button'
-import { useSites, useCreateSite, useDeleteSite, useRegenerateSiteToken } from './useSites'
+import { useSites, useCreateSite, useUpdateSite, useDeleteSite, useRegenerateSiteToken, type Site } from './useSites'
 import { useAssignableUsers } from '@/pages/oncall/useOnCall'
 
 export function SitesTab() {
   const { t } = useLang()
-  const { data: sites, isLoading } = useSites()
+  const { data: sites, isLoading, error } = useSites()
   const createSite = useCreateSite()
   const deleteSite = useDeleteSite()
   const regenerateToken = useRegenerateSiteToken()
   const { data: users } = useAssignableUsers()
   const [expandedIntegration, setExpandedIntegration] = useState<string | null>(null)
+  const [editingSite, setEditingSite] = useState<Site | null>(null)
 
   const [showForm, setShowForm] = useState(false)
   const [name, setName] = useState('')
@@ -130,7 +131,8 @@ export function SitesTab() {
       )}
 
       {isLoading && <p className="text-[12px] text-[var(--text-faint)]">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</p>}
-      {!isLoading && !sites?.length && <p className="text-[13px] text-[var(--text-faint)] py-6 text-center">{t({ tr: 'Henüz site eklenmedi.', en: 'No sites added yet.' })}</p>}
+      {error && <p className="text-[12px] text-p1">{t({ tr: 'Siteler yüklenemedi.', en: 'Failed to load sites.' })}</p>}
+      {!isLoading && !error && !sites?.length && <p className="text-[13px] text-[var(--text-faint)] py-6 text-center">{t({ tr: 'Henüz site eklenmedi.', en: 'No sites added yet.' })}</p>}
 
       <div className="flex flex-col gap-2">
         {sites?.map((s) => (
@@ -153,21 +155,125 @@ export function SitesTab() {
                 </div>
               </div>
               <button
+                onClick={() => setEditingSite(editingSite?.id === s.id ? null : s)}
+                title={t({ tr: 'Düzenle', en: 'Edit' })}
+                aria-label={t({ tr: 'Düzenle', en: 'Edit' })}
+                className="p-1.5 rounded-md text-[var(--text-faint)] hover:text-brand-dim hover:bg-[var(--panel-2)] shrink-0"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+              </button>
+              <button
                 onClick={() => setExpandedIntegration(expandedIntegration === s.id ? null : s.id)}
                 title={t({ tr: 'Entegrasyon', en: 'Integration' })}
+                aria-label={t({ tr: 'Entegrasyon', en: 'Integration' })}
                 className="p-1.5 rounded-md text-[var(--text-faint)] hover:text-brand-dim hover:bg-[var(--panel-2)] shrink-0"
               >
                 <Plug className="w-3.5 h-3.5" />
               </button>
-              <button onClick={() => handleDelete(s.id)} className="text-[var(--text-faint)] hover:text-p1 shrink-0">
+              <button
+                onClick={() => handleDelete(s.id)}
+                title={t({ tr: 'Sil', en: 'Delete' })}
+                aria-label={t({ tr: 'Sil', en: 'Delete' })}
+                className="text-[var(--text-faint)] hover:text-p1 shrink-0"
+              >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
             </div>
+            {editingSite?.id === s.id && (
+              <SiteEditForm site={s} sites={sites ?? []} users={users} onDone={() => setEditingSite(null)} />
+            )}
             {expandedIntegration === s.id && (
               <SiteIntegrationPanel token={s.integration_token} onRegenerate={() => regenerateToken.mutate(s.id)} isRegenerating={regenerateToken.isPending} />
             )}
           </div>
         ))}
+      </div>
+    </div>
+  )
+}
+
+function SiteEditForm({
+  site,
+  sites,
+  users,
+  onDone,
+}: {
+  site: Site
+  sites: Site[]
+  users: { id: string; full_name: string }[] | undefined
+  onDone: () => void
+}) {
+  const { t } = useLang()
+  const updateSite = useUpdateSite()
+  const [name, setName] = useState(site.name)
+  const [city, setCity] = useState(site.city ?? '')
+  const [address, setAddress] = useState(site.address ?? '')
+  const [isHq, setIsHq] = useState(site.is_headquarters)
+  const [parentSiteId, setParentSiteId] = useState(site.parent_site_id ?? '')
+  const [managerId, setManagerId] = useState(site.manager_id ?? '')
+  const [error, setError] = useState('')
+
+  async function save() {
+    if (!name.trim()) return
+    setError('')
+    try {
+      await updateSite.mutateAsync({
+        id: site.id,
+        name: name.trim(),
+        city,
+        address,
+        isHeadquarters: isHq,
+        parentSiteId: parentSiteId || null,
+        managerId: managerId || null,
+      })
+      onDone()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err))
+    }
+  }
+
+  return (
+    <div className="bg-[var(--panel-2)] border border-[var(--border)] border-t-0 rounded-b-lg px-4 py-3.5 -mt-2 pt-4 space-y-3">
+      <input
+        autoFocus
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        className="w-full bg-[var(--panel)] border border-[var(--border)] rounded-lg px-3 py-2 text-[13px]"
+      />
+      <div className="grid grid-cols-2 gap-3">
+        <input value={city} onChange={(e) => setCity(e.target.value)} placeholder={t({ tr: 'Şehir', en: 'City' })} className="w-full bg-[var(--panel)] border border-[var(--border)] rounded-lg px-3 py-2 text-[13px]" />
+        <input value={address} onChange={(e) => setAddress(e.target.value)} placeholder={t({ tr: 'Adres (opsiyonel)', en: 'Address (optional)' })} className="w-full bg-[var(--panel)] border border-[var(--border)] rounded-lg px-3 py-2 text-[13px]" />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <select value={parentSiteId} onChange={(e) => setParentSiteId(e.target.value)} className="w-full bg-[var(--panel)] border border-[var(--border)] rounded-lg px-2.5 py-2 text-[12.5px]">
+          <option value="">{t({ tr: 'Yok (bağımsız)', en: 'None (standalone)' })}</option>
+          {sites.filter((s) => s.id !== site.id).map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.name}
+            </option>
+          ))}
+        </select>
+        <select value={managerId} onChange={(e) => setManagerId(e.target.value)} className="w-full bg-[var(--panel)] border border-[var(--border)] rounded-lg px-2.5 py-2 text-[12.5px]">
+          <option value="">{t({ tr: 'Yönetici yok', en: 'No manager' })}</option>
+          {users?.map((u) => (
+            <option key={u.id} value={u.id}>
+              {u.full_name}
+            </option>
+          ))}
+        </select>
+      </div>
+      <label className="flex items-center gap-2 text-[12px] text-[var(--text-sub)]">
+        <input type="checkbox" checked={isHq} onChange={(e) => setIsHq(e.target.checked)} />
+        {t({ tr: 'Genel Merkez', en: 'Headquarters' })}
+      </label>
+      {error && <p className="text-p1 text-[11.5px]">{error}</p>}
+      <div className="flex gap-2">
+        <Button onClick={save} disabled={updateSite.isPending || !name.trim()}>
+          {updateSite.isPending ? t({ tr: 'Kaydediliyor…', en: 'Saving…' }) : t({ tr: 'Kaydet', en: 'Save' })}
+        </Button>
+        <Button variant="ghost" onClick={onDone}>
+          {t({ tr: 'Vazgeç', en: 'Cancel' })}
+        </Button>
       </div>
     </div>
   )
@@ -194,7 +300,12 @@ function SiteIntegrationPanel({ token, onRegenerate, isRegenerating }: { token: 
       </p>
       <div className="flex items-center gap-2 bg-[var(--panel)] border border-[var(--border)] rounded-lg px-3 py-2 mb-2">
         <code className="flex-1 text-[11px] font-mono truncate">{webhookUrl}</code>
-        <button onClick={() => copy(webhookUrl, 'url')} className="text-brand-dim shrink-0">
+        <button
+          onClick={() => copy(webhookUrl, 'url')}
+          title={t({ tr: "URL'yi Kopyala", en: 'Copy URL' })}
+          aria-label={t({ tr: "URL'yi Kopyala", en: 'Copy URL' })}
+          className="text-brand-dim shrink-0"
+        >
           {copied === 'url' ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
         </button>
       </div>

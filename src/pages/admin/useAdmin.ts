@@ -5,6 +5,13 @@ import type { UserRole } from '@/types/database'
 import { NAV_MODULES } from '@/components/layout/nav-modules'
 import { pickLang, type Lang } from '@/contexts/LangContext'
 
+export const ROLE_LABEL: Record<UserRole, { tr: string; en: string }> = {
+  tenant_admin: { tr: 'Tenant Admin', en: 'Tenant Admin' },
+  manager: { tr: 'Ekip Yöneticisi', en: 'Team Manager' },
+  agent: { tr: 'Teknisyen', en: 'Agent' },
+  requester: { tr: 'Son Kullanıcı', en: 'Requester' },
+}
+
 export interface TenantUser {
   id: string
   full_name: string

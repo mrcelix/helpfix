@@ -3,16 +3,9 @@ import { Copy, Check } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { useLang, pickLang} from '@/contexts/LangContext'
-import { useCreateUser, useDepartments, generateTempPassword } from './useAdmin'
+import { useCreateUser, useDepartments, generateTempPassword, ROLE_LABEL } from './useAdmin'
 import { useSites } from './useSites'
 import type { UserRole } from '@/types/database'
-
-const ROLE_LABEL: Record<UserRole, { tr: string; en: string }> = {
-  tenant_admin: { tr: 'Tenant Admin', en: 'Tenant Admin' },
-  manager: { tr: 'Ekip Yöneticisi', en: 'Team Manager' },
-  agent: { tr: 'Teknisyen', en: 'Agent' },
-  requester: { tr: 'Son Kullanıcı', en: 'Requester' },
-}
 
 export function NewUserModal({ onClose }: { onClose: () => void }) {
   const { lang, t } = useLang()
@@ -59,7 +52,12 @@ export function NewUserModal({ onClose }: { onClose: () => void }) {
           </p>
           <div className="flex items-center gap-2 bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2.5 mb-4">
             <code className="flex-1 text-[13px] font-mono text-left">{password}</code>
-            <button onClick={copyPassword} className="text-brand-dim">
+            <button
+              onClick={copyPassword}
+              title={t({ tr: 'Şifreyi Kopyala', en: 'Copy Password' })}
+              aria-label={t({ tr: 'Şifreyi Kopyala', en: 'Copy Password' })}
+              className="text-brand-dim"
+            >
               {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
             </button>
           </div>

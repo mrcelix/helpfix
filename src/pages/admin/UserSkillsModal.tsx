@@ -7,7 +7,7 @@ import { TICKET_CATEGORIES } from '@/pages/service-desk/ticket-categories'
 
 export function UserSkillsModal({ user, onClose }: { user: TenantUser; onClose: () => void }) {
   const { lang, t } = useLang()
-  const { data: skills } = useUserSkills(user.id)
+  const { data: skills, isLoading, error } = useUserSkills(user.id)
   const setSkill = useSetUserSkill()
   const removeSkill = useRemoveUserSkill()
 
@@ -27,12 +27,21 @@ export function UserSkillsModal({ user, onClose }: { user: TenantUser; onClose: 
 
   return (
     <Modal open onClose={onClose} title={t({ tr: `${user.full_name} — Beceriler`, en: `${user.full_name} — Skills` })} footer={<Button onClick={onClose}>{t({ tr: 'Kapat', en: 'Close' })}</Button>}>
-      <p className="text-[11.5px] text-[var(--text-faint)] mb-4">
+      <p className="text-[11.5px] text-[var(--text-faint)] mb-2.5">
         {t({
           tr: 'Bu kullanıcının yetkin olduğu kategorileri işaretleyin. Otomasyon kurallarında "Beceriye Göre Ata" seçildiğinde, eşleşen kategoride en az açık kaydı olan yetkin kişiye otomatik atama yapılır.',
           en: 'Mark the categories this user is proficient in. When an automation rule uses "Assign by Skill", the least-loaded proficient person for the matching category is auto-assigned.',
         })}
       </p>
+      <p className="text-[10.5px] text-[var(--text-faint)] italic mb-4">
+        {t({
+          tr: 'Not: Eşleştirme, talebin oluşturulduğu andaki Türkçe kategori metniyle yapılır — talep başka bir dilde açılırsa otomatik atama bu beceriyle eşleşmeyebilir.',
+          en: 'Note: matching uses the Turkish category text at the time the ticket is created — if a ticket is opened in another language, auto-assignment may not match this skill.',
+        })}
+      </p>
+      {isLoading && <p className="text-[12px] text-[var(--text-faint)] text-center py-4">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</p>}
+      {error && <p className="text-[12px] text-p1 text-center py-4">{t({ tr: 'Beceriler yüklenemedi.', en: 'Failed to load skills.' })}</p>}
+      {!isLoading && !error && (
       <div className="flex flex-col gap-2">
         {TICKET_CATEGORIES.map((cat) => {
           const Icon = cat.icon
@@ -46,14 +55,25 @@ export function UserSkillsModal({ user, onClose }: { user: TenantUser; onClose: 
                 (isActive ? 'bg-brand-tint border-brand/40' : 'bg-[var(--panel-2)] border-[var(--border)]')
               }
             >
-              <button type="button" onClick={() => toggle(cat.label.tr)} className="flex items-center gap-2.5 flex-1 text-left">
+              <button
+                type="button"
+                onClick={() => toggle(cat.label.tr)}
+                aria-pressed={isActive}
+                className="flex items-center gap-2.5 flex-1 text-left"
+              >
                 <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-brand-dim' : 'text-[var(--text-faint)]'}`} />
                 <span className="text-[13px] font-semibold">{pickLang(cat.label, lang)}</span>
               </button>
               {isActive && (
                 <div className="flex items-center gap-0.5 shrink-0">
                   {[1, 2, 3, 4, 5].map((n) => (
-                    <button key={n} type="button" onClick={() => setProficiency(cat.label.tr, n)}>
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => setProficiency(cat.label.tr, n)}
+                      title={t({ tr: `Yetkinlik: ${n}/5`, en: `Proficiency: ${n}/5` })}
+                      aria-label={t({ tr: `Yetkinlik: ${n}/5`, en: `Proficiency: ${n}/5` })}
+                    >
                       <Star className={`w-3.5 h-3.5 ${n <= skill.proficiency ? 'fill-p2 text-p2' : 'text-[var(--border)]'}`} />
                     </button>
                   ))}
@@ -63,6 +83,7 @@ export function UserSkillsModal({ user, onClose }: { user: TenantUser; onClose: 
           )
         })}
       </div>
+      )}
     </Modal>
   )
 }

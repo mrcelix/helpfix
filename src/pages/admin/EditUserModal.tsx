@@ -2,16 +2,9 @@ import { useState } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { useLang, pickLang} from '@/contexts/LangContext'
-import { useUpdateUser, useUpdateUserSite, useDepartments, type TenantUser } from './useAdmin'
+import { useUpdateUser, useUpdateUserSite, useDepartments, ROLE_LABEL, type TenantUser } from './useAdmin'
 import { useSites } from './useSites'
 import type { UserRole } from '@/types/database'
-
-const ROLE_LABEL: Record<UserRole, { tr: string; en: string }> = {
-  tenant_admin: { tr: 'Tenant Admin', en: 'Tenant Admin' },
-  manager: { tr: 'Ekip Yöneticisi', en: 'Team Manager' },
-  agent: { tr: 'Teknisyen', en: 'Agent' },
-  requester: { tr: 'Son Kullanıcı', en: 'Requester' },
-}
 
 export function EditUserModal({ user, onClose }: { user: TenantUser; onClose: () => void }) {
   const { lang, t } = useLang()
