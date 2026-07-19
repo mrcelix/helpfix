@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Plus, ArrowUpCircle } from 'lucide-react'
 import { useLang, type Lang } from '@/contexts/LangContext'
 import { useAuth } from '@/contexts/AuthContext'
@@ -53,8 +53,18 @@ export function SlaPage() {
   const { data: escalationLevels } = useAllEscalationLevels()
   const togglePolicy = useTogglePolicy()
 
-  const warningPercentByPolicy = new Map((policies ?? []).map((p) => [p.id, p.escalation_warning_percent]))
+  const warningPercentByPolicy = useMemo(() => new Map((policies ?? []).map((p) => [p.id, p.escalation_warning_percent])), [policies])
   const warningPercentFor = (i: MonitoredIncident) => (i.sla_policy_id && warningPercentByPolicy.get(i.sla_policy_id)) || 80
+
+  const escalationLevelsByPolicy = useMemo(() => {
+    const map = new Map<string, typeof escalationLevels>()
+    for (const l of escalationLevels ?? []) {
+      const list = map.get(l.sla_policy_id)
+      if (list) list.push(l)
+      else map.set(l.sla_policy_id, [l])
+    }
+    return map
+  }, [escalationLevels])
 
   const breachedCount = incidents?.filter((i) => slaState(i, warningPercentFor(i)) === 'breached').length ?? 0
   const warningCount = incidents?.filter((i) => slaState(i, warningPercentFor(i)) === 'warning').length ?? 0
@@ -129,7 +139,8 @@ export function SlaPage() {
               )}
               {incidents?.map((i) => {
                 const state = slaState(i, warningPercentFor(i))
-                const triggeredLevel = escalationLevels ? computeTriggeredLevel(i, escalationLevels) : null
+                const levelsForPolicy = i.sla_policy_id ? escalationLevelsByPolicy.get(i.sla_policy_id) : undefined
+                const triggeredLevel = levelsForPolicy ? computeTriggeredLevel(i, levelsForPolicy) : null
                 return (
                   <tr key={i.id} className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--row-hover)]">
                     <td className="px-3.5 py-3 font-mono text-[var(--text-faint)]">{i.ref}</td>

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { useLang, pickLang} from '@/contexts/LangContext'
 import { useAlerts, useDailyAlertVolume, useAcknowledgeAlert, useResolveAlert, useMttaBySource, useRunbooks, findMatchingRunbook, type AlertSavedView } from './useMonitoring'
@@ -52,6 +52,12 @@ export function MonitoringPage() {
   const { data: runbooks } = useRunbooks()
   const acknowledgeAlert = useAcknowledgeAlert()
   const resolveAlert = useResolveAlert()
+
+  const runbookByAlertId = useMemo(() => {
+    const map = new Map<string, ReturnType<typeof findMatchingRunbook>>()
+    for (const a of alerts ?? []) map.set(a.id, findMatchingRunbook(a.title, runbooks))
+    return map
+  }, [alerts, runbooks])
 
   const chartData = volume?.map((v) => ({
     day: new Date(v.day).toLocaleDateString(lang === 'tr' ? 'tr-TR' : 'en-US', { day: '2-digit', month: '2-digit' }),
@@ -136,7 +142,7 @@ export function MonitoringPage() {
           <p className="text-[var(--text-faint)] text-sm py-14 text-center">{t({ tr: 'Bu görünümde uyarı yok.', en: 'No alerts in this view.' })}</p>
         )}
         {alerts?.map((a) => {
-          const runbook = findMatchingRunbook(a.title, runbooks)
+          const runbook = runbookByAlertId.get(a.id) ?? null
           return (
           <div key={a.id} className="bg-[var(--panel)] border border-[var(--border)] rounded-xl p-3.5">
           <div className="flex items-center gap-3">

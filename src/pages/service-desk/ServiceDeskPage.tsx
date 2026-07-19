@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useOpenParam } from '@/hooks/useOpenParam'
 import { Plus, Download, List, Kanban, BookmarkPlus, X, MonitorPlay, CheckSquare, Square } from 'lucide-react'
 import { useLang, pickLang} from '@/contexts/LangContext'
 import { Button } from '@/components/ui/Button'
 import { PriorityBadge, StatusBadge, STATUS_LABEL } from '@/components/ui/Badge'
 import { priorityLabel } from '@/lib/priority'
-import { useIncidents, useUpdateIncident, useMajorIncidents, useBulkUpdateIncidents, type SavedView } from './useIncidents'
+import { useIncidents, useUpdateIncident, useMajorIncidents, useBulkUpdateIncidents, useIncidentKpis, type SavedView } from './useIncidents'
 import { useAssignableUsers } from '@/pages/oncall/useOnCall'
 import { TicketDrawer } from './TicketDrawer'
 import { NewTicketModal } from './NewTicketModal'
@@ -99,7 +99,7 @@ export function ServiceDeskPage() {
   const [showNewModal, setShowNewModal] = useState(false)
 
   const { data: incidentsRaw, isLoading, error } = useIncidents(view, channel)
-  const { data: allIncidents } = useIncidents('all')
+  const { data: kpisRaw } = useIncidentKpis()
   const { data: majorIncidents } = useMajorIncidents()
   const [sortBy, setSortBy] = useState<'created_desc' | 'priority' | 'sla' | 'az'>('created_desc')
 
@@ -122,7 +122,7 @@ export function ServiceDeskPage() {
     saveFilter.mutate({ name: name.trim(), filters: { view, channel, sortBy } })
   }
 
-  const incidents = incidentsRaw ? [...incidentsRaw].sort((a, b) => {
+  const incidents = useMemo(() => incidentsRaw ? [...incidentsRaw].sort((a, b) => {
     if (sortBy === 'priority') return a.priority.localeCompare(b.priority)
     if (sortBy === 'sla') {
       if (!a.sla_due_at) return 1
@@ -131,14 +131,9 @@ export function ServiceDeskPage() {
     }
     if (sortBy === 'az') return a.title.localeCompare(b.title)
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-  }) : incidentsRaw
+  }) : incidentsRaw, [incidentsRaw, sortBy])
 
-  const kpis = {
-    total: allIncidents?.length ?? 0,
-    p1: allIncidents?.filter((i) => i.priority === 'P1' && !['resolved', 'closed'].includes(i.status)).length ?? 0,
-    unassigned: allIncidents?.filter((i) => !i.assignee).length ?? 0,
-    open: allIncidents?.filter((i) => !['resolved', 'closed', 'merged'].includes(i.status)).length ?? 0,
-  }
+  const kpis = kpisRaw ?? { total: 0, p1: 0, unassigned: 0, open: 0 }
 
   function exportCsv() {
     if (!incidents?.length) return

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useOpenParam } from '@/hooks/useOpenParam'
 import { Plus, List, Share2, Download, ShieldCheck, Layers, Package, Upload } from 'lucide-react'
 import { useLang, pickLang} from '@/contexts/LangContext'
@@ -66,7 +66,7 @@ export function CmdbPage() {
   const { data: duplicates } = useDuplicateCis()
   const [sortBy, setSortBy] = useState<'created_desc' | 'warranty' | 'az'>('created_desc')
 
-  const sortedItems = items ? [...items].sort((a, b) => {
+  const sortedItems = useMemo(() => items ? [...items].sort((a, b) => {
     if (sortBy === 'warranty') {
       if (!a.warranty_expiry) return 1
       if (!b.warranty_expiry) return -1
@@ -74,7 +74,7 @@ export function CmdbPage() {
     }
     if (sortBy === 'az') return a.name.localeCompare(b.name)
     return 0
-  }) : items
+  }) : items, [items, sortBy])
 
   function exportCsv() {
     if (!sortedItems?.length) return

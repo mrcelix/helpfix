@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
@@ -108,6 +109,38 @@ export function useIncidents(view: SavedView, channel?: TicketChannel | 'all') {
       const { data, error } = await query
       if (error) throw error
       return data as unknown as IncidentListItem[]
+    },
+  })
+}
+
+export interface IncidentKpis {
+  total: number
+  p1: number
+  unassigned: number
+  open: number
+}
+
+/** Servis Masası KPI şeridi için — ServiceDeskPage önceden bunun için
+ * TÜM talepleri (tam satır, tüm join'lerle) ikinci kez çekip istemci
+ * tarafında filtreliyordu. Sadece 4 sayı gerektiğinden, satırları hiç
+ * indirmeden 4 paralel count-only sorguya (head:true) çevrildi. */
+export function useIncidentKpis() {
+  const { profile } = useAuth()
+  return useQuery({
+    queryKey: ['incident-kpis', profile?.tenantId],
+    enabled: !!profile,
+    queryFn: async (): Promise<IncidentKpis> => {
+      const [total, p1, unassigned, open] = await Promise.all([
+        supabase.from('incidents').select('id', { count: 'exact', head: true }),
+        supabase.from('incidents').select('id', { count: 'exact', head: true }).eq('priority', 'P1').not('status', 'in', '(resolved,closed)'),
+        supabase.from('incidents').select('id', { count: 'exact', head: true }).is('assignee_id', null),
+        supabase.from('incidents').select('id', { count: 'exact', head: true }).not('status', 'in', '(resolved,closed,merged)'),
+      ])
+      if (total.error) throw total.error
+      if (p1.error) throw p1.error
+      if (unassigned.error) throw unassigned.error
+      if (open.error) throw open.error
+      return { total: total.count ?? 0, p1: p1.count ?? 0, unassigned: unassigned.count ?? 0, open: open.count ?? 0 }
     },
   })
 }
@@ -621,17 +654,26 @@ export function useMajorIncidentChildren(majorIncidentId: string) {
   })
 }
 
-/** Bağlanacak kayıt aramak için — ref veya başlığa göre, kendisi hariç. */
+/** Bağlanacak kayıt aramak için — ref veya başlığa göre, kendisi hariç.
+ * Her tuş vuruşunda ayrı sorgu atmamak için dahili olarak debounce'lanır —
+ * bu hook'u kullanan tüm bileşenler (LinkedIncidentsSection, WarRoomPanel)
+ * otomatik olarak faydalanır. */
 export function useSearchIncidentsToLink(query: string, excludeId: string) {
+  const [debouncedQuery, setDebouncedQuery] = useState(query)
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(query), 300)
+    return () => clearTimeout(timer)
+  }, [query])
+
   return useQuery({
-    queryKey: ['search-incidents-to-link', query, excludeId],
-    enabled: query.trim().length >= 2,
+    queryKey: ['search-incidents-to-link', debouncedQuery, excludeId],
+    enabled: debouncedQuery.trim().length >= 2,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('incidents')
         .select('id, ref, title, status, priority')
         .neq('id', excludeId)
-        .or(`title.ilike.%${query.trim()}%,ref.ilike.%${query.trim()}%`)
+        .or(`title.ilike.%${debouncedQuery.trim()}%,ref.ilike.%${debouncedQuery.trim()}%`)
         .order('created_at', { ascending: false })
         .limit(8)
       if (error) throw error

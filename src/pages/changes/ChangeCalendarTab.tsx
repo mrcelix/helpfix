@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { ChevronLeft, ChevronRight, AlertTriangle } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
 import { useScheduledChanges, findChangeConflicts, type ScheduledChange } from './useChanges'
@@ -25,8 +25,8 @@ export function ChangeCalendarTab({ onOpenChange }: { onOpenChange: (id: string)
     return d
   })
 
-  const conflicts = findChangeConflicts(changes ?? [])
-  const conflictedIds = new Set(conflicts.flatMap((c) => [c.a.id, c.b.id]))
+  const conflicts = useMemo(() => findChangeConflicts(changes ?? []), [changes])
+  const conflictedIds = useMemo(() => new Set(conflicts.flatMap((c) => [c.a.id, c.b.id])), [conflicts])
 
   const firstOfMonth = new Date(cursor)
   const firstWeekday = (firstOfMonth.getDay() + 6) % 7
@@ -39,8 +39,20 @@ export function ChangeCalendarTab({ onOpenChange }: { onOpenChange: (id: string)
     return d
   })
 
+  const changesByDayKey = useMemo(() => {
+    const map = new Map<string, ScheduledChange[]>()
+    for (const c of changes ?? []) {
+      const d = new Date(c.scheduled_start)
+      const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
+      const list = map.get(key)
+      if (list) list.push(c)
+      else map.set(key, [c])
+    }
+    return map
+  }, [changes])
+
   function changesOnDay(day: Date): ScheduledChange[] {
-    return (changes ?? []).filter((c) => sameDay(new Date(c.scheduled_start), day))
+    return changesByDayKey.get(`${day.getFullYear()}-${day.getMonth()}-${day.getDate()}`) ?? []
   }
 
   const monthLabel = cursor.toLocaleDateString(lang === 'tr' ? 'tr-TR' : 'en-US', { month: 'long', year: 'numeric' })

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useOpenParam } from '@/hooks/useOpenParam'
 import { Plus, Snowflake, Download } from 'lucide-react'
 import { useLang, pickLang} from '@/contexts/LangContext'
@@ -59,11 +59,11 @@ export function ChangesPage() {
   const { data: changes, isLoading, error } = useChanges(view)
   const [sortBy, setSortBy] = useState<'created_desc' | 'risk' | 'az'>('created_desc')
 
-  const sortedChanges = changes ? [...changes].sort((a, b) => {
+  const sortedChanges = useMemo(() => changes ? [...changes].sort((a, b) => {
     if (sortBy === 'risk') return b.risk_score - a.risk_score
     if (sortBy === 'az') return a.title.localeCompare(b.title)
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-  }) : changes
+  }) : changes, [changes, sortBy])
 
   function exportCsv() {
     if (!sortedChanges?.length) return

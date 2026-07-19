@@ -46,7 +46,11 @@ export function useNotifications() {
       if (error) throw error
       return data as Notification[]
     },
-    refetchInterval: 60_000,
+    // Gerçek zamanlı abonelik (yukarıda) yeni bildirimleri zaten anlık
+    // yakalıyor — bu interval sadece bağlantı kopması ihtimaline karşı
+    // bir yedek. Her kullanıcı oturumu için sürekli 60sn'de bir sorgu
+    // atmamak için aralık uzatıldı.
+    refetchInterval: 5 * 60_000,
   })
 }
 

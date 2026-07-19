@@ -28,7 +28,14 @@ export function CommandPalette() {
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
-  const { data: results, isLoading } = useGlobalSearch(query)
+  // Her tuş vuruşunda 6 tabloya paralel sorgu atmamak için debounce'lu
+  // arama terimi — kullanıcı yazmayı bıraktıktan 300ms sonra sorgulanır.
+  const [debouncedQuery, setDebouncedQuery] = useState('')
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(query), 300)
+    return () => clearTimeout(timer)
+  }, [query])
+  const { data: results, isLoading } = useGlobalSearch(debouncedQuery)
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {

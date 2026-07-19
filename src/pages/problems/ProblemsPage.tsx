@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useOpenParam } from '@/hooks/useOpenParam'
 import { Plus, Sparkles, Download } from 'lucide-react'
 import { useLang, pickLang} from '@/contexts/LangContext'
@@ -39,11 +39,11 @@ export function ProblemsPage() {
   const { data: clusters } = useClusterCandidates()
   const [sortBy, setSortBy] = useState<'created_desc' | 'priority' | 'az'>('created_desc')
 
-  const sortedProblems = problems ? [...problems].sort((a, b) => {
+  const sortedProblems = useMemo(() => problems ? [...problems].sort((a, b) => {
     if (sortBy === 'priority') return a.priority.localeCompare(b.priority)
     if (sortBy === 'az') return a.title.localeCompare(b.title)
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-  }) : problems
+  }) : problems, [problems, sortBy])
 
   function exportCsv() {
     if (!sortedProblems?.length) return

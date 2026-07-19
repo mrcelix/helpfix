@@ -39,7 +39,14 @@ export function KnowledgeBasePage() {
   useEffect(() => { if (openId) setSelectedId(openId) }, [openId])
   const [showNewModal, setShowNewModal] = useState(false)
 
-  const { data: articles, isLoading, error } = useArticles(view, search)
+  // Her tuş vuruşunda ayrı bir sorgu atmamak için debounce'lu arama terimi.
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(search), 300)
+    return () => clearTimeout(timer)
+  }, [search])
+
+  const { data: articles, isLoading, error } = useArticles(view, debouncedSearch)
   const logSearch = useLogSearch()
   const { data: gaps, error: gapsError } = useKbGapAnalysis()
 
