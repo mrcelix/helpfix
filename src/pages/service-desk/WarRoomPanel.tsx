@@ -22,7 +22,7 @@ export function WarRoomPanel({ incidentId, declaredAt }: { incidentId: string; d
   const [, forceTick] = useState(0)
 
   // Faz AY — Bağlı Çocuk Olaylar (aynı kök nedenden açılan diğer talepler)
-  const { data: children } = useMajorIncidentChildren(incidentId)
+  const { data: children, isLoading: childrenLoading } = useMajorIncidentChildren(incidentId)
   const createLink = useCreateIncidentLink()
   const deleteLink = useDeleteIncidentLink()
   const [childPicking, setChildPicking] = useState(false)
@@ -62,7 +62,11 @@ export function WarRoomPanel({ incidentId, declaredAt }: { incidentId: string; d
           {responders?.map((r) => (
             <span key={r.user_id} className="flex items-center gap-1.5 text-[11px] font-semibold bg-[var(--panel)] border border-[var(--border)] rounded-full pl-2.5 pr-1.5 py-1">
               {r.full_name}
-              <button onClick={() => removeResponder.mutate(r.user_id)}>
+              <button
+                onClick={() => removeResponder.mutate(r.user_id)}
+                title={t({ tr: 'Müdahale ekibinden çıkar', en: 'Remove from responders' })}
+                aria-label={t({ tr: 'Müdahale ekibinden çıkar', en: 'Remove from responders' })}
+              >
                 <X className="w-3 h-3 text-[var(--text-faint)] hover:text-p1" />
               </button>
             </span>
@@ -136,7 +140,10 @@ export function WarRoomPanel({ incidentId, declaredAt }: { incidentId: string; d
           </div>
         )}
 
-        {!children?.length && !childPicking && (
+        {childrenLoading && (
+          <p className="text-[11px] text-[var(--text-faint)] italic">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</p>
+        )}
+        {!childrenLoading && !children?.length && !childPicking && (
           <p className="text-[11px] text-[var(--text-faint)] italic">
             {t({ tr: 'Henüz bağlı çocuk olay yok — aynı kök nedenden gelen talepleri buraya bağlayın.', en: 'No linked child incidents yet — link tickets from the same root cause here.' })}
           </p>
@@ -146,7 +153,11 @@ export function WarRoomPanel({ incidentId, declaredAt }: { incidentId: string; d
             <span key={c.id} className="flex items-center gap-1.5 text-[11px] font-semibold bg-[var(--panel)] border border-[var(--border)] rounded-full pl-2.5 pr-1.5 py-1">
               <span className="font-mono text-[10px] text-[var(--text-faint)]">{c.other.ref}</span>
               {c.other.title}
-              <button onClick={() => deleteLink.mutate(c.id)}>
+              <button
+                onClick={() => deleteLink.mutate(c.id)}
+                title={t({ tr: 'Bağlantıyı kaldır', en: 'Remove link' })}
+                aria-label={t({ tr: 'Bağlantıyı kaldır', en: 'Remove link' })}
+              >
                 <X className="w-3 h-3 text-[var(--text-faint)] hover:text-p1" />
               </button>
             </span>

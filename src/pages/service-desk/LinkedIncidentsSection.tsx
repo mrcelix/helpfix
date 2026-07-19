@@ -24,7 +24,7 @@ const LINK_TYPE_LABEL_REVERSE: Record<IncidentLinkType, { tr: string; en: string
 
 export function LinkedIncidentsSection({ incidentId, onOpen }: { incidentId: string; onOpen: (id: string) => void }) {
   const { lang, t } = useLang()
-  const { data: links } = useIncidentLinks(incidentId)
+  const { data: links, isLoading: linksLoading } = useIncidentLinks(incidentId)
   const createLink = useCreateIncidentLink()
   const deleteLink = useDeleteIncidentLink()
 
@@ -100,7 +100,10 @@ export function LinkedIncidentsSection({ incidentId, onOpen }: { incidentId: str
         </div>
       )}
 
-      {!links?.length && !picking && (
+      {linksLoading && (
+        <p className="text-[11.5px] text-[var(--text-faint)] italic">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</p>
+      )}
+      {!linksLoading && !links?.length && !picking && (
         <p className="text-[11.5px] text-[var(--text-faint)] italic">{t({ tr: 'Henüz ilişkili kayıt yok.', en: 'No linked records yet.' })}</p>
       )}
 
@@ -122,7 +125,12 @@ export function LinkedIncidentsSection({ incidentId, onOpen }: { incidentId: str
             <span className="text-[10px] font-bold text-[var(--text-faint)] shrink-0 max-w-[90px] text-right">
               {pickLang((l.isSourceSide ? LINK_TYPE_LABEL : LINK_TYPE_LABEL_REVERSE)[l.link_type], lang)}
             </span>
-            <button onClick={() => deleteLink.mutate(l.id)} className="shrink-0 text-[var(--text-faint)] hover:text-p1">
+            <button
+              onClick={() => deleteLink.mutate(l.id)}
+              title={t({ tr: 'Bağlantıyı kaldır', en: 'Remove link' })}
+              aria-label={t({ tr: 'Bağlantıyı kaldır', en: 'Remove link' })}
+              className="shrink-0 text-[var(--text-faint)] hover:text-p1"
+            >
               <X className="w-3.5 h-3.5" />
             </button>
           </div>

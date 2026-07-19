@@ -40,9 +40,9 @@ export function TicketDrawer({ id, onClose }: { id: string; onClose: () => void 
   const [currentId, setCurrentId] = useState(id)
   useEffect(() => setCurrentId(id), [id])
 
-  const { data: incident, isLoading } = useIncidentDetail(currentId)
+  const { data: incident, isLoading, error } = useIncidentDetail(currentId)
   const { data: comments } = useIncidentComments(currentId)
-  const { data: timeline } = useIncidentTimeline(currentId)
+  const { data: timeline, isLoading: timelineLoading } = useIncidentTimeline(currentId)
   const updateIncident = useUpdateIncident(currentId)
   const addComment = useAddComment(currentId)
   const { data: duplicates } = useDuplicateCandidates(currentId, incident?.category ?? null)
@@ -63,6 +63,16 @@ export function TicketDrawer({ id, onClose }: { id: string; onClose: () => void 
   const summarizeTicket = useSummarizeTicket()
   const draftReply = useDraftReply()
   const [aiSummary, setAiSummary] = useState<string | null>(null)
+
+  // İlişkili/Benzer Kayıtlar'dan başka bir kayda geçildiğinde (currentId
+  // değiştiğinde) önceki kaydın taslak yanıtı/AI özeti burada kalmasın —
+  // aksi halde kullanıcı yanlış kayda ait bir taslağı gönderebilir.
+  useEffect(() => {
+    setDraft('')
+    setIsInternal(false)
+    setShowCanned(false)
+    setAiSummary(null)
+  }, [currentId])
 
   function threadForAi() {
     return (comments ?? []).map((c) => ({
@@ -131,7 +141,12 @@ export function TicketDrawer({ id, onClose }: { id: string; onClose: () => void 
       }
       widthClass="w-[480px]"
     >
-      {isLoading || !incident ? (
+      {error ? (
+        <div className="text-p1 text-sm py-10 text-center px-6">
+          {t({ tr: 'Kayıt yüklenemedi.', en: 'Failed to load this record.' })}
+          <div className="text-[var(--text-faint)] text-[11.5px] mt-1">{error instanceof Error ? error.message : String(error)}</div>
+        </div>
+      ) : isLoading || !incident ? (
         <div className="text-[var(--text-faint)] text-sm py-10 text-center">
           {t({ tr: 'Yükleniyor…', en: 'Loading…' })}
         </div>
@@ -278,6 +293,12 @@ export function TicketDrawer({ id, onClose }: { id: string; onClose: () => void 
             <div className="text-[10.5px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-2.5">
               {t({ tr: 'Zaman Çizelgesi', en: 'Timeline' })}
             </div>
+            {timelineLoading && (
+              <p className="text-[11.5px] text-[var(--text-faint)] italic mb-4">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</p>
+            )}
+            {!timelineLoading && !timeline?.length && (
+              <p className="text-[11.5px] text-[var(--text-faint)] italic mb-4">{t({ tr: 'Henüz olay yok.', en: 'No events yet.' })}</p>
+            )}
             <ul className="space-y-2 mb-4">
               {timeline?.map((ev) => (
                 <li key={ev.id} className="text-[11.5px] text-[var(--text-faint)] flex justify-between gap-2">

@@ -42,6 +42,10 @@ const KANBAN_COLUMNS: { key: TicketStatus; label: { tr: string; en: string } }[]
   { key: 'in_progress', label: { tr: 'İşlemde', en: 'In Progress' } },
   { key: 'on_hold', label: { tr: 'Beklemede', en: 'On Hold' } },
   { key: 'resolved', label: { tr: 'Çözüldü', en: 'Resolved' } },
+  // "Tümü" görünümü status filtresi uygulamıyor (bkz. useIncidents), yani
+  // kapatılmış kayıtlar da listeye dahil olabiliyor — bu sütun olmadan
+  // Kanban'da hiçbir yerde görünmeden sessizce kayboluyorlardı.
+  { key: 'closed', label: { tr: 'Kapalı', en: 'Closed' } },
 ]
 
 function nextStatus(current: TicketStatus): TicketStatus {
@@ -62,6 +66,14 @@ export function ServiceDeskPage() {
   const [bulkSelection, setBulkSelection] = useState<Set<string>>(new Set())
   const bulkUpdate = useBulkUpdateIncidents()
   const { data: assignableUsers } = useAssignableUsers()
+
+  // Görünüm/kanal değişince ekrandaki kayıt seti değişir — önceki seçim
+  // artık ekranda olmayan (farklı bir filtreye ait) kayıtları işaret
+  // edebileceğinden temizlenmeli. Aksi halde "3 seçili" barı görünmeyen
+  // kayıtlar üzerinde toplu işlem uygulanmasına izin verirdi.
+  useEffect(() => {
+    setBulkSelection(new Set())
+  }, [view, channel])
 
   function toggleBulkRow(id: string, e?: React.MouseEvent) {
     e?.stopPropagation()
@@ -260,6 +272,8 @@ export function ServiceDeskPage() {
                 deleteSavedFilter.mutate(sf.id)
                 if (activeSavedId === sf.id) setActiveSavedId(null)
               }}
+              title={t({ tr: 'Görünümü sil', en: 'Delete view' })}
+              aria-label={t({ tr: 'Görünümü sil', en: 'Delete view' })}
               className={`opacity-0 group-hover:opacity-100 ${activeSavedId === sf.id ? 'text-white/80' : 'text-[var(--text-faint)]'} hover:text-p1`}
             >
               <X className="w-3 h-3" />
@@ -278,12 +292,18 @@ export function ServiceDeskPage() {
           <div className="flex border border-[var(--border)] rounded-lg overflow-hidden">
             <button
               onClick={() => setViewMode('list')}
+              title={t({ tr: 'Liste görünümü', en: 'List view' })}
+              aria-label={t({ tr: 'Liste görünümü', en: 'List view' })}
+              aria-pressed={viewMode === 'list'}
               className={`px-2.5 py-2 ${viewMode === 'list' ? 'bg-brand text-white' : 'bg-[var(--panel)] text-[var(--text-faint)]'}`}
             >
               <List className="w-[14px] h-[14px]" />
             </button>
             <button
               onClick={() => setViewMode('kanban')}
+              title={t({ tr: 'Kanban görünümü', en: 'Kanban view' })}
+              aria-label={t({ tr: 'Kanban görünümü', en: 'Kanban view' })}
+              aria-pressed={viewMode === 'kanban'}
               className={`px-2.5 py-2 ${viewMode === 'kanban' ? 'bg-brand text-white' : 'bg-[var(--panel)] text-[var(--text-faint)]'}`}
             >
               <Kanban className="w-[14px] h-[14px]" />
@@ -330,7 +350,7 @@ export function ServiceDeskPage() {
       </div>
 
       {viewMode === 'kanban' ? (
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5">
           {KANBAN_COLUMNS.map((col) => (
             <div key={col.key}>
               <div className="text-[10.5px] font-bold text-[var(--text-faint)] uppercase mb-2 flex items-center justify-between">
@@ -425,7 +445,12 @@ export function ServiceDeskPage() {
           <thead>
             <tr className="bg-[var(--panel-2)] border-b border-[var(--border)]">
               <th className="w-9 px-3.5 py-2.5">
-                <button onClick={toggleBulkAll} className="flex items-center text-[var(--text-faint)] hover:text-brand-dim">
+                <button
+                  onClick={toggleBulkAll}
+                  title={t({ tr: 'Tümünü seç', en: 'Select all' })}
+                  aria-label={t({ tr: 'Tümünü seç', en: 'Select all' })}
+                  className="flex items-center text-[var(--text-faint)] hover:text-brand-dim"
+                >
                   {incidents?.length && incidents.every((i) => bulkSelection.has(i.id)) ? (
                     <CheckSquare className="w-4 h-4 text-brand-dim" />
                   ) : (
@@ -468,7 +493,11 @@ export function ServiceDeskPage() {
             {incidents?.map((i) => (
               <tr
                 key={i.id}
+                tabIndex={0}
                 onClick={() => setSelectedId(i.id)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') setSelectedId(i.id)
+                }}
                 className={
                   'border-b border-[var(--border)] last:border-0 hover:bg-[var(--row-hover)] cursor-pointer ' +
                   (bulkSelection.has(i.id) ? 'bg-brand-tint/40' : '')
@@ -529,7 +558,18 @@ function KanbanCard({
   const updateIncident = useUpdateIncident(incident.id)
   return (
     <div className="bg-[var(--panel)] border border-[var(--border)] rounded-xl p-3 hover:border-brand transition-colors">
-      <div onClick={onOpen} className="cursor-pointer">
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={onOpen}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault()
+            onOpen()
+          }
+        }}
+        className="cursor-pointer"
+      >
         <div className="flex items-center justify-between mb-1.5">
           <PriorityBadge priority={incident.priority} />
           <span className="font-mono text-[10px] text-[var(--text-faint)]">{incident.ref}</span>
@@ -537,7 +577,7 @@ function KanbanCard({
         <div className="text-[12px] font-semibold mb-1.5 line-clamp-2">{incident.title}</div>
         <div className="text-[10.5px] text-[var(--text-faint)]">{incident.assignee?.full_name ?? '—'}</div>
       </div>
-      {incident.status !== 'resolved' && (
+      {incident.status !== 'resolved' && incident.status !== 'closed' && incident.status !== 'merged' && (
         <button
           onClick={(e) => {
             e.stopPropagation()
