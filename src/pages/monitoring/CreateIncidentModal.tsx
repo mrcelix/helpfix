@@ -4,16 +4,28 @@ import { Button } from '@/components/ui/Button'
 import { useLang } from '@/contexts/LangContext'
 import { useCreateIncidentFromAlert } from './useMonitoring'
 
-export function CreateIncidentModal({ alert, onClose }: { alert: { id: string; title: string }; onClose: () => void }) {
+export function CreateIncidentModal({
+  alert,
+  onClose,
+}: {
+  alert: { id: string; title: string; description: string | null; ciId: string | null }
+  onClose: () => void
+}) {
   const { t } = useLang()
   const createIncident = useCreateIncidentFromAlert()
   const [title, setTitle] = useState(alert.title)
-  const [description, setDescription] = useState('')
+  const [description, setDescription] = useState(alert.description ?? '')
+  const [submitError, setSubmitError] = useState('')
 
   async function handleSubmit() {
     if (!title.trim()) return
-    await createIncident.mutateAsync({ alertId: alert.id, title: title.trim(), description: description.trim(), ciId: null })
-    onClose()
+    setSubmitError('')
+    try {
+      await createIncident.mutateAsync({ alertId: alert.id, title: title.trim(), description: description.trim(), ciId: alert.ciId })
+      onClose()
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : String(err))
+    }
   }
 
   return (
@@ -59,6 +71,7 @@ export function CreateIncidentModal({ alert, onClose }: { alert: { id: string; t
         <p className="text-[10.5px] text-[var(--text-faint)]">
           {t({ tr: 'Bu olay otomatik olarak Acil önceliğinde oluşturulacak ve uyarıyla bağlantılı kalacak.', en: 'This incident will be created as Urgent priority and remain linked to the alert.' })}
         </p>
+        {submitError && <p className="text-[12px] text-p1">{submitError}</p>}
       </div>
     </Modal>
   )

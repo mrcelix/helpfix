@@ -20,21 +20,35 @@ const SOURCE_COLOR: Record<string, string> = {
   manual: 'bg-[var(--panel-2)] text-[var(--text-faint)] border border-[var(--border)]',
 }
 
+const SOURCE_LABEL: Record<string, { tr: string; en: string }> = {
+  datadog: { tr: 'Datadog', en: 'Datadog' },
+  zabbix: { tr: 'Zabbix', en: 'Zabbix' },
+  prometheus: { tr: 'Prometheus', en: 'Prometheus' },
+  cloudwatch: { tr: 'CloudWatch', en: 'CloudWatch' },
+  manual: { tr: 'Manuel', en: 'Manual' },
+}
+
 const SEVERITY_STYLE: Record<string, string> = {
   critical: 'bg-p1-tint text-p1',
   warning: 'bg-p2-tint text-p2',
   info: 'bg-[var(--panel-2)] text-[var(--text-faint)] border border-[var(--border)]',
 }
 
+const SEVERITY_LABEL: Record<string, { tr: string; en: string }> = {
+  critical: { tr: 'Kritik', en: 'Critical' },
+  warning: { tr: 'Uyarı', en: 'Warning' },
+  info: { tr: 'Bilgi', en: 'Info' },
+}
+
 export function MonitoringPage() {
   const { lang, t } = useLang()
   const [view, setView] = useState<AlertSavedView>('firing')
-  const [incidentModalAlert, setIncidentModalAlert] = useState<{ id: string; title: string } | null>(null)
+  const [incidentModalAlert, setIncidentModalAlert] = useState<{ id: string; title: string; description: string | null; ciId: string | null } | null>(null)
   const [showRunbooksModal, setShowRunbooksModal] = useState(false)
 
-  const { data: alerts, isLoading } = useAlerts(view)
-  const { data: volume } = useDailyAlertVolume()
-  const { data: mtta } = useMttaBySource()
+  const { data: alerts, isLoading, error } = useAlerts(view)
+  const { data: volume, error: volumeError } = useDailyAlertVolume()
+  const { data: mtta, error: mttaError } = useMttaBySource()
   const { data: runbooks } = useRunbooks()
   const acknowledgeAlert = useAcknowledgeAlert()
   const resolveAlert = useResolveAlert()
@@ -66,18 +80,25 @@ export function MonitoringPage() {
 
       <div className="bg-[var(--panel)] border border-[var(--border)] rounded-2xl p-5 mb-5">
         <div className="text-[13px] font-bold mb-4">{t({ tr: 'Günlük Uyarı Hacmi (14 gün)', en: 'Daily Alert Volume (14d)' })}</div>
-        <ResponsiveContainer width="100%" height={160}>
-          <BarChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-            <XAxis dataKey="day" tick={{ fontSize: 10, fill: 'var(--text-faint)' }} />
-            <YAxis tick={{ fontSize: 10, fill: 'var(--text-faint)' }} allowDecimals={false} />
-            <Tooltip contentStyle={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} />
-            <Bar dataKey={t({ tr: 'Uyarı', en: 'Alerts' })} fill="#4C6FFF" radius={[4, 4, 0, 0]} />
-            <Bar dataKey={t({ tr: 'Kritik', en: 'Critical' })} fill="#EF4444" radius={[4, 4, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
+        {volumeError ? (
+          <p className="text-p1 text-sm py-8 text-center">{t({ tr: 'Uyarı hacmi yüklenemedi.', en: 'Failed to load alert volume.' })}</p>
+        ) : (
+          <ResponsiveContainer width="100%" height={160}>
+            <BarChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+              <XAxis dataKey="day" tick={{ fontSize: 10, fill: 'var(--text-faint)' }} />
+              <YAxis tick={{ fontSize: 10, fill: 'var(--text-faint)' }} allowDecimals={false} />
+              <Tooltip contentStyle={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} />
+              <Bar dataKey={t({ tr: 'Uyarı', en: 'Alerts' })} fill="#4C6FFF" radius={[4, 4, 0, 0]} />
+              <Bar dataKey={t({ tr: 'Kritik', en: 'Critical' })} fill="#EF4444" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        )}
       </div>
 
+      {mttaError && (
+        <p className="text-p1 text-[12px] mb-5">{t({ tr: 'MTTA verileri yüklenemedi.', en: 'Failed to load MTTA data.' })}</p>
+      )}
       {!!mtta?.length && (
         <div className="grid grid-cols-4 gap-3 mb-5">
           {mtta.map((m) => (
@@ -95,6 +116,7 @@ export function MonitoringPage() {
           <button
             key={v.key}
             onClick={() => setView(v.key)}
+            aria-pressed={view === v.key}
             className={
               'text-[12.5px] font-bold px-3.5 py-2 rounded-lg border transition-colors ' +
               (view === v.key
@@ -109,7 +131,8 @@ export function MonitoringPage() {
 
       <div className="space-y-2">
         {isLoading && <p className="text-[var(--text-faint)] text-sm py-8 text-center">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</p>}
-        {!isLoading && alerts?.length === 0 && (
+        {error && <p className="text-p1 text-sm py-8 text-center">{t({ tr: 'Uyarılar yüklenemedi.', en: 'Failed to load alerts.' })}</p>}
+        {!isLoading && !error && alerts?.length === 0 && (
           <p className="text-[var(--text-faint)] text-sm py-14 text-center">{t({ tr: 'Bu görünümde uyarı yok.', en: 'No alerts in this view.' })}</p>
         )}
         {alerts?.map((a) => {
@@ -117,8 +140,12 @@ export function MonitoringPage() {
           return (
           <div key={a.id} className="bg-[var(--panel)] border border-[var(--border)] rounded-xl p-3.5">
           <div className="flex items-center gap-3">
-            <span className={`text-[9.5px] font-bold uppercase px-2 py-1 rounded-md ${SOURCE_COLOR[a.source]}`}>{a.source}</span>
-            <span className={`text-[9.5px] font-bold uppercase px-2 py-1 rounded-md ${SEVERITY_STYLE[a.severity]}`}>{a.severity}</span>
+            <span className={`text-[9.5px] font-bold uppercase px-2 py-1 rounded-md ${SOURCE_COLOR[a.source]}`}>
+              {SOURCE_LABEL[a.source] ? pickLang(SOURCE_LABEL[a.source], lang) : a.source}
+            </span>
+            <span className={`text-[9.5px] font-bold uppercase px-2 py-1 rounded-md ${SEVERITY_STYLE[a.severity]}`}>
+              {SEVERITY_LABEL[a.severity] ? pickLang(SEVERITY_LABEL[a.severity], lang) : a.severity}
+            </span>
             <div className="flex-1 min-w-0">
               <div className="text-[12.5px] font-semibold truncate">{a.title}</div>
               <div className="text-[10.5px] text-[var(--text-faint)]">
@@ -138,7 +165,7 @@ export function MonitoringPage() {
               )}
               {!a.incident_id ? (
                 <button
-                  onClick={() => setIncidentModalAlert({ id: a.id, title: a.title })}
+                  onClick={() => setIncidentModalAlert({ id: a.id, title: a.title, description: a.description, ciId: a.ci_id })}
                   className="text-[10.5px] font-bold px-2.5 py-1.5 rounded-md bg-brand text-white"
                 >
                   {t({ tr: 'Olay Oluştur', en: 'Create Incident' })}

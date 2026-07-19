@@ -2,10 +2,13 @@ import { useState } from 'react'
 import { Trash2 } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
 import { useLang } from '@/contexts/LangContext'
+import { useAuth } from '@/contexts/AuthContext'
 import { useRunbooks, useCreateRunbook, useDeleteRunbook } from './useMonitoring'
 
 export function RunbooksModal({ onClose }: { onClose: () => void }) {
   const { t } = useLang()
+  const { profile } = useAuth()
+  const canManage = profile && ['tenant_admin', 'manager'].includes(profile.role)
   const { data: runbooks } = useRunbooks()
   const createRunbook = useCreateRunbook()
   const deleteRunbook = useDeleteRunbook()
@@ -31,30 +34,32 @@ export function RunbooksModal({ onClose }: { onClose: () => void }) {
         })}
       </p>
 
-      <div className="bg-[var(--panel-2)] border border-[var(--border)] rounded-lg p-3 mb-4 space-y-2">
-        <input
-          value={keyword}
-          onChange={(e) => setKeyword(e.target.value)}
-          placeholder={t({ tr: 'Anahtar kelime (örn. "disk kullanımı")', en: 'Keyword (e.g. "disk usage")' })}
-          className="w-full bg-[var(--panel)] border border-[var(--border)] rounded-lg px-2.5 py-2 text-[12.5px]"
-        />
-        <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder={t({ tr: 'Runbook başlığı', en: 'Runbook title' })}
-          className="w-full bg-[var(--panel)] border border-[var(--border)] rounded-lg px-2.5 py-2 text-[12.5px]"
-        />
-        <textarea
-          value={steps}
-          onChange={(e) => setSteps(e.target.value)}
-          rows={4}
-          placeholder={t({ tr: 'Adımlar (her satır bir adım)…', en: 'Steps (one per line)…' })}
-          className="w-full bg-[var(--panel)] border border-[var(--border)] rounded-lg px-2.5 py-2 text-[12.5px] resize-none"
-        />
-        <button onClick={handleAdd} disabled={createRunbook.isPending} className="w-full py-2 rounded-lg bg-brand text-white text-[12px] font-bold disabled:opacity-40">
-          {t({ tr: 'Runbook Ekle', en: 'Add Runbook' })}
-        </button>
-      </div>
+      {canManage && (
+        <div className="bg-[var(--panel-2)] border border-[var(--border)] rounded-lg p-3 mb-4 space-y-2">
+          <input
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            placeholder={t({ tr: 'Anahtar kelime (örn. "disk kullanımı")', en: 'Keyword (e.g. "disk usage")' })}
+            className="w-full bg-[var(--panel)] border border-[var(--border)] rounded-lg px-2.5 py-2 text-[12.5px]"
+          />
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder={t({ tr: 'Runbook başlığı', en: 'Runbook title' })}
+            className="w-full bg-[var(--panel)] border border-[var(--border)] rounded-lg px-2.5 py-2 text-[12.5px]"
+          />
+          <textarea
+            value={steps}
+            onChange={(e) => setSteps(e.target.value)}
+            rows={4}
+            placeholder={t({ tr: 'Adımlar (her satır bir adım)…', en: 'Steps (one per line)…' })}
+            className="w-full bg-[var(--panel)] border border-[var(--border)] rounded-lg px-2.5 py-2 text-[12.5px] resize-none"
+          />
+          <button onClick={handleAdd} disabled={createRunbook.isPending} className="w-full py-2 rounded-lg bg-brand text-white text-[12px] font-bold disabled:opacity-40">
+            {t({ tr: 'Runbook Ekle', en: 'Add Runbook' })}
+          </button>
+        </div>
+      )}
 
       <div className="space-y-2">
         {runbooks?.map((r) => (
@@ -63,9 +68,16 @@ export function RunbooksModal({ onClose }: { onClose: () => void }) {
               <div className="text-[12.5px] font-bold">{r.title}</div>
               <div className="text-[10.5px] text-[var(--text-faint)] font-mono">"{r.trigger_keyword}"</div>
             </div>
-            <button onClick={() => deleteRunbook.mutate(r.id)} className="text-[var(--text-faint)] hover:text-p1">
-              <Trash2 className="w-4 h-4" />
-            </button>
+            {canManage && (
+              <button
+                onClick={() => deleteRunbook.mutate(r.id)}
+                title={t({ tr: 'Runbook\'u sil', en: 'Delete runbook' })}
+                aria-label={t({ tr: 'Runbook\'u sil', en: 'Delete runbook' })}
+                className="text-[var(--text-faint)] hover:text-p1"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
           </div>
         ))}
       </div>

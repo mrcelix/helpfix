@@ -1,6 +1,7 @@
 import { useEffect, type ReactNode } from 'react'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useLang } from '@/contexts/LangContext'
 
 interface ModalProps {
   open: boolean
@@ -12,6 +13,7 @@ interface ModalProps {
 }
 
 export function Modal({ open, onClose, title, children, footer, widthClass = 'max-w-[520px]' }: ModalProps) {
+  const { t } = useLang()
   useEffect(() => {
     if (!open) return
     function handleKeyDown(e: KeyboardEvent) {
@@ -33,6 +35,8 @@ export function Modal({ open, onClose, title, children, footer, widthClass = 'ma
           <h3 className="font-display font-bold text-base">{title}</h3>
           <button
             onClick={onClose}
+            title={t({ tr: 'Kapat', en: 'Close' })}
+            aria-label={t({ tr: 'Kapat', en: 'Close' })}
             className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--text-faint)] hover:bg-[var(--row-hover)] hover:text-[var(--text)]"
           >
             <X className="w-4 h-4" />

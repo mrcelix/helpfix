@@ -7,10 +7,12 @@ export interface AlertListItem {
   id: string
   source: string
   title: string
+  description: string | null
   severity: AlertSeverity
   status: AlertStatus
   fired_at: string
   incident_id: string | null
+  ci_id: string | null
   ci: { name: string } | null
 }
 
@@ -24,7 +26,7 @@ export function useAlerts(view: AlertSavedView) {
     queryFn: async () => {
       let query = supabase
         .from('monitoring_alerts')
-        .select('id, source, title, severity, status, fired_at, incident_id, ci:ci_id ( name )')
+        .select('id, source, title, description, severity, status, fired_at, incident_id, ci_id, ci:ci_id ( name )')
         .order('fired_at', { ascending: false })
         .limit(200)
 
@@ -126,7 +128,10 @@ export function useCreateIncidentFromAlert() {
 
       return incident
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['monitoring-alerts'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['monitoring-alerts'] })
+      qc.invalidateQueries({ queryKey: ['incidents'] })
+    },
   })
 }
 
