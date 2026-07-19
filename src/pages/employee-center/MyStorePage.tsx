@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { Store, AlertTriangle, Ticket, Package, Monitor, Tag, ShoppingCart, Wifi, Headphones, CheckCircle2, XCircle, Clock, HelpCircle } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
+import { priorityLabel } from '@/lib/priority'
+import type { Priority } from '@/types/database'
 import {
   useMySite,
   useMyStoreHealthScore,
@@ -18,7 +20,7 @@ import {
   type StoreHealthCategory,
 } from '@/pages/store-performance/useStorePerformance'
 import { PeriodSelector } from '@/pages/store-performance/PeriodSelector'
-import { CiAvailabilityTable } from '@/pages/store-performance/CiAvailabilityTable'
+import { CiAvailabilityTable, CI_TYPE_LABEL } from '@/pages/store-performance/CiAvailabilityTable'
 import { CiAvailabilityDrawer } from '@/pages/store-performance/CiAvailabilityDrawer'
 import { Pillar } from '@/pages/store-performance/Pillar'
 import { HealthPillarModal, type HealthPillarKey } from '@/pages/store-performance/HealthPillarModal'
@@ -46,7 +48,7 @@ const CATEGORY_META: Record<StoreHealthCategory, { label: { tr: string; en: stri
 
 export function MyStorePage() {
   const { lang, t } = useLang()
-  const { data: site, isLoading: siteLoading } = useMySite()
+  const { data: site, isLoading: siteLoading, error: siteError } = useMySite()
   const { data: health } = useMyStoreHealthScore()
   const { data: incidents } = useMyStoreIncidents()
   const { data: assets } = useMyStoreAssets()
@@ -72,6 +74,17 @@ export function MyStorePage() {
 
   if (siteLoading) {
     return <div className="py-16 text-center text-[13px] text-[var(--text-faint)]">{t({ tr: 'Yükleniyor…', en: 'Loading…', fr: 'Chargement…', it: 'Caricamento…', ar: 'جارٍ التحميل…' })}</div>
+  }
+
+  if (siteError) {
+    return (
+      <div className="py-16 text-center px-6">
+        <Store className="w-10 h-10 text-p1 mx-auto mb-3" />
+        <p className="text-[13px] text-p1 max-w-sm mx-auto">
+          {t({ tr: 'Mağaza bilgisi yüklenemedi.', en: 'Failed to load store info.' })}
+        </p>
+      </div>
+    )
   }
 
   if (!site) {
@@ -270,7 +283,12 @@ export function MyStorePage() {
             {!incidents?.length && <p className="text-[12px] text-[var(--text-faint)] italic">{t({ tr: 'Kayıt yok.', en: 'No records.', fr: 'Aucun enregistrement.', it: 'Nessun record.', ar: 'لا توجد سجلات.' })}</p>}
             {incidents?.map((i) => (
               <div key={i.id} className="flex items-center gap-2 px-2.5 py-2 rounded-lg hover:bg-[var(--row-hover)] text-[12px]">
-                <span className={`text-[9.5px] font-bold rounded-full px-1.5 py-0.5 shrink-0 ${PRIORITY_STYLE[i.priority]}`}>{i.priority}</span>
+                <span
+                  className={`text-[9.5px] font-bold rounded-full px-1.5 py-0.5 shrink-0 ${PRIORITY_STYLE[i.priority]}`}
+                  title={priorityLabel(i.priority as Priority, lang)}
+                >
+                  {i.priority}
+                </span>
                 <span className="flex-1 min-w-0 truncate">{i.title}</span>
                 <span className="text-[10.5px] text-[var(--text-faint)] shrink-0">{i.requester?.full_name?.split(' ')[0]}</span>
               </div>
@@ -289,7 +307,7 @@ export function MyStorePage() {
               <div key={a.id} className="flex items-center gap-2 px-2.5 py-2 rounded-lg hover:bg-[var(--row-hover)] text-[12px]">
                 <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${a.is_online ? 'bg-ok' : 'bg-p1'}`} />
                 <span className="flex-1 min-w-0 truncate">{a.name}</span>
-                <span className="text-[10.5px] text-[var(--text-faint)] shrink-0">{a.ci_type}</span>
+                <span className="text-[10.5px] text-[var(--text-faint)] shrink-0">{t(CI_TYPE_LABEL[a.ci_type] ?? { tr: a.ci_type, en: a.ci_type })}</span>
               </div>
             ))}
           </div>

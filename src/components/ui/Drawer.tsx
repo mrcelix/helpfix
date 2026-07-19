@@ -1,6 +1,7 @@
 import { useEffect, type ReactNode } from 'react'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useLang } from '@/contexts/LangContext'
 
 interface DrawerProps {
   open: boolean
@@ -12,6 +13,7 @@ interface DrawerProps {
 }
 
 export function Drawer({ open, onClose, title, subtitle, children, widthClass = 'w-[460px]' }: DrawerProps) {
+  const { t } = useLang()
   useEffect(() => {
     if (!open) return
     function handleKeyDown(e: KeyboardEvent) {
@@ -44,6 +46,8 @@ export function Drawer({ open, onClose, title, subtitle, children, widthClass = 
           </div>
           <button
             onClick={onClose}
+            title={t({ tr: 'Kapat', en: 'Close' })}
+            aria-label={t({ tr: 'Kapat', en: 'Close' })}
             className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--text-faint)] hover:bg-[var(--row-hover)] hover:text-[var(--text)] shrink-0"
           >
             <X className="w-4 h-4" />

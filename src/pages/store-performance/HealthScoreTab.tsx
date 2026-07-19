@@ -52,11 +52,21 @@ export function HealthScoreTab() {
       </div>
 
       <div className="flex items-center justify-center gap-3 mb-4">
-        <button onClick={() => setWeekStart((w) => shiftWeek(w, -1))} className="w-7 h-7 rounded-md border border-[var(--border)] flex items-center justify-center text-[var(--text-faint)] hover:text-[var(--text)]">
+        <button
+          onClick={() => setWeekStart((w) => shiftWeek(w, -1))}
+          title={t({ tr: 'Önceki hafta', en: 'Previous week' })}
+          aria-label={t({ tr: 'Önceki hafta', en: 'Previous week' })}
+          className="w-7 h-7 rounded-md border border-[var(--border)] flex items-center justify-center text-[var(--text-faint)] hover:text-[var(--text)]"
+        >
           <ChevronLeft className="w-4 h-4" />
         </button>
         <span className="text-[12.5px] font-bold">{weekLabel}</span>
-        <button onClick={() => setWeekStart((w) => shiftWeek(w, 1))} className="w-7 h-7 rounded-md border border-[var(--border)] flex items-center justify-center text-[var(--text-faint)] hover:text-[var(--text)]">
+        <button
+          onClick={() => setWeekStart((w) => shiftWeek(w, 1))}
+          title={t({ tr: 'Sonraki hafta', en: 'Next week' })}
+          aria-label={t({ tr: 'Sonraki hafta', en: 'Next week' })}
+          className="w-7 h-7 rounded-md border border-[var(--border)] flex items-center justify-center text-[var(--text-faint)] hover:text-[var(--text)]"
+        >
           <ChevronRight className="w-4 h-4" />
         </button>
         {weekStart !== currentWeekStart() && (

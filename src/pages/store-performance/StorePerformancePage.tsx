@@ -242,8 +242,12 @@ function IntegrationStatusWidget({ onOpenIntegrations }: { onOpenIntegrations: (
  * day→son 7 gün, week→son 8 hafta, month→son 12 hafta, year→son 12 ay. */
 function StoreHistoryTab({ stores, period, onOpenStore }: { stores: StoreScorecard[]; period: StorePeriod; onOpenStore: (s: StoreScorecard) => void }) {
   const { t } = useLang()
-  const [compareSiteId, setCompareSiteId] = useState<string | null>(stores[0]?.site_id ?? null)
-  const { data: trend } = useStoreScoreTrend(compareSiteId, period)
+  // stores prop ebeveyn sorgusu yüklenirken boş dizi olabilir; siteId'yi
+  // useState initializer ile stores[0]'a sabitlemek bu durumda kalıcı
+  // null'a saplanırdı — bkz. LinesDevicesTab'daki aynı düzeltme.
+  const [compareSiteId, setCompareSiteId] = useState<string | null>(null)
+  const activeCompareSiteId = compareSiteId ?? stores[0]?.site_id ?? null
+  const { data: trend, isLoading: trendLoading } = useStoreScoreTrend(activeCompareSiteId, period)
 
   const chartData = trend?.map((p) => ({
     date: p.period_label,
@@ -254,7 +258,7 @@ function StoreHistoryTab({ stores, period, onOpenStore }: { stores: StoreScoreca
     <div className="border border-[var(--border)] rounded-[var(--radius-app)] bg-[var(--panel)] p-4">
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-display text-[14px] font-bold">{t({ tr: 'Mağaza Geçmiş Trendi', en: 'Store History Trend' })}</h3>
-        <select value={compareSiteId ?? ''} onChange={(e) => setCompareSiteId(e.target.value)} className="text-[11.5px] font-semibold bg-[var(--panel-2)] border border-[var(--border)] rounded-md px-2 py-1.5">
+        <select value={activeCompareSiteId ?? ''} onChange={(e) => setCompareSiteId(e.target.value)} className="text-[11.5px] font-semibold bg-[var(--panel-2)] border border-[var(--border)] rounded-md px-2 py-1.5">
           {stores.map((s) => (
             <option key={s.site_id} value={s.site_id}>
               {s.site_name}
@@ -263,7 +267,9 @@ function StoreHistoryTab({ stores, period, onOpenStore }: { stores: StoreScoreca
         </select>
       </div>
 
-      {!chartData?.length && (
+      {trendLoading && <p className="text-[12px] text-[var(--text-faint)] py-12 text-center">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</p>}
+
+      {!trendLoading && !chartData?.length && (
         <p className="text-[12px] text-[var(--text-faint)] py-12 text-center">
           {t({
             tr: 'Bu periyot için henüz veri yok. Günlük görünüm "Anlık Görüntü Al" butonuna, haftalık/aylık/yıllık görünüm ise Sağlık Skoru sekmesindeki "Haftalık Skor Üret" butonuna bağlıdır.',
@@ -285,8 +291,8 @@ function StoreHistoryTab({ stores, period, onOpenStore }: { stores: StoreScoreca
         </ResponsiveContainer>
       )}
 
-      {!!stores.length && compareSiteId && (
-        <button onClick={() => onOpenStore(stores.find((s) => s.site_id === compareSiteId)!)} className="mt-3 text-[11.5px] font-bold text-brand-dim">
+      {!!stores.length && activeCompareSiteId && (
+        <button onClick={() => onOpenStore(stores.find((s) => s.site_id === activeCompareSiteId)!)} className="mt-3 text-[11.5px] font-bold text-brand-dim">
           {t({ tr: 'Bu mağazanın detayını aç →', en: "Open this store's detail →" })}
         </button>
       )}

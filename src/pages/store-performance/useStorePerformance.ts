@@ -131,25 +131,6 @@ export function useStoreIncidents(siteId: string | null) {
   })
 }
 
-export function useToggleDeviceOnline() {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: async (input: { id: string; isOnline: boolean }) => {
-      const { error } = await supabase
-        .from('configuration_items')
-        .update({ is_online: input.isOnline, last_seen_at: new Date().toISOString() })
-        .eq('id', input.id)
-      if (error) throw error
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['store-devices'] })
-      qc.invalidateQueries({ queryKey: ['store-scorecard'] })
-      qc.invalidateQueries({ queryKey: ['cmdb'] })
-      qc.invalidateQueries({ queryKey: ['ci'] })
-    },
-  })
-}
-
 // ------------------------------------------------------------------
 // Faz BN — MAĞAZA IT SAĞLIĞI SKORU (A/B/C, 4 sütun: ESL/Kiosk/Network/Yardım Masası)
 // ------------------------------------------------------------------
@@ -199,28 +180,6 @@ export function useGenerateWeeklyScores() {
       const { data, error } = await supabase.rpc('generate_weekly_store_health_scores', { p_tenant_id: profile.tenantId, p_week_start: weekStart })
       if (error) throw error
       return data as number
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['store-health-scores'] }),
-  })
-}
-
-export type OperationalEventType = 'late_opening' | 'recurring_fault' | 'other'
-
-export function useCreateOperationalEvent() {
-  const qc = useQueryClient()
-  const { profile } = useAuth()
-  return useMutation({
-    mutationFn: async (input: { siteId: string; eventType: OperationalEventType; note: string }) => {
-      if (!profile) throw new Error('Profil yüklenmedi')
-      const { error } = await supabase.from('store_operational_events').insert({
-        tenant_id: profile.tenantId,
-        site_id: input.siteId,
-        event_type: input.eventType,
-        note: input.note || null,
-        source: 'manual',
-        created_by: profile.id,
-      })
-      if (error) throw error
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['store-health-scores'] }),
   })

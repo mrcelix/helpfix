@@ -143,11 +143,18 @@ function EndpointRow({
       <button
         onClick={() => updateEndpoint.mutate({ id: ep.id, isActive: !ep.is_active })}
         title={ep.is_active ? t({ tr: 'Pasifleştir', en: 'Deactivate' }) : t({ tr: 'Aktifleştir', en: 'Activate' })}
+        aria-label={ep.is_active ? t({ tr: 'Pasifleştir', en: 'Deactivate' }) : t({ tr: 'Aktifleştir', en: 'Activate' })}
+        aria-pressed={ep.is_active}
         className={`p-1.5 rounded-md hover:bg-[var(--panel-2)] shrink-0 ${ep.is_active ? 'text-ok' : 'text-[var(--text-faint)]'}`}
       >
         <Power className="w-3.5 h-3.5" />
       </button>
-      <button onClick={handleDelete} className="p-1.5 rounded-md text-[var(--text-faint)] hover:text-p1 hover:bg-[var(--panel-2)] shrink-0">
+      <button
+        onClick={handleDelete}
+        title={t({ tr: 'Sil', en: 'Delete' })}
+        aria-label={t({ tr: 'Sil', en: 'Delete' })}
+        className="p-1.5 rounded-md text-[var(--text-faint)] hover:text-p1 hover:bg-[var(--panel-2)] shrink-0"
+      >
         <Trash2 className="w-3.5 h-3.5" />
       </button>
     </div>
@@ -166,7 +173,12 @@ function LogsModal({ endpointId, onClose }: { endpointId: string | undefined; on
       >
         <div className="px-5 py-4 border-b border-[var(--border)] flex items-center justify-between">
           <h3 className="font-display text-[15px] font-bold">{t({ tr: 'Entegrasyon Logları', en: 'Integration Logs' })}</h3>
-          <button onClick={onClose} className="text-[var(--text-faint)] hover:text-[var(--text)] text-[13px]">
+          <button
+            onClick={onClose}
+            title={t({ tr: 'Kapat', en: 'Close' })}
+            aria-label={t({ tr: 'Kapat', en: 'Close' })}
+            className="text-[var(--text-faint)] hover:text-[var(--text)] text-[13px]"
+          >
             ✕
           </button>
         </div>

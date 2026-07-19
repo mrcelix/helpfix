@@ -10,7 +10,7 @@ const LINE_TYPE_LABEL: Record<string, string> = {
   other: 'Diğer',
 }
 
-const CI_TYPE_LABEL: Record<string, { tr: string; en: string }> = {
+export const CI_TYPE_LABEL: Record<string, { tr: string; en: string }> = {
   server: { tr: 'Sunucu', en: 'Server' },
   laptop: { tr: 'Laptop', en: 'Laptop' },
   desktop: { tr: 'Masaüstü', en: 'Desktop' },
@@ -72,7 +72,10 @@ export function CiAvailabilityTable({
             }}
             className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-[var(--row-hover)] cursor-pointer"
           >
-            <span className={`w-2 h-2 rounded-full shrink-0 ${r.is_currently_online ? 'bg-ok' : 'bg-p1'}`} title={r.is_currently_online ? 'online' : 'offline'} />
+            <span
+              className={`w-2 h-2 rounded-full shrink-0 ${r.is_currently_online ? 'bg-ok' : 'bg-p1'}`}
+              title={r.is_currently_online ? t({ tr: 'Çevrimiçi', en: 'Online' }) : t({ tr: 'Çevrimdışı', en: 'Offline' })}
+            />
             <div className="flex-1 min-w-0">
               <div className="text-[13px] font-semibold truncate">{r.name}</div>
               <div className="text-[11px] text-[var(--text-faint)] mt-0.5 flex items-center gap-2">

@@ -161,9 +161,3 @@ export function useIntegrationSummary() {
     },
   })
 }
-
-export function useMyStoreIntegrationSummary() {
-  const { profile } = useAuth()
-  const { data } = useIntegrationSummary()
-  return data?.find((s) => s.site_id === profile?.siteId) ?? null
-}

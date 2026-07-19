@@ -28,6 +28,7 @@ export function PeriodSelector({
         <button
           key={p}
           onClick={() => onChange(p)}
+          aria-pressed={period === p}
           className={`px-2.5 py-1.5 text-[11.5px] font-bold rounded-md transition-colors ${
             period === p ? 'bg-brand text-white' : 'text-[var(--text-faint)] hover:text-[var(--text)]'
           }`}

@@ -19,19 +19,25 @@ export function NewIntegrationEndpointModal({ onClose }: { onClose: () => void }
   const [authHeaderName, setAuthHeaderName] = useState('')
   const [authHeaderValue, setAuthHeaderValue] = useState('')
   const [pollIntervalMinutes, setPollIntervalMinutes] = useState(15)
+  const [submitError, setSubmitError] = useState('')
 
   async function handleSubmit() {
     if (!siteId || !name.trim() || !endpointUrl.trim()) return
-    await createEndpoint.mutateAsync({
-      siteId,
-      name: name.trim(),
-      endpointUrl: endpointUrl.trim(),
-      httpMethod,
-      authHeaderName: authHeaderName.trim(),
-      authHeaderValue: authHeaderValue.trim(),
-      pollIntervalMinutes,
-    })
-    onClose()
+    setSubmitError('')
+    try {
+      await createEndpoint.mutateAsync({
+        siteId,
+        name: name.trim(),
+        endpointUrl: endpointUrl.trim(),
+        httpMethod,
+        authHeaderName: authHeaderName.trim(),
+        authHeaderValue: authHeaderValue.trim(),
+        pollIntervalMinutes,
+      })
+      onClose()
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : String(err))
+    }
   }
 
   return (
@@ -136,6 +142,7 @@ export function NewIntegrationEndpointModal({ onClose }: { onClose: () => void }
             en: 'The endpoint must return JSON in this shape: { "devices": [ { "tag": "ESL-001", "online": true }, ... ] }. Tags must match device tags in the CMDB.',
           })}
         </p>
+        {submitError && <p className="text-[12px] text-p1">{submitError}</p>}
       </div>
     </Modal>
   )

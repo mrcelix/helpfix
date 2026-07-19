@@ -46,7 +46,12 @@ export function LinesDevicesTab({
   onGoToIntegrations: () => void
 }) {
   const { t } = useLang()
-  const [siteId, setSiteId] = useState<string | null>(stores[0]?.site_id ?? null)
+  // stores prop, ebeveynin useStoreScorecard() sorgusu yüklenirken boş
+  // dizi olarak gelebilir; siteId'yi ilk render'da stores[0] ile
+  // başlatmak (useState initializer) bu durumda kalıcı olarak null'a
+  // saplanıp kalırdı — bunun yerine "seçim yoksa ilk mağaza" hesaplanır.
+  const [siteId, setSiteId] = useState<string | null>(null)
+  const activeSiteId = siteId ?? stores[0]?.site_id ?? null
   const [filterCategory, setFilterCategory] = useState<StoreHealthCategory | null>(null)
   // ci_id tutuluyor, tam satır DEĞİL — böylece Realtime bir olayla `rows`
   // tazelendiğinde açık drawer'ın "anlık" bilgileri (durum, availability)
@@ -54,15 +59,15 @@ export function LinesDevicesTab({
   const [selectedCiId, setSelectedCiId] = useState<string | null>(null)
   const [ticketPrefill, setTicketPrefill] = useState<{ title: string; category: string } | null>(null)
 
-  useDeviceStatusRealtime(siteId)
-  const { data: summary } = useStoreCategorySummary(siteId, period)
-  const { data: rows, isLoading } = useStoreAvailability(siteId, period, { category: filterCategory })
+  useDeviceStatusRealtime(activeSiteId)
+  const { data: summary } = useStoreCategorySummary(activeSiteId, period)
+  const { data: rows, isLoading } = useStoreAvailability(activeSiteId, period, { category: filterCategory })
   const { data: endpoints } = useIntegrationEndpoints()
 
   const selectedCi = rows?.find((r) => r.ci_id === selectedCiId) ?? null
   const summaryByCategory = new Map(summary?.map((s) => [s.category, s]))
-  const hasIntegration = endpoints?.some((e) => e.site_id === siteId) ?? false
-  const storeName = stores.find((s) => s.site_id === siteId)?.site_name ?? ''
+  const hasIntegration = endpoints?.some((e) => e.site_id === activeSiteId) ?? false
+  const storeName = stores.find((s) => s.site_id === activeSiteId)?.site_name ?? ''
 
   function quickCreateTicket(row: StoreAvailabilityRow) {
     const pct = row.availability_percent != null ? `%${row.availability_percent}` : t({ tr: 'veri yok', en: 'no data' })
@@ -87,7 +92,7 @@ export function LinesDevicesTab({
       <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <h3 className="font-display text-[15px] font-bold">{t({ tr: 'Hatlar & Cihazlar', en: 'Lines & Devices' })}</h3>
         <select
-          value={siteId ?? ''}
+          value={activeSiteId ?? ''}
           onChange={(e) => {
             setSiteId(e.target.value)
             setFilterCategory(null)
@@ -112,6 +117,7 @@ export function LinesDevicesTab({
             <button
               key={cat}
               onClick={() => setFilterCategory((cur) => (cur === cat ? null : cat))}
+              aria-pressed={active}
               className={`text-left border rounded-xl p-3.5 transition-colors ${
                 active ? 'border-brand bg-brand-tint/40' : 'border-[var(--border)] bg-[var(--panel)] hover:border-brand/40'
               }`}

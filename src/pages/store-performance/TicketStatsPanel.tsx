@@ -1,6 +1,7 @@
 import { ArrowUp, ArrowDown } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { useLang } from '@/contexts/LangContext'
+import { priorityLabel } from '@/lib/priority'
 import { useStoreTicketStats, type StorePeriod } from './useStorePerformance'
 
 const STATUS_LABEL: Record<string, { tr: string; en: string }> = {
@@ -47,7 +48,7 @@ function TrendBadge({
  * HealthPillarModal'ın (Yardım Masası sütunu) PAYLAŞTIĞI panel — kendi
  * verisini kendi çeker (siteId+period yeterli), dışarıdan veri beklemez. */
 export function TicketStatsPanel({ siteId, period }: { siteId: string; period: StorePeriod }) {
-  const { t } = useLang()
+  const { lang, t } = useLang()
   const { data: ticketStats, isLoading } = useStoreTicketStats(siteId, period)
 
   if (isLoading) {
@@ -90,6 +91,7 @@ export function TicketStatsPanel({ siteId, period }: { siteId: string; period: S
             { key: 'status_on_hold', count: ticketStats.status_on_hold },
             { key: 'status_resolved', count: ticketStats.status_resolved },
             { key: 'status_closed', count: ticketStats.status_closed },
+            { key: 'status_merged', count: ticketStats.status_merged },
           ].map((d) => ({ ...d, label: t(STATUS_LABEL[d.key]) }))}
         >
           <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -100,10 +102,10 @@ export function TicketStatsPanel({ siteId, period }: { siteId: string; period: S
         </BarChart>
       </ResponsiveContainer>
       <div className="flex flex-wrap gap-1.5 mt-2">
-        <span className="text-[9.5px] font-bold bg-p1-tint text-p1 rounded-full px-1.5 py-0.5">P1 · {ticketStats.priority_p1}</span>
-        <span className="text-[9.5px] font-bold bg-p2-tint text-p2 rounded-full px-1.5 py-0.5">P2 · {ticketStats.priority_p2}</span>
-        <span className="text-[9.5px] font-bold bg-brand-tint text-brand-dim rounded-full px-1.5 py-0.5">P3 · {ticketStats.priority_p3}</span>
-        <span className="text-[9.5px] font-bold bg-[var(--panel-2)] text-[var(--text-faint)] rounded-full px-1.5 py-0.5">P4 · {ticketStats.priority_p4}</span>
+        <span className="text-[9.5px] font-bold bg-p1-tint text-p1 rounded-full px-1.5 py-0.5" title={priorityLabel('P1', lang)}>P1 · {ticketStats.priority_p1}</span>
+        <span className="text-[9.5px] font-bold bg-p2-tint text-p2 rounded-full px-1.5 py-0.5" title={priorityLabel('P2', lang)}>P2 · {ticketStats.priority_p2}</span>
+        <span className="text-[9.5px] font-bold bg-brand-tint text-brand-dim rounded-full px-1.5 py-0.5" title={priorityLabel('P3', lang)}>P3 · {ticketStats.priority_p3}</span>
+        <span className="text-[9.5px] font-bold bg-[var(--panel-2)] text-[var(--text-faint)] rounded-full px-1.5 py-0.5" title={priorityLabel('P4', lang)}>P4 · {ticketStats.priority_p4}</span>
       </div>
     </div>
   )

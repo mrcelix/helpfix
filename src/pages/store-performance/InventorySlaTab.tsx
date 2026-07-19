@@ -30,19 +30,23 @@ const STATUS_COLOR: Record<string, string> = {
  * kullanır (CiAvailabilityTable) — ayrıca ci_status kırılımı mini bar. */
 export function InventorySlaTab({ stores, period }: { stores: StoreScorecard[]; period: StorePeriod }) {
   const { t } = useLang()
-  const [siteId, setSiteId] = useState<string | null>(stores[0]?.site_id ?? null)
+  // stores prop ebeveyn sorgusu yüklenirken boş dizi olabilir; siteId'yi
+  // useState initializer ile stores[0]'a sabitlemek bu durumda kalıcı
+  // null'a saplanırdı — bkz. LinesDevicesTab'daki aynı düzeltme.
+  const [siteId, setSiteId] = useState<string | null>(null)
+  const activeSiteId = siteId ?? stores[0]?.site_id ?? null
   // ci_id tutuluyor, tam satır değil — bkz. LinesDevicesTab'daki aynı
   // yorum: açık drawer'ın Realtime'la tazelenmesi için.
   const [selectedCiId, setSelectedCiId] = useState<string | null>(null)
   const [ticketPrefill, setTicketPrefill] = useState<{ title: string; category: string } | null>(null)
 
-  useDeviceStatusRealtime(siteId)
-  const { data: rows, isLoading } = useStoreAvailability(siteId, period, { uncategorized: true })
-  const { data: statusBreakdown } = useInventoryStatusBreakdown(siteId)
+  useDeviceStatusRealtime(activeSiteId)
+  const { data: rows, isLoading } = useStoreAvailability(activeSiteId, period, { uncategorized: true })
+  const { data: statusBreakdown } = useInventoryStatusBreakdown(activeSiteId)
 
   const selectedCi = rows?.find((r) => r.ci_id === selectedCiId) ?? null
   const statusTotal = statusBreakdown ? Object.values(statusBreakdown).reduce((s, n) => s + n, 0) : 0
-  const storeName = stores.find((s) => s.site_id === siteId)?.site_name ?? ''
+  const storeName = stores.find((s) => s.site_id === activeSiteId)?.site_name ?? ''
 
   function quickCreateTicket(row: StoreAvailabilityRow) {
     const pct = row.availability_percent != null ? `%${row.availability_percent}` : t({ tr: 'veri yok', en: 'no data' })
@@ -57,7 +61,7 @@ export function InventorySlaTab({ stores, period }: { stores: StoreScorecard[]; 
       <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <h3 className="font-display text-[15px] font-bold">{t({ tr: 'Envanter SLA', en: 'Inventory SLA' })}</h3>
         <select
-          value={siteId ?? ''}
+          value={activeSiteId ?? ''}
           onChange={(e) => setSiteId(e.target.value)}
           className="text-[11.5px] font-semibold bg-[var(--panel-2)] border border-[var(--border)] rounded-md px-2 py-1.5"
         >
