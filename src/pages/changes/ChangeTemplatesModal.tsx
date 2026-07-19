@@ -5,7 +5,7 @@ import { useChangeTemplates, useCreateChangeTemplate } from './useChanges'
 
 export function ChangeTemplatesModal({ onClose }: { onClose: () => void }) {
   const { t } = useLang()
-  const { data: templates } = useChangeTemplates()
+  const { data: templates, isLoading: templatesLoading } = useChangeTemplates()
   const createTemplate = useCreateChangeTemplate()
 
   const [name, setName] = useState('')
@@ -80,6 +80,12 @@ export function ChangeTemplatesModal({ onClose }: { onClose: () => void }) {
       </div>
 
       <div className="space-y-2">
+        {templatesLoading && (
+          <p className="text-[12px] text-[var(--text-faint)] text-center py-3">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</p>
+        )}
+        {!templatesLoading && !templates?.length && (
+          <p className="text-[12px] text-[var(--text-faint)] text-center py-3">{t({ tr: 'Henüz şablon yok.', en: 'No templates yet.' })}</p>
+        )}
         {templates?.map((tpl) => (
           <div key={tpl.id} className="bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3.5 py-2.5">
             <div className="text-[12.5px] font-bold">{tpl.name}</div>

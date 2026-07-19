@@ -72,7 +72,12 @@ export function FreezeWindowsModal({ onClose }: { onClose: () => void }) {
                 {w.reason && ` · ${w.reason}`}
               </div>
             </div>
-            <button onClick={() => deleteWindow.mutate(w.id)} className="text-[var(--text-faint)] hover:text-p1">
+            <button
+              onClick={() => deleteWindow.mutate(w.id)}
+              title={t({ tr: 'Pencereyi sil', en: 'Delete window' })}
+              aria-label={t({ tr: 'Pencereyi sil', en: 'Delete window' })}
+              className="text-[var(--text-faint)] hover:text-p1"
+            >
               <Trash2 className="w-4 h-4" />
             </button>
           </div>

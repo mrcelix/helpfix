@@ -20,6 +20,35 @@ const APPROVAL_LABEL: Record<string, { tr: string; en: string }> = {
   cab: { tr: 'CAB (Değişiklik Kurulu)', en: 'CAB (Change Advisory Board)' },
 }
 
+// ChangesPage.tsx'teki liste sayfasıyla aynı etiketler — drawer önceden
+// ham enum değerlerini (draft, cab_review, pending, rolled_back vb.)
+// gösteriyordu, aynı modülün liste görünümüyle tutarsızdı.
+const STATUS_LABEL: Record<string, { tr: string; en: string }> = {
+  draft: { tr: 'Taslak', en: 'Draft' },
+  submitted: { tr: 'Gönderildi', en: 'Submitted' },
+  technical_review: { tr: 'Teknik İnceleme', en: 'Technical Review' },
+  cab_review: { tr: 'CAB İncelemesi', en: 'CAB Review' },
+  approved: { tr: 'Onaylandı', en: 'Approved' },
+  scheduled: { tr: 'Planlandı', en: 'Scheduled' },
+  in_progress: { tr: 'Uygulanıyor', en: 'In Progress' },
+  completed: { tr: 'Tamamlandı', en: 'Completed' },
+  failed: { tr: 'Başarısız', en: 'Failed' },
+  closed: { tr: 'Kapatıldı', en: 'Closed' },
+}
+
+const APPROVAL_STATUS_LABEL: Record<string, { tr: string; en: string }> = {
+  pending: { tr: 'Beklemede', en: 'Pending' },
+  approved: { tr: 'Onaylandı', en: 'Approved' },
+  rejected: { tr: 'Reddedildi', en: 'Rejected' },
+}
+
+const PIR_LABEL: Record<string, { tr: string; en: string }> = {
+  successful: { tr: 'Başarılı', en: 'Successful' },
+  partial: { tr: 'Kısmen Başarılı', en: 'Partial' },
+  failed: { tr: 'Başarısız', en: 'Failed' },
+  rolled_back: { tr: 'Geri Alındı', en: 'Rolled Back' },
+}
+
 function riskColor(score: number) {
   if (score >= 60) return 'text-p1 bg-p1-tint'
   if (score >= 31) return 'text-p2 bg-p2-tint'
@@ -67,7 +96,7 @@ export function ChangeDrawer({ id, onClose }: { id: string; onClose: () => void 
               {t({ tr: 'Risk', en: 'Risk' })}: {change.risk_score}
             </span>
             <span className="text-[11px] text-[var(--text-faint)] bg-[var(--panel-2)] border border-[var(--border)] rounded-full px-2.5 py-0.5">
-              {change.status}
+              {STATUS_LABEL[change.status] ? pickLang(STATUS_LABEL[change.status], lang) : change.status}
             </span>
           </div>
 
@@ -155,7 +184,7 @@ export function ChangeDrawer({ id, onClose }: { id: string; onClose: () => void 
                               : 'bg-p2-tint text-p2')
                         }
                       >
-                        {a.status}
+                        {APPROVAL_STATUS_LABEL[a.status] ? pickLang(APPROVAL_STATUS_LABEL[a.status], lang) : a.status}
                       </span>
                     </div>
                     {a.status === 'pending' && canManage && (
@@ -275,7 +304,9 @@ export function ChangeDrawer({ id, onClose }: { id: string; onClose: () => void 
           {change.pir_outcome && (
             <div className="bg-[var(--panel-2)] border border-[var(--border)] rounded-lg p-3.5">
               <div className="text-[10.5px] font-bold text-[var(--text-faint)] uppercase mb-1.5">PIR</div>
-              <div className="text-[12.5px] font-semibold mb-1">{change.pir_outcome}</div>
+              <div className="text-[12.5px] font-semibold mb-1">
+                {PIR_LABEL[change.pir_outcome] ? pickLang(PIR_LABEL[change.pir_outcome], lang) : change.pir_outcome}
+              </div>
               {change.pir_notes && <p className="text-[12px] text-[var(--text-sub)]">{change.pir_notes}</p>}
             </div>
           )}

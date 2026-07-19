@@ -64,7 +64,14 @@ export function ChangesPage() {
 
   function exportCsv() {
     if (!sortedChanges?.length) return
-    const headers = ['Ref', 'Başlık', 'Tip', 'Risk Skoru', 'Durum', 'Planlanan']
+    const headers = [
+      'Ref',
+      t({ tr: 'Başlık', en: 'Title' }),
+      t({ tr: 'Tip', en: 'Type' }),
+      t({ tr: 'Risk Skoru', en: 'Risk Score' }),
+      t({ tr: 'Durum', en: 'Status' }),
+      t({ tr: 'Planlanan', en: 'Scheduled' }),
+    ]
     const rows = sortedChanges.map((c) => [
       c.ref,
       c.title,
@@ -206,7 +213,11 @@ export function ChangesPage() {
             {sortedChanges?.map((c) => (
               <tr
                 key={c.id}
+                tabIndex={0}
                 onClick={() => setSelectedId(c.id)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') setSelectedId(c.id)
+                }}
                 className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--row-hover)] cursor-pointer"
               >
                 <td className="px-3.5 py-3 font-mono text-[var(--text-faint)]">{c.ref}</td>
@@ -229,7 +240,7 @@ export function ChangesPage() {
       </>
       )}
 
-      {selectedId && <ChangeDrawer id={selectedId} onClose={() => setSelectedId(null)} />}
+      {selectedId && <ChangeDrawer key={selectedId} id={selectedId} onClose={() => setSelectedId(null)} />}
       {showNewModal && <NewChangeModal onClose={() => setShowNewModal(false)} />}
       {showFreezeModal && <FreezeWindowsModal onClose={() => setShowFreezeModal(false)} />}
       {showTemplatesModal && <ChangeTemplatesModal onClose={() => setShowTemplatesModal(false)} />}

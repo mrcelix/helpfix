@@ -18,7 +18,7 @@ function sameDay(a: Date, b: Date) {
 
 export function ChangeCalendarTab({ onOpenChange }: { onOpenChange: (id: string) => void }) {
   const { lang, t } = useLang()
-  const { data: changes } = useScheduledChanges()
+  const { data: changes, isLoading, error } = useScheduledChanges()
   const [cursor, setCursor] = useState(() => {
     const d = new Date()
     d.setDate(1)
@@ -48,6 +48,14 @@ export function ChangeCalendarTab({ onOpenChange }: { onOpenChange: (id: string)
 
   return (
     <div>
+      {isLoading && (
+        <p className="text-[12px] text-[var(--text-faint)] text-center py-3">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</p>
+      )}
+      {error && (
+        <p className="text-[12px] text-p1 text-center py-3">
+          {t({ tr: 'Planlanmış değişiklikler yüklenemedi.', en: 'Failed to load scheduled changes.' })}
+        </p>
+      )}
       {conflicts.length > 0 && (
         <div className="flex items-start gap-2.5 bg-p1-tint border border-p1/40 rounded-xl px-4 py-3 mb-4">
           <AlertTriangle className="w-4 h-4 text-p1 shrink-0 mt-0.5" />
@@ -81,6 +89,8 @@ export function ChangeCalendarTab({ onOpenChange }: { onOpenChange: (id: string)
         <div className="flex items-center gap-1">
           <button
             onClick={() => setCursor((c) => new Date(c.getFullYear(), c.getMonth() - 1, 1))}
+            title={t({ tr: 'Önceki ay', en: 'Previous month' })}
+            aria-label={t({ tr: 'Önceki ay', en: 'Previous month' })}
             className="w-7 h-7 rounded-md flex items-center justify-center border border-[var(--border)] text-[var(--text-faint)] hover:text-[var(--text)]"
           >
             <ChevronLeft className="w-4 h-4" />
@@ -93,6 +103,8 @@ export function ChangeCalendarTab({ onOpenChange }: { onOpenChange: (id: string)
           </button>
           <button
             onClick={() => setCursor((c) => new Date(c.getFullYear(), c.getMonth() + 1, 1))}
+            title={t({ tr: 'Sonraki ay', en: 'Next month' })}
+            aria-label={t({ tr: 'Sonraki ay', en: 'Next month' })}
             className="w-7 h-7 rounded-md flex items-center justify-center border border-[var(--border)] text-[var(--text-faint)] hover:text-[var(--text)]"
           >
             <ChevronRight className="w-4 h-4" />

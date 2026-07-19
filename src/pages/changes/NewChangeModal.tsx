@@ -145,7 +145,7 @@ export function NewChangeModal({
                     : 'bg-[var(--panel-2)] border-[var(--border)] text-[var(--text-sub)]')
                 }
               >
-                {tp.label.tr}
+                {t(tp.label)}
               </button>
             ))}
           </div>
