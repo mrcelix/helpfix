@@ -20,6 +20,8 @@ import {
 import { PeriodSelector } from '@/pages/store-performance/PeriodSelector'
 import { CiAvailabilityTable } from '@/pages/store-performance/CiAvailabilityTable'
 import { CiAvailabilityDrawer } from '@/pages/store-performance/CiAvailabilityDrawer'
+import { Pillar } from '@/pages/store-performance/Pillar'
+import { HealthPillarModal, type HealthPillarKey } from '@/pages/store-performance/HealthPillarModal'
 
 const GRADE_STYLE: Record<string, string> = {
   A: 'bg-ok/15 text-ok border-ok/40',
@@ -64,6 +66,7 @@ export function MyStorePage() {
   // yorum: açık drawer'ın Realtime'la tazelenmesi için.
   const [selectedCiId, setSelectedCiId] = useState<string | null>(null)
   const selectedCi = lineRows?.find((r) => r.ci_id === selectedCiId) ?? null
+  const [pillarDrilldown, setPillarDrilldown] = useState<HealthPillarKey | null>(null)
 
   const thirdPartySummary = categorySummary?.filter((s) => THIRD_PARTY_CATEGORIES.includes(s.category)) ?? []
 
@@ -158,10 +161,34 @@ export function MyStorePage() {
         ) : (
           <>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 mb-4">
-              <Pillar icon={Tag} label={t({ tr: 'ESL Durumu', en: 'ESL Status', fr: 'État ESL', it: 'Stato ESL', ar: 'حالة الملصقات الإلكترونية' })} score={health.esl_score} detail={`${t({ tr: 'Offline', en: 'Offline', fr: 'Hors ligne', it: 'Offline', ar: 'غير متصل' })} %${health.esl_offline_pct}`} />
-              <Pillar icon={ShoppingCart} label={t({ tr: 'Kiosk & Kasa', en: 'Kiosk & POS', fr: 'Kiosque et caisse', it: 'Kiosk e cassa', ar: 'الكشك ونقاط البيع' })} score={health.kiosk_score} detail={`${t({ tr: 'Çalışırlık', en: 'Uptime', fr: 'Disponibilité', it: 'Uptime', ar: 'وقت التشغيل' })} %${health.kiosk_uptime_pct}`} />
-              <Pillar icon={Wifi} label={t({ tr: 'Network', en: 'Network', fr: 'Réseau', it: 'Rete', ar: 'الشبكة' })} score={health.network_score} detail={`${health.network_downtime_minutes} ${t({ tr: 'dk kesinti', en: 'min down', fr: "min d'arrêt", it: 'min di inattività', ar: 'دقيقة توقف' })}`} />
-              <Pillar icon={Headphones} label={t({ tr: 'Yardım Masası', en: 'Help Desk', fr: "Service d'assistance", it: 'Help desk', ar: 'مكتب المساعدة' })} score={health.helpdesk_score} detail={`${health.helpdesk_call_count} ${t({ tr: 'çağrı', en: 'calls', fr: 'appels', it: 'chiamate', ar: 'مكالمات' })}`} />
+              <Pillar
+                icon={Tag}
+                label={t({ tr: 'ESL Durumu', en: 'ESL Status', fr: 'État ESL', it: 'Stato ESL', ar: 'حالة الملصقات الإلكترونية' })}
+                score={health.esl_score}
+                detail={`${t({ tr: 'Offline', en: 'Offline', fr: 'Hors ligne', it: 'Offline', ar: 'غير متصل' })} %${health.esl_offline_pct}`}
+                onClick={() => setPillarDrilldown('esl')}
+              />
+              <Pillar
+                icon={ShoppingCart}
+                label={t({ tr: 'Kiosk & Kasa', en: 'Kiosk & POS', fr: 'Kiosque et caisse', it: 'Kiosk e cassa', ar: 'الكشك ونقاط البيع' })}
+                score={health.kiosk_score}
+                detail={`${t({ tr: 'Çalışırlık', en: 'Uptime', fr: 'Disponibilité', it: 'Uptime', ar: 'وقت التشغيل' })} %${health.kiosk_uptime_pct}`}
+                onClick={() => setPillarDrilldown('kiosk_pos')}
+              />
+              <Pillar
+                icon={Wifi}
+                label={t({ tr: 'Network', en: 'Network', fr: 'Réseau', it: 'Rete', ar: 'الشبكة' })}
+                score={health.network_score}
+                detail={`${health.network_downtime_minutes} ${t({ tr: 'dk kesinti', en: 'min down', fr: "min d'arrêt", it: 'min di inattività', ar: 'دقيقة توقف' })}`}
+                onClick={() => setPillarDrilldown('network')}
+              />
+              <Pillar
+                icon={Headphones}
+                label={t({ tr: 'Yardım Masası', en: 'Help Desk', fr: "Service d'assistance", it: 'Help desk', ar: 'مكتب المساعدة' })}
+                score={health.helpdesk_score}
+                detail={`${health.helpdesk_call_count} ${t({ tr: 'çağrı', en: 'calls', fr: 'appels', it: 'chiamate', ar: 'مكالمات' })}`}
+                onClick={() => setPillarDrilldown('helpdesk')}
+              />
             </div>
             {!!scoreTrend?.length && (
               <div className="flex items-end gap-1.5 h-16 pt-2 border-t border-[var(--border)]">
@@ -270,30 +297,9 @@ export function MyStorePage() {
       </div>
 
       {selectedCi && <CiAvailabilityDrawer ci={selectedCi} onClose={() => setSelectedCiId(null)} />}
-    </div>
-  )
-}
-
-function Pillar({
-  icon: Icon,
-  label,
-  score,
-  detail,
-}: {
-  icon: React.ComponentType<{ className?: string }>
-  label: string
-  score: number
-  detail: string
-}) {
-  const color = score >= 80 ? 'text-ok' : score >= 60 ? 'text-p2' : 'text-p1'
-  return (
-    <div className="bg-[var(--panel-2)] border border-[var(--border)] rounded-lg p-2.5">
-      <div className="flex items-center gap-1.5 mb-1">
-        <Icon className="w-3.5 h-3.5 text-[var(--text-faint)] shrink-0" />
-        <span className="text-[10.5px] font-bold text-[var(--text-faint)] truncate">{label}</span>
-      </div>
-      <div className={`font-display text-[17px] font-bold ${color}`}>{score}</div>
-      <div className="text-[10px] text-[var(--text-faint)] mt-0.5">{detail}</div>
+      {pillarDrilldown && (
+        <HealthPillarModal siteId={site.id} storeName={site.name} pillar={pillarDrilldown} onClose={() => setPillarDrilldown(null)} />
+      )}
     </div>
   )
 }

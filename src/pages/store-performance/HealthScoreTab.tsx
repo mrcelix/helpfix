@@ -3,6 +3,8 @@ import { ChevronLeft, ChevronRight, Sparkles, Tag, ShoppingCart, Wifi, Headphone
 import { useLang } from '@/contexts/LangContext'
 import { Button } from '@/components/ui/Button'
 import { useStoreHealthScores, useGenerateWeeklyScores, currentWeekStart, type StoreHealthScore } from './useStorePerformance'
+import { Pillar } from './Pillar'
+import { HealthPillarModal, type HealthPillarKey } from './HealthPillarModal'
 
 const GRADE_STYLE: Record<string, string> = {
   A: 'bg-ok/15 text-ok border-ok/40',
@@ -21,6 +23,7 @@ export function HealthScoreTab() {
   const [weekStart, setWeekStart] = useState(currentWeekStart())
   const { data: scores, isLoading } = useStoreHealthScores(weekStart)
   const generate = useGenerateWeeklyScores()
+  const [drilldown, setDrilldown] = useState<{ siteId: string; storeName: string; pillar: HealthPillarKey } | null>(null)
 
   const weekLabel = (() => {
     const start = new Date(weekStart + 'T00:00:00')
@@ -75,14 +78,31 @@ export function HealthScoreTab() {
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">
         {scores?.map((s) => (
-          <StoreHealthCard key={s.site_id} score={s} t={t} />
+          <StoreHealthCard key={s.site_id} score={s} t={t} onOpenPillar={(pillar) => setDrilldown({ siteId: s.site_id, storeName: s.site_name, pillar })} />
         ))}
       </div>
+
+      {drilldown && (
+        <HealthPillarModal
+          siteId={drilldown.siteId}
+          storeName={drilldown.storeName}
+          pillar={drilldown.pillar}
+          onClose={() => setDrilldown(null)}
+        />
+      )}
     </div>
   )
 }
 
-function StoreHealthCard({ score: s, t }: { score: StoreHealthScore; t: (d: { tr: string; en: string }) => string }) {
+function StoreHealthCard({
+  score: s,
+  t,
+  onOpenPillar,
+}: {
+  score: StoreHealthScore
+  t: (d: { tr: string; en: string }) => string
+  onOpenPillar: (pillar: HealthPillarKey) => void
+}) {
   return (
     <div className="border border-[var(--border)] rounded-[var(--radius-app)] bg-[var(--panel)] p-4">
       <div className="flex items-center justify-between mb-3">
@@ -93,14 +113,33 @@ function StoreHealthCard({ score: s, t }: { score: StoreHealthScore; t: (d: { tr
       </div>
 
       <div className="grid grid-cols-2 gap-2">
-        <Pillar icon={Tag} label={t({ tr: 'ESL Durumu', en: 'ESL Status' })} score={s.esl_score} detail={`${t({ tr: 'Offline', en: 'Offline' })} %${s.esl_offline_pct}`} />
-        <Pillar icon={ShoppingCart} label={t({ tr: 'Kiosk & Mobil Kasa', en: 'Kiosk & Mobile POS' })} score={s.kiosk_score} detail={`${t({ tr: 'Çalışırlık', en: 'Uptime' })} %${s.kiosk_uptime_pct}`} />
-        <Pillar icon={Wifi} label={t({ tr: 'Network', en: 'Network' })} score={s.network_score} detail={`${s.network_downtime_minutes} ${t({ tr: 'dk kesinti', en: 'min downtime' })}`} />
+        <Pillar
+          icon={Tag}
+          label={t({ tr: 'ESL Durumu', en: 'ESL Status' })}
+          score={s.esl_score}
+          detail={`${t({ tr: 'Offline', en: 'Offline' })} %${s.esl_offline_pct}`}
+          onClick={() => onOpenPillar('esl')}
+        />
+        <Pillar
+          icon={ShoppingCart}
+          label={t({ tr: 'Kiosk & Mobil Kasa', en: 'Kiosk & Mobile POS' })}
+          score={s.kiosk_score}
+          detail={`${t({ tr: 'Çalışırlık', en: 'Uptime' })} %${s.kiosk_uptime_pct}`}
+          onClick={() => onOpenPillar('kiosk_pos')}
+        />
+        <Pillar
+          icon={Wifi}
+          label={t({ tr: 'Network', en: 'Network' })}
+          score={s.network_score}
+          detail={`${s.network_downtime_minutes} ${t({ tr: 'dk kesinti', en: 'min downtime' })}`}
+          onClick={() => onOpenPillar('network')}
+        />
         <Pillar
           icon={Headphones}
           label={t({ tr: 'Yardım Masası', en: 'Help Desk' })}
           score={s.helpdesk_score}
           detail={`${s.helpdesk_call_count} ${t({ tr: 'çağrı', en: 'calls' })}, ${s.helpdesk_sla_breach_count} ${t({ tr: 'ihlal', en: 'breach' })}`}
+          onClick={() => onOpenPillar('helpdesk')}
         />
       </div>
 
@@ -108,30 +147,6 @@ function StoreHealthCard({ score: s, t }: { score: StoreHealthScore; t: (d: { tr
         <span className="text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide">{t({ tr: 'Bileşik Skor', en: 'Composite Score' })}</span>
         <span className="font-display text-[18px] font-bold">{s.composite_score}</span>
       </div>
-    </div>
-  )
-}
-
-function Pillar({
-  icon: Icon,
-  label,
-  score,
-  detail,
-}: {
-  icon: React.ComponentType<{ className?: string }>
-  label: string
-  score: number
-  detail: string
-}) {
-  const color = score >= 80 ? 'text-ok' : score >= 60 ? 'text-p2' : 'text-p1'
-  return (
-    <div className="bg-[var(--panel-2)] border border-[var(--border)] rounded-lg p-2.5">
-      <div className="flex items-center gap-1.5 mb-1">
-        <Icon className="w-3.5 h-3.5 text-[var(--text-faint)] shrink-0" />
-        <span className="text-[10.5px] font-bold text-[var(--text-faint)] truncate">{label}</span>
-      </div>
-      <div className={`font-display text-[17px] font-bold ${color}`}>{score}</div>
-      <div className="text-[10px] text-[var(--text-faint)] mt-0.5">{detail}</div>
     </div>
   )
 }
