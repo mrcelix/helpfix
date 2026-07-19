@@ -4,7 +4,7 @@ import { Plus, List, Share2, Download, ShieldCheck, Layers, Package, Upload } fr
 import { useLang, pickLang} from '@/contexts/LangContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/Button'
-import { useConfigurationItems, useDuplicateCis, type CiSavedView } from './useCmdb'
+import { useConfigurationItems, useDuplicateCis, CI_STATUS_LABEL as STATUS_LABEL, CI_TYPE_LABEL as TYPE_LABEL, type CiSavedView } from './useCmdb'
 import { CiDrawer } from './CiDrawer'
 import { NewCiModal } from './NewCiModal'
 import { ServiceMap } from './ServiceMap'
@@ -22,23 +22,6 @@ const SAVED_VIEWS: { key: CiSavedView; label: { tr: string; en: string } }[] = [
   { key: 'warranty_expiring', label: { tr: 'Garantisi Bitenler', en: 'Warranty Expiring' } },
   { key: 'unassigned', label: { tr: 'Zimmetsiz', en: 'Unassigned' } },
 ]
-
-const TYPE_LABEL: Record<string, { tr: string; en: string }> = {
-  server: { tr: 'Sunucu', en: 'Server' },
-  laptop: { tr: 'Dizüstü', en: 'Laptop' },
-  desktop: { tr: 'Masaüstü', en: 'Desktop' },
-  network_device: { tr: 'Ağ Cihazı', en: 'Network Device' },
-  software_license: { tr: 'Yazılım Lisansı', en: 'Software License' },
-  mobile_device: { tr: 'Mobil Cihaz', en: 'Mobile Device' },
-  other: { tr: 'Diğer', en: 'Other' },
-}
-
-const STATUS_LABEL: Record<string, { tr: string; en: string }> = {
-  active: { tr: 'Aktif', en: 'Active' },
-  in_repair: { tr: 'Tamirde', en: 'In Repair' },
-  retired: { tr: 'Emekli', en: 'Retired' },
-  unmanaged: { tr: 'Yönetilmeyen', en: 'Unmanaged' },
-}
 
 function isWarrantySoon(dateStr: string | null) {
   if (!dateStr) return false

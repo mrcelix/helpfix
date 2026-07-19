@@ -2,32 +2,13 @@ import { useState } from 'react'
 import { Trash2, Wifi, WifiOff, UserCheck, UserX, QrCode, History, Settings2 } from 'lucide-react'
 import { Drawer } from '@/components/ui/Drawer'
 import { useLang, pickLang } from '@/contexts/LangContext'
-import { useCiDetail, useLinkedRecords, useUpdateCi, useConfigurationItems, useCiRelationships, useCreateRelationship, useDeleteRelationship } from './useCmdb'
+import { useCiDetail, useLinkedRecords, useUpdateCi, useConfigurationItems, useCiRelationships, useCreateRelationship, useDeleteRelationship, CI_STATUS_LABEL as STATUS_LABEL, CI_TYPE_LABEL as TYPE_LABEL } from './useCmdb'
 import { useCiCheckoutHistory, useCheckoutCi, useCheckinCi, useCiTypeFields, useSetCiTypeFields } from './useAssetOps'
 import { useAssignableUsers } from '@/pages/oncall/useOnCall'
 import { DynamicFieldsRenderer, FieldSchemaEditor } from '@/components/ui/DynamicFields'
 import type { CiStatus } from '@/types/database'
 
 const STATUS_OPTIONS: CiStatus[] = ['active', 'in_repair', 'retired', 'unmanaged']
-
-// CmdbPage.tsx'teki liste/CSV etiketleriyle aynı — durum seçici önceden
-// ham enum değerini (in_repair, unmanaged...) gösteriyordu.
-const STATUS_LABEL: Record<string, { tr: string; en: string }> = {
-  active: { tr: 'Aktif', en: 'Active' },
-  in_repair: { tr: 'Tamirde', en: 'In Repair' },
-  retired: { tr: 'Emekli', en: 'Retired' },
-  unmanaged: { tr: 'Yönetilmeyen', en: 'Unmanaged' },
-}
-
-const TYPE_LABEL: Record<string, { tr: string; en: string }> = {
-  server: { tr: 'Sunucu', en: 'Server' },
-  laptop: { tr: 'Dizüstü', en: 'Laptop' },
-  desktop: { tr: 'Masaüstü', en: 'Desktop' },
-  network_device: { tr: 'Ağ Cihazı', en: 'Network Device' },
-  software_license: { tr: 'Yazılım Lisansı', en: 'Software License' },
-  mobile_device: { tr: 'Mobil Cihaz', en: 'Mobile Device' },
-  other: { tr: 'Diğer', en: 'Other' },
-}
 
 // ServiceMap.tsx'teki servis haritasıyla aynı etiketler.
 const REL_LABEL: Record<string, { tr: string; en: string }> = {

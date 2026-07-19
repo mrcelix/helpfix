@@ -3,6 +3,25 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import type { CiType, CiStatus } from '@/types/database'
 
+// CmdbPage.tsx ve CiDrawer.tsx'te ayrı ayrı tutulup elle senkronize edilen
+// kopyalar yerine tek kaynak.
+export const CI_STATUS_LABEL: Record<CiStatus, { tr: string; en: string }> = {
+  active: { tr: 'Aktif', en: 'Active' },
+  in_repair: { tr: 'Tamirde', en: 'In Repair' },
+  retired: { tr: 'Emekli', en: 'Retired' },
+  unmanaged: { tr: 'Yönetilmeyen', en: 'Unmanaged' },
+}
+
+export const CI_TYPE_LABEL: Record<CiType, { tr: string; en: string }> = {
+  server: { tr: 'Sunucu', en: 'Server' },
+  laptop: { tr: 'Dizüstü', en: 'Laptop' },
+  desktop: { tr: 'Masaüstü', en: 'Desktop' },
+  network_device: { tr: 'Ağ Cihazı', en: 'Network Device' },
+  software_license: { tr: 'Yazılım Lisansı', en: 'Software License' },
+  mobile_device: { tr: 'Mobil Cihaz', en: 'Mobile Device' },
+  other: { tr: 'Diğer', en: 'Other' },
+}
+
 export interface CiListItem {
   id: string
   tag: string

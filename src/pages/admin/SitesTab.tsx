@@ -45,8 +45,8 @@ export function SitesTab() {
   function handleDelete(id: string) {
     const confirmed = window.confirm(
       t({
-        tr: 'Bu siteyi silmek istediğinize emin misiniz? Bu siteye atanmış kullanıcı/varlıkların site bağlantısı kaldırılır.',
-        en: 'Delete this site? Users/assets assigned to it will have their site link removed.',
+        tr: 'Bu siteyi silmek istediğinize emin misiniz? Bu siteye atanmış kullanıcı/varlıkların site bağlantısı kaldırılır. Bu sitenin sağlık skoru geçmişi, anlık görüntüleri ve entegrasyon uç noktaları KALICI OLARAK silinir — bu işlem geri alınamaz.',
+        en: 'Delete this site? Users/assets assigned to it will have their site link removed. This site\'s health score history, snapshots, and integration endpoints will be PERMANENTLY deleted — this cannot be undone.',
       })
     )
     if (confirmed) deleteSite.mutate(id)
