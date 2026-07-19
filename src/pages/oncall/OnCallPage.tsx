@@ -20,6 +20,7 @@ import { EscalationChain } from './EscalationChain'
 export function OnCallPage() {
   const { lang, t } = useLang()
   const { profile } = useAuth()
+  const canManage = profile && ['tenant_admin', 'manager'].includes(profile.role)
   const [scheduleId, setScheduleId] = useState<string | null>(null)
   const [showNewShift, setShowNewShift] = useState(false)
   const [swapShift, setSwapShift] = useState<Shift | null>(null)
@@ -57,10 +58,12 @@ export function OnCallPage() {
             {t({ tr: 'Nöbet çizelgesi, eskalasyon ve vardiya değişimi', en: 'On-call schedule, escalation, and shift swaps' })}
           </p>
         </div>
-        <Button onClick={() => setShowNewShift(true)} disabled={!activeScheduleId}>
-          <Plus className="w-[15px] h-[15px]" />
-          {t({ tr: 'Vardiya Ekle', en: 'Add Shift' })}
-        </Button>
+        {canManage && (
+          <Button onClick={() => setShowNewShift(true)} disabled={!activeScheduleId}>
+            <Plus className="w-[15px] h-[15px]" />
+            {t({ tr: 'Vardiya Ekle', en: 'Add Shift' })}
+          </Button>
+        )}
       </div>
 
       <div className="flex items-center gap-1.5 mb-5 flex-wrap">
@@ -79,7 +82,7 @@ export function OnCallPage() {
             {s.name}
           </button>
         ))}
-        {!showNewSchedule ? (
+        {canManage && (!showNewSchedule ? (
           <button
             onClick={() => setShowNewSchedule(true)}
             className="text-[12.5px] font-bold px-3.5 py-2 rounded-lg border border-dashed border-[var(--border)] text-[var(--text-faint)]"
@@ -100,7 +103,7 @@ export function OnCallPage() {
               {t({ tr: 'Ekle', en: 'Add' })}
             </button>
           </div>
-        )}
+        ))}
       </div>
 
       {schedulesLoading && (

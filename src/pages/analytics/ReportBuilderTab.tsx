@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Download, Save, Trash2, FileBarChart } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { useLang, pickLang} from '@/contexts/LangContext'
+import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/Button'
 import {
   useReportData,
@@ -21,6 +22,8 @@ const DATE_RANGES = [7, 30, 90, 365]
 
 export function ReportBuilderTab() {
   const { lang, t } = useLang()
+  const { profile } = useAuth()
+  const canManage = profile && ['tenant_admin', 'manager'].includes(profile.role)
   const [dataSource, setDataSource] = useState<ReportDataSource>('incidents')
   const [groupBy, setGroupBy] = useState<ReportGroupBy>('category')
   const [dateRangeDays, setDateRangeDays] = useState(30)
@@ -142,14 +145,16 @@ export function ReportBuilderTab() {
                     <button onClick={() => loadReport(r.id)} className="text-[12px] font-semibold text-left flex-1 truncate">
                       {r.name}
                     </button>
-                    <button
-                      onClick={() => deleteReport.mutate(r.id)}
-                      title={t({ tr: 'Raporu sil', en: 'Delete report' })}
-                      aria-label={t({ tr: 'Raporu sil', en: 'Delete report' })}
-                      className="opacity-0 group-hover:opacity-100 text-[var(--text-faint)] hover:text-p1 shrink-0"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    {(canManage || r.created_by === profile?.id) && (
+                      <button
+                        onClick={() => deleteReport.mutate(r.id)}
+                        title={t({ tr: 'Raporu sil', en: 'Delete report' })}
+                        aria-label={t({ tr: 'Raporu sil', en: 'Delete report' })}
+                        className="opacity-0 group-hover:opacity-100 text-[var(--text-faint)] hover:text-p1 shrink-0"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>

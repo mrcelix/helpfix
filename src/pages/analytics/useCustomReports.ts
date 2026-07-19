@@ -145,6 +145,7 @@ export interface CustomReport {
   data_source: ReportDataSource
   group_by: ReportGroupBy
   date_range_days: number
+  created_by: string
 }
 
 export function useCustomReports() {
@@ -155,7 +156,7 @@ export function useCustomReports() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('custom_reports')
-        .select('id, name, data_source, group_by, date_range_days')
+        .select('id, name, data_source, group_by, date_range_days, created_by')
         .order('created_at', { ascending: false })
       if (error) throw error
       return data as CustomReport[]

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Camera, AlertTriangle, Wifi, ChevronRight, Store as StoreIcon, RefreshCw, CheckCircle2, XCircle, Clock } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from 'recharts'
 import { useLang } from '@/contexts/LangContext'
+import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/Button'
 import {
   useStoreScorecard,
@@ -22,6 +23,8 @@ import { PeriodSelector } from './PeriodSelector'
 
 export function StorePerformancePage() {
   const { t } = useLang()
+  const { profile } = useAuth()
+  const canManage = profile && ['tenant_admin', 'manager'].includes(profile.role)
   const [pageTab, setPageTab] = useState<'dashboard' | 'health-score' | 'history' | 'lines-devices' | 'inventory-sla' | 'integrations'>('dashboard')
   const [selectedStore, setSelectedStore] = useState<StoreScorecard | null>(null)
   const [sortBy, setSortBy] = useState<'score' | 'name'>('score')
@@ -49,10 +52,12 @@ export function StorePerformancePage() {
         </div>
         <div className="flex items-center gap-2.5 flex-wrap">
           <PeriodSelector period={period} onChange={setPeriod} />
-          <Button onClick={() => captureSnapshot.mutate()} disabled={captureSnapshot.isPending}>
-            <Camera className="w-[15px] h-[15px]" />
-            {captureSnapshot.isPending ? t({ tr: 'Alınıyor…', en: 'Capturing…' }) : t({ tr: 'Anlık Görüntü Al', en: 'Take Snapshot' })}
-          </Button>
+          {canManage && (
+            <Button onClick={() => captureSnapshot.mutate()} disabled={captureSnapshot.isPending}>
+              <Camera className="w-[15px] h-[15px]" />
+              {captureSnapshot.isPending ? t({ tr: 'Alınıyor…', en: 'Capturing…' }) : t({ tr: 'Anlık Görüntü Al', en: 'Take Snapshot' })}
+            </Button>
+          )}
         </div>
       </div>
 

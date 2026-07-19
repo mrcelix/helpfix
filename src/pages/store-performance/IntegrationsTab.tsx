@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Plus, RefreshCw, Trash2, CheckCircle2, XCircle, AlertTriangle, Clock, FileText, Power } from 'lucide-react'
 import { useLang, type Lang } from '@/contexts/LangContext'
+import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/Button'
 import {
   useIntegrationEndpoints,
@@ -30,6 +31,8 @@ function timeAgo(iso: string | null, lang: Lang): string {
 
 export function IntegrationsTab() {
   const { lang, t } = useLang()
+  const { profile } = useAuth()
+  const canManage = profile && ['tenant_admin', 'manager'].includes(profile.role)
   const { data: endpoints, isLoading } = useIntegrationEndpoints()
   const [showNewModal, setShowNewModal] = useState(false)
   const [showLogsFor, setShowLogsFor] = useState<string | 'all' | null>(null)
@@ -55,10 +58,12 @@ export function IntegrationsTab() {
             <FileText className="w-[13px] h-[13px]" />
             {t({ tr: 'Tüm Loglar', en: 'All Logs' })}
           </button>
-          <Button onClick={() => setShowNewModal(true)}>
-            <Plus className="w-[15px] h-[15px]" />
-            {t({ tr: 'Yeni Uç Nokta', en: 'New Endpoint' })}
-          </Button>
+          {canManage && (
+            <Button onClick={() => setShowNewModal(true)}>
+              <Plus className="w-[15px] h-[15px]" />
+              {t({ tr: 'Yeni Uç Nokta', en: 'New Endpoint' })}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -74,7 +79,7 @@ export function IntegrationsTab() {
 
       <div className="flex flex-col gap-2">
         {endpoints?.map((ep) => (
-          <EndpointRow key={ep.id} endpoint={ep} lang={lang} t={t} onViewLogs={() => setShowLogsFor(ep.id)} syncNow={syncNow} />
+          <EndpointRow key={ep.id} endpoint={ep} lang={lang} t={t} canManage={!!canManage} onViewLogs={() => setShowLogsFor(ep.id)} syncNow={syncNow} />
         ))}
       </div>
 
@@ -88,12 +93,14 @@ function EndpointRow({
   endpoint: ep,
   lang,
   t,
+  canManage,
   onViewLogs,
   syncNow,
 }: {
   endpoint: IntegrationEndpoint
   lang: Lang
   t: (d: { tr: string; en: string }) => string
+  canManage: boolean
   onViewLogs: () => void
   syncNow: ReturnType<typeof useSyncNow>
 }) {
@@ -140,23 +147,27 @@ function EndpointRow({
       >
         <FileText className="w-3.5 h-3.5" />
       </button>
-      <button
-        onClick={() => updateEndpoint.mutate({ id: ep.id, isActive: !ep.is_active })}
-        title={ep.is_active ? t({ tr: 'Pasifleştir', en: 'Deactivate' }) : t({ tr: 'Aktifleştir', en: 'Activate' })}
-        aria-label={ep.is_active ? t({ tr: 'Pasifleştir', en: 'Deactivate' }) : t({ tr: 'Aktifleştir', en: 'Activate' })}
-        aria-pressed={ep.is_active}
-        className={`p-1.5 rounded-md hover:bg-[var(--panel-2)] shrink-0 ${ep.is_active ? 'text-ok' : 'text-[var(--text-faint)]'}`}
-      >
-        <Power className="w-3.5 h-3.5" />
-      </button>
-      <button
-        onClick={handleDelete}
-        title={t({ tr: 'Sil', en: 'Delete' })}
-        aria-label={t({ tr: 'Sil', en: 'Delete' })}
-        className="p-1.5 rounded-md text-[var(--text-faint)] hover:text-p1 hover:bg-[var(--panel-2)] shrink-0"
-      >
-        <Trash2 className="w-3.5 h-3.5" />
-      </button>
+      {canManage && (
+        <button
+          onClick={() => updateEndpoint.mutate({ id: ep.id, isActive: !ep.is_active })}
+          title={ep.is_active ? t({ tr: 'Pasifleştir', en: 'Deactivate' }) : t({ tr: 'Aktifleştir', en: 'Activate' })}
+          aria-label={ep.is_active ? t({ tr: 'Pasifleştir', en: 'Deactivate' }) : t({ tr: 'Aktifleştir', en: 'Activate' })}
+          aria-pressed={ep.is_active}
+          className={`p-1.5 rounded-md hover:bg-[var(--panel-2)] shrink-0 ${ep.is_active ? 'text-ok' : 'text-[var(--text-faint)]'}`}
+        >
+          <Power className="w-3.5 h-3.5" />
+        </button>
+      )}
+      {canManage && (
+        <button
+          onClick={handleDelete}
+          title={t({ tr: 'Sil', en: 'Delete' })}
+          aria-label={t({ tr: 'Sil', en: 'Delete' })}
+          className="p-1.5 rounded-md text-[var(--text-faint)] hover:text-p1 hover:bg-[var(--panel-2)] shrink-0"
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </button>
+      )}
     </div>
   )
 }

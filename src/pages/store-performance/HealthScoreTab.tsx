@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ChevronLeft, ChevronRight, Sparkles, Tag, ShoppingCart, Wifi, Headphones } from 'lucide-react'
 import { useLang } from '@/contexts/LangContext'
+import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/Button'
 import { useStoreHealthScores, useGenerateWeeklyScores, currentWeekStart, type StoreHealthScore } from './useStorePerformance'
 import { Pillar } from './Pillar'
@@ -20,6 +21,8 @@ function shiftWeek(weekStart: string, deltaWeeks: number): string {
 
 export function HealthScoreTab() {
   const { lang, t } = useLang()
+  const { profile } = useAuth()
+  const canManage = profile && ['tenant_admin', 'manager'].includes(profile.role)
   const [weekStart, setWeekStart] = useState(currentWeekStart())
   const { data: scores, isLoading } = useStoreHealthScores(weekStart)
   const generate = useGenerateWeeklyScores()
@@ -45,10 +48,12 @@ export function HealthScoreTab() {
             })}
           </p>
         </div>
-        <Button onClick={() => generate.mutate(weekStart)} disabled={generate.isPending}>
-          <Sparkles className="w-[15px] h-[15px]" />
-          {generate.isPending ? t({ tr: 'Üretiliyor…', en: 'Generating…' }) : t({ tr: 'Haftalık Skor Üret', en: 'Generate Weekly Score' })}
-        </Button>
+        {canManage && (
+          <Button onClick={() => generate.mutate(weekStart)} disabled={generate.isPending}>
+            <Sparkles className="w-[15px] h-[15px]" />
+            {generate.isPending ? t({ tr: 'Üretiliyor…', en: 'Generating…' }) : t({ tr: 'Haftalık Skor Üret', en: 'Generate Weekly Score' })}
+          </Button>
+        )}
       </div>
 
       <div className="flex items-center justify-center gap-3 mb-4">

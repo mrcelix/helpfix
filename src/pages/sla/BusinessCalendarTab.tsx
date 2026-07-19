@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Plus, Trash2, Clock } from 'lucide-react'
 import { useLang, pickLang} from '@/contexts/LangContext'
+import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/Button'
 import {
   useBusinessHours,
@@ -25,6 +26,8 @@ const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0] // Pazartesi ile başla
 
 export function BusinessCalendarTab() {
   const { lang, t } = useLang()
+  const { profile } = useAuth()
+  const canManage = profile && ['tenant_admin', 'manager'].includes(profile.role)
   const { data: sites } = useSites()
   const [siteId, setSiteId] = useState<string | null>(null)
   const { data: hours, isLoading: hoursLoading, error: hoursError } = useBusinessHours(siteId)
@@ -86,11 +89,12 @@ export function BusinessCalendarTab() {
             return (
               <div key={day} className="flex items-center gap-2.5 bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2">
                 <button
-                  onClick={() => (isOpen ? closeDay.mutate({ dayOfWeek: day, siteId }) : setDay.mutate({ dayOfWeek: day, startTime: '09:00', endTime: '18:00', siteId }))}
+                  onClick={() => canManage && (isOpen ? closeDay.mutate({ dayOfWeek: day, siteId }) : setDay.mutate({ dayOfWeek: day, startTime: '09:00', endTime: '18:00', siteId }))}
+                  disabled={!canManage}
                   aria-pressed={isOpen}
-                  title={isOpen ? t({ tr: 'Açık — kapat', en: 'Open — close' }) : t({ tr: 'Kapalı — aç', en: 'Closed — open' })}
+                  title={!canManage ? t({ tr: 'Bu işlem için yönetici yetkisi gerekir', en: 'Requires manager access' }) : isOpen ? t({ tr: 'Açık — kapat', en: 'Open — close' }) : t({ tr: 'Kapalı — aç', en: 'Closed — open' })}
                   aria-label={isOpen ? t({ tr: 'Açık — kapat', en: 'Open — close' }) : t({ tr: 'Kapalı — aç', en: 'Closed — open' })}
-                  className={`w-9 h-5 rounded-full relative transition-colors shrink-0 ${isOpen ? 'bg-ok' : 'bg-[var(--border)]'}`}
+                  className={`w-9 h-5 rounded-full relative transition-colors shrink-0 disabled:opacity-50 ${isOpen ? 'bg-ok' : 'bg-[var(--border)]'}`}
                 >
                   <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${isOpen ? 'left-[18px]' : 'left-0.5'}`} />
                 </button>
@@ -101,14 +105,16 @@ export function BusinessCalendarTab() {
                       type="time"
                       value={row.start_time.slice(0, 5)}
                       onChange={(e) => setDay.mutate({ dayOfWeek: day, startTime: e.target.value, endTime: row.end_time.slice(0, 5), siteId })}
-                      className="bg-[var(--panel)] border border-[var(--border)] rounded-md px-2 py-1 text-[12px]"
+                      disabled={!canManage}
+                      className="bg-[var(--panel)] border border-[var(--border)] rounded-md px-2 py-1 text-[12px] disabled:opacity-50"
                     />
                     <span className="text-[var(--text-faint)]">–</span>
                     <input
                       type="time"
                       value={row.end_time.slice(0, 5)}
                       onChange={(e) => setDay.mutate({ dayOfWeek: day, startTime: row.start_time.slice(0, 5), endTime: e.target.value, siteId })}
-                      className="bg-[var(--panel)] border border-[var(--border)] rounded-md px-2 py-1 text-[12px]"
+                      disabled={!canManage}
+                      className="bg-[var(--panel)] border border-[var(--border)] rounded-md px-2 py-1 text-[12px] disabled:opacity-50"
                     />
                   </div>
                 ) : (
@@ -129,28 +135,30 @@ export function BusinessCalendarTab() {
             en: 'Public and religious holidays. Religious holidays shift yearly per the Hijri calendar, so add them manually from the Diyanet calendar.',
           })}
         </p>
-        <div className="flex gap-1.5 mb-3.5">
-          <input
-            type="date"
-            value={newHolidayDate}
-            onChange={(e) => setNewHolidayDate(e.target.value)}
-            className="bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-2.5 py-2 text-[12.5px] w-[136px] shrink-0"
-          />
-          <input
-            value={newHolidayName}
-            onChange={(e) => setNewHolidayName(e.target.value)}
-            placeholder={t({ tr: 'örn. Ramazan Bayramı', en: 'e.g. Eid al-Fitr' })}
-            className="flex-1 bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2 text-[12.5px] outline-none focus:border-brand"
-          />
-          <Button
-            onClick={addHoliday}
-            disabled={createHoliday.isPending || !newHolidayDate || !newHolidayName.trim()}
-            title={t({ tr: 'Tatil Ekle', en: 'Add Holiday' })}
-            aria-label={t({ tr: 'Tatil Ekle', en: 'Add Holiday' })}
-          >
-            <Plus className="w-[15px] h-[15px]" />
-          </Button>
-        </div>
+        {canManage && (
+          <div className="flex gap-1.5 mb-3.5">
+            <input
+              type="date"
+              value={newHolidayDate}
+              onChange={(e) => setNewHolidayDate(e.target.value)}
+              className="bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-2.5 py-2 text-[12.5px] w-[136px] shrink-0"
+            />
+            <input
+              value={newHolidayName}
+              onChange={(e) => setNewHolidayName(e.target.value)}
+              placeholder={t({ tr: 'örn. Ramazan Bayramı', en: 'e.g. Eid al-Fitr' })}
+              className="flex-1 bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2 text-[12.5px] outline-none focus:border-brand"
+            />
+            <Button
+              onClick={addHoliday}
+              disabled={createHoliday.isPending || !newHolidayDate || !newHolidayName.trim()}
+              title={t({ tr: 'Tatil Ekle', en: 'Add Holiday' })}
+              aria-label={t({ tr: 'Tatil Ekle', en: 'Add Holiday' })}
+            >
+              <Plus className="w-[15px] h-[15px]" />
+            </Button>
+          </div>
+        )}
         {holidaysLoading && <div className="text-[12px] text-[var(--text-faint)] py-4 text-center">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</div>}
         {holidaysError && <div className="text-[12px] text-p1 py-4 text-center">{t({ tr: 'Tatil günleri yüklenemedi.', en: 'Failed to load holidays.' })}</div>}
         {!holidaysLoading && !holidaysError && holidays?.length === 0 && (
@@ -165,14 +173,16 @@ export function BusinessCalendarTab() {
                   {new Date(h.holiday_date + 'T00:00:00').toLocaleDateString(lang === 'tr' ? 'tr-TR' : 'en-US', { day: '2-digit', month: 'short', year: 'numeric' })}
                 </span>
               </div>
-              <button
-                onClick={() => deleteHoliday.mutate(h.id)}
-                title={t({ tr: 'Tatili sil', en: 'Delete holiday' })}
-                aria-label={t({ tr: 'Tatili sil', en: 'Delete holiday' })}
-                className="opacity-0 group-hover:opacity-100 text-[var(--text-faint)] hover:text-p1"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
+              {canManage && (
+                <button
+                  onClick={() => deleteHoliday.mutate(h.id)}
+                  title={t({ tr: 'Tatili sil', en: 'Delete holiday' })}
+                  aria-label={t({ tr: 'Tatili sil', en: 'Delete holiday' })}
+                  className="opacity-0 group-hover:opacity-100 text-[var(--text-faint)] hover:text-p1"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
           ))}
         </div>

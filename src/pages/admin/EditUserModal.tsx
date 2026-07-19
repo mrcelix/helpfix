@@ -4,10 +4,13 @@ import { Button } from '@/components/ui/Button'
 import { useLang, pickLang} from '@/contexts/LangContext'
 import { useUpdateUser, useUpdateUserSite, useDepartments, ROLE_LABEL, type TenantUser } from './useAdmin'
 import { useSites } from './useSites'
+import { useAuth } from '@/contexts/AuthContext'
 import type { UserRole } from '@/types/database'
 
 export function EditUserModal({ user, onClose }: { user: TenantUser; onClose: () => void }) {
   const { lang, t } = useLang()
+  const { profile } = useAuth()
+  const isSelf = user.id === profile?.id
   const updateUser = useUpdateUser()
   const updateUserSite = useUpdateUserSite()
   const { data: departments } = useDepartments()
@@ -93,7 +96,9 @@ export function EditUserModal({ user, onClose }: { user: TenantUser; onClose: ()
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as UserRole)}
-              className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-2.5 py-2.5 text-[13px]"
+              disabled={isSelf}
+              title={isSelf ? t({ tr: 'Kendi rolünüzü değiştiremezsiniz', en: "You can't change your own role" }) : undefined}
+              className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-2.5 py-2.5 text-[13px] disabled:opacity-50"
             >
               {(Object.keys(ROLE_LABEL) as UserRole[]).map((r) => (
                 <option key={r} value={r}>

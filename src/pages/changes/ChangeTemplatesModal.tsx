@@ -3,7 +3,7 @@ import { Modal } from '@/components/ui/Modal'
 import { useLang } from '@/contexts/LangContext'
 import { useChangeTemplates, useCreateChangeTemplate } from './useChanges'
 
-export function ChangeTemplatesModal({ onClose }: { onClose: () => void }) {
+export function ChangeTemplatesModal({ canManage, onClose }: { canManage: boolean; onClose: () => void }) {
   const { t } = useLang()
   const { data: templates, isLoading: templatesLoading } = useChangeTemplates()
   const createTemplate = useCreateChangeTemplate()
@@ -38,46 +38,48 @@ export function ChangeTemplatesModal({ onClose }: { onClose: () => void }) {
         })}
       </p>
 
-      <div className="bg-[var(--panel-2)] border border-[var(--border)] rounded-lg p-3 mb-4 space-y-2">
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder={t({ tr: 'Şablon adı…', en: 'Template name…' })}
-          className="w-full bg-[var(--panel)] border border-[var(--border)] rounded-lg px-2.5 py-2 text-[12.5px]"
-        />
-        <textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          rows={2}
-          placeholder={t({ tr: 'Açıklama…', en: 'Description…' })}
-          className="w-full bg-[var(--panel)] border border-[var(--border)] rounded-lg px-2.5 py-2 text-[12.5px] resize-none"
-        />
-        <div className="grid grid-cols-2 gap-2">
+      {canManage && (
+        <div className="bg-[var(--panel-2)] border border-[var(--border)] rounded-lg p-3 mb-4 space-y-2">
           <input
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            placeholder={t({ tr: 'Kategori', en: 'Category' })}
-            className="bg-[var(--panel)] border border-[var(--border)] rounded-lg px-2.5 py-2 text-[12.5px]"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder={t({ tr: 'Şablon adı…', en: 'Template name…' })}
+            className="w-full bg-[var(--panel)] border border-[var(--border)] rounded-lg px-2.5 py-2 text-[12.5px]"
           />
-          <input
-            type="number"
-            value={riskScore}
-            onChange={(e) => setRiskScore(Number(e.target.value))}
-            placeholder={t({ tr: 'Varsayılan Risk Skoru', en: 'Default Risk Score' })}
-            className="bg-[var(--panel)] border border-[var(--border)] rounded-lg px-2.5 py-2 text-[12.5px]"
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={2}
+            placeholder={t({ tr: 'Açıklama…', en: 'Description…' })}
+            className="w-full bg-[var(--panel)] border border-[var(--border)] rounded-lg px-2.5 py-2 text-[12.5px] resize-none"
           />
+          <div className="grid grid-cols-2 gap-2">
+            <input
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              placeholder={t({ tr: 'Kategori', en: 'Category' })}
+              className="bg-[var(--panel)] border border-[var(--border)] rounded-lg px-2.5 py-2 text-[12.5px]"
+            />
+            <input
+              type="number"
+              value={riskScore}
+              onChange={(e) => setRiskScore(Number(e.target.value))}
+              placeholder={t({ tr: 'Varsayılan Risk Skoru', en: 'Default Risk Score' })}
+              className="bg-[var(--panel)] border border-[var(--border)] rounded-lg px-2.5 py-2 text-[12.5px]"
+            />
+          </div>
+          <textarea
+            value={rollbackPlan}
+            onChange={(e) => setRollbackPlan(e.target.value)}
+            rows={2}
+            placeholder={t({ tr: 'Varsayılan geri alma planı…', en: 'Default rollback plan…' })}
+            className="w-full bg-[var(--panel)] border border-[var(--border)] rounded-lg px-2.5 py-2 text-[12.5px] resize-none"
+          />
+          <button onClick={handleAdd} disabled={createTemplate.isPending || !name.trim()} className="w-full py-2 rounded-lg bg-brand text-white text-[12px] font-bold disabled:opacity-40">
+            {t({ tr: 'Şablonu Ekle', en: 'Add Template' })}
+          </button>
         </div>
-        <textarea
-          value={rollbackPlan}
-          onChange={(e) => setRollbackPlan(e.target.value)}
-          rows={2}
-          placeholder={t({ tr: 'Varsayılan geri alma planı…', en: 'Default rollback plan…' })}
-          className="w-full bg-[var(--panel)] border border-[var(--border)] rounded-lg px-2.5 py-2 text-[12.5px] resize-none"
-        />
-        <button onClick={handleAdd} disabled={createTemplate.isPending || !name.trim()} className="w-full py-2 rounded-lg bg-brand text-white text-[12px] font-bold disabled:opacity-40">
-          {t({ tr: 'Şablonu Ekle', en: 'Add Template' })}
-        </button>
-      </div>
+      )}
 
       <div className="space-y-2">
         {templatesLoading && (

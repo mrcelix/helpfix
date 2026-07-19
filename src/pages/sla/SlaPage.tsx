@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Plus, ArrowUpCircle } from 'lucide-react'
 import { useLang, type Lang } from '@/contexts/LangContext'
+import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/Button'
 import { PriorityBadge } from '@/components/ui/Badge'
 import { usePolicies, useMonitoredIncidents, useTogglePolicy, useAllEscalationLevels, computeTriggeredLevel, type MonitoredIncident } from './useSla'
@@ -41,6 +42,8 @@ const STATE_STYLE: Record<string, string> = {
 
 export function SlaPage() {
   const { lang, t } = useLang()
+  const { profile } = useAuth()
+  const canManage = profile && ['tenant_admin', 'manager'].includes(profile.role)
   const [tab, setTab] = useState<'monitor' | 'policies' | 'calendar'>('monitor')
   const [showNewModal, setShowNewModal] = useState(false)
   const [escalationPolicy, setEscalationPolicy] = useState<{ id: string; name: string } | null>(null)
@@ -67,7 +70,7 @@ export function SlaPage() {
             {t({ tr: 'Öncelik bazlı politikalar ve canlı ihlal takibi', en: 'Priority-based policies and live breach tracking' })}
           </p>
         </div>
-        {tab === 'policies' && (
+        {canManage && tab === 'policies' && (
           <Button onClick={() => setShowNewModal(true)}>
             <Plus className="w-[15px] h-[15px]" />
             {t({ tr: 'Yeni Politika', en: 'New Policy' })}
@@ -196,10 +199,17 @@ export function SlaPage() {
                   <td className="px-3.5 py-3">
                     <button
                       onClick={() => togglePolicy.mutate({ id: p.id, is_active: !p.is_active })}
+                      disabled={!canManage}
                       aria-pressed={p.is_active}
-                      title={p.is_active ? t({ tr: 'Aktif — devre dışı bırak', en: 'Active — deactivate' }) : t({ tr: 'Pasif — etkinleştir', en: 'Inactive — activate' })}
+                      title={
+                        !canManage
+                          ? t({ tr: 'Bu işlem için yönetici yetkisi gerekir', en: 'Requires manager access' })
+                          : p.is_active
+                            ? t({ tr: 'Aktif — devre dışı bırak', en: 'Active — deactivate' })
+                            : t({ tr: 'Pasif — etkinleştir', en: 'Inactive — activate' })
+                      }
                       aria-label={p.is_active ? t({ tr: 'Aktif — devre dışı bırak', en: 'Active — deactivate' }) : t({ tr: 'Pasif — etkinleştir', en: 'Inactive — activate' })}
-                      className={`w-9 h-5 rounded-full relative transition-colors ${p.is_active ? 'bg-ok' : 'bg-[var(--border)]'}`}
+                      className={`w-9 h-5 rounded-full relative transition-colors disabled:opacity-50 ${p.is_active ? 'bg-ok' : 'bg-[var(--border)]'}`}
                     >
                       <span
                         className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${p.is_active ? 'left-[18px]' : 'left-0.5'}`}
@@ -228,6 +238,7 @@ export function SlaPage() {
         <EscalationMatrixModal
           policyId={escalationPolicy.id}
           policyName={escalationPolicy.name}
+          canManage={!!canManage}
           onClose={() => setEscalationPolicy(null)}
         />
       )}

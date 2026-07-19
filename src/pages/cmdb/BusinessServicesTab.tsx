@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronUp, AlertTriangle, Plus, X, Link2, Ticket, AlertCircle, GitBranch, Radio } from 'lucide-react'
 import { useLang, pickLang, type Lang } from '@/contexts/LangContext'
+import { useAuth } from '@/contexts/AuthContext'
 import {
   useBusinessServiceHealth,
   useServiceLinkedCis,
@@ -102,6 +103,8 @@ export function BusinessServicesTab() {
 
 function ServiceDetailPanel({ service }: { service: BusinessServiceHealth }) {
   const { lang, t } = useLang()
+  const { profile } = useAuth()
+  const canManage = profile && ['tenant_admin', 'manager'].includes(profile.role)
   const { data: linkedCis } = useServiceLinkedCis(service.service_id)
   const { data: lifecycle } = useServiceLifecycle(service.service_id)
   const { data: allCis } = useConfigurationItems('all')
@@ -129,12 +132,14 @@ function ServiceDetailPanel({ service }: { service: BusinessServiceHealth }) {
             <Link2 className="w-3 h-3" />
             {t({ tr: 'Bağlı Cihazlar (Bağımlılık Haritası)', en: 'Linked Devices (Dependency Map)' })}
           </span>
-          <button onClick={() => setPickingCi((p) => !p)} className="flex items-center gap-1 text-[10.5px] font-bold text-brand-dim">
-            <Plus className="w-3 h-3" />
-            {t({ tr: 'Cihaz Bağla', en: 'Link Device' })}
-          </button>
+          {canManage && (
+            <button onClick={() => setPickingCi((p) => !p)} className="flex items-center gap-1 text-[10.5px] font-bold text-brand-dim">
+              <Plus className="w-3 h-3" />
+              {t({ tr: 'Cihaz Bağla', en: 'Link Device' })}
+            </button>
+          )}
         </div>
-        {pickingCi && (
+        {canManage && pickingCi && (
           <div className="flex items-center gap-1.5 mb-2">
             <select value={ciToAdd} onChange={(e) => setCiToAdd(e.target.value)} className="flex-1 text-[12px] bg-[var(--panel)] border border-[var(--border)] rounded-md px-2 py-1.5">
               <option value="">{t({ tr: 'Seçin…', en: 'Select…' })}</option>
@@ -155,13 +160,15 @@ function ServiceDetailPanel({ service }: { service: BusinessServiceHealth }) {
             <span key={c.id} className="flex items-center gap-1.5 text-[11px] font-semibold bg-[var(--panel)] border border-[var(--border)] rounded-full pl-2.5 pr-1.5 py-1">
               <span className={`w-1.5 h-1.5 rounded-full ${c.is_online ? 'bg-ok' : 'bg-p1'}`} />
               {c.name}
-              <button
-                onClick={() => unlinkCi.mutate({ serviceId: service.service_id, ciId: c.id })}
-                title={t({ tr: 'Bağlantıyı kaldır', en: 'Unlink' })}
-                aria-label={t({ tr: 'Bağlantıyı kaldır', en: 'Unlink' })}
-              >
-                <X className="w-3 h-3 text-[var(--text-faint)] hover:text-p1" />
-              </button>
+              {canManage && (
+                <button
+                  onClick={() => unlinkCi.mutate({ serviceId: service.service_id, ciId: c.id })}
+                  title={t({ tr: 'Bağlantıyı kaldır', en: 'Unlink' })}
+                  aria-label={t({ tr: 'Bağlantıyı kaldır', en: 'Unlink' })}
+                >
+                  <X className="w-3 h-3 text-[var(--text-faint)] hover:text-p1" />
+                </button>
+              )}
             </span>
           ))}
         </div>

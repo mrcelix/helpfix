@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useOpenParam } from '@/hooks/useOpenParam'
 import { Plus, Snowflake, Download } from 'lucide-react'
 import { useLang, pickLang} from '@/contexts/LangContext'
+import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/Button'
 import { useChanges, type ChangeSavedView } from './useChanges'
 import { ChangeDrawer } from './ChangeDrawer'
@@ -44,6 +45,8 @@ function riskColor(score: number) {
 
 export function ChangesPage() {
   const { lang, t } = useLang()
+  const { profile } = useAuth()
+  const canManage = profile && ['tenant_admin', 'manager'].includes(profile.role)
   const [view, setView] = useState<ChangeSavedView>('all')
   const [pageTab, setPageTab] = useState<'changes' | 'calendar' | 'analytics'>('changes')
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -242,8 +245,8 @@ export function ChangesPage() {
 
       {selectedId && <ChangeDrawer key={selectedId} id={selectedId} onClose={() => setSelectedId(null)} />}
       {showNewModal && <NewChangeModal onClose={() => setShowNewModal(false)} />}
-      {showFreezeModal && <FreezeWindowsModal onClose={() => setShowFreezeModal(false)} />}
-      {showTemplatesModal && <ChangeTemplatesModal onClose={() => setShowTemplatesModal(false)} />}
+      {showFreezeModal && <FreezeWindowsModal canManage={!!canManage} onClose={() => setShowFreezeModal(false)} />}
+      {showTemplatesModal && <ChangeTemplatesModal canManage={!!canManage} onClose={() => setShowTemplatesModal(false)} />}
     </div>
   )
 }

@@ -78,13 +78,27 @@ Deno.serve(async (req: Request) => {
       }
     }
 
+    // GÜVENLİK: endpointId ile çağrıldığında MUTLAKA doğrulanmış bir
+    // tenant_admin/manager JWT'si gerekir ve sorgu o kullanıcının kendi
+    // tenant'ıyla sınırlanır. Önceden bu dal callerTenantId'yi hiç
+    // kontrol etmiyordu — kimliği doğrulanmamış biri bile, herhangi bir
+    // tenant'a ait bir endpoint UUID'sini bilerek/tahmin ederek o
+    // tenant'ın saklı auth header'ıyla keyfi bir URL'e sunucu taraflı
+    // istek attırabiliyor ve o tenant'ın configuration_items tablosunu
+    // güncelleyebiliyordu (service_role anahtarıyla, RLS'i atlayarak).
+    if (body.endpointId) {
+      if (!callerTenantId) {
+        return json({ error: 'Yetkisiz.' }, 403)
+      }
+    }
+
     let query = supabaseAdmin
       .from('integration_endpoints')
       .select('id, tenant_id, site_id, endpoint_url, http_method, auth_header_name, auth_header_value, poll_interval_minutes, last_synced_at')
       .eq('is_active', true)
 
     if (body.endpointId) {
-      query = query.eq('id', body.endpointId)
+      query = query.eq('id', body.endpointId).eq('tenant_id', callerTenantId!)
     } else if (callerTenantId) {
       query = query.eq('tenant_id', callerTenantId)
     }

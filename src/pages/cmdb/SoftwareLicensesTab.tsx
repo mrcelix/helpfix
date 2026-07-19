@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronUp, Plus, X, TrendingDown } from 'lucide-react'
 import { useLang, pickLang} from '@/contexts/LangContext'
+import { useAuth } from '@/contexts/AuthContext'
 import {
   useSoftwareLicenses,
   useLicenseSeatUsage,
@@ -113,6 +114,8 @@ export function SoftwareLicensesTab() {
 
 function LicenseAssignmentsPanel({ licenseId }: { licenseId: string }) {
   const { t } = useLang()
+  const { profile } = useAuth()
+  const canManage = profile && ['tenant_admin', 'manager'].includes(profile.role)
   const { data: assignments } = useLicenseAssignments(licenseId)
   const { data: users } = useAssignableUsers()
   const { data: cis } = useConfigurationItems('all')
@@ -130,50 +133,54 @@ function LicenseAssignmentsPanel({ licenseId }: { licenseId: string }) {
 
   return (
     <div className="border-t border-[var(--border)] px-4 py-3 bg-[var(--panel-2)]">
-      <div className="flex items-center gap-1.5 mb-3">
-        <select
-          value={targetType}
-          onChange={(e) => {
-            setTargetType(e.target.value as 'user' | 'ci')
-            setTargetId('')
-          }}
-          className="text-[11.5px] font-semibold bg-[var(--panel)] border border-[var(--border)] rounded-md px-2 py-1.5"
-        >
-          <option value="user">{t({ tr: 'Kullanıcı', en: 'User' })}</option>
-          <option value="ci">{t({ tr: 'Cihaz', en: 'Device' })}</option>
-        </select>
-        <select value={targetId} onChange={(e) => setTargetId(e.target.value)} className="flex-1 text-[12px] bg-[var(--panel)] border border-[var(--border)] rounded-md px-2 py-1.5">
-          <option value="">{t({ tr: 'Seçin…', en: 'Select…' })}</option>
-          {targetType === 'user'
-            ? users?.map((u) => (
-                <option key={u.id} value={u.id}>
-                  {u.full_name}
-                </option>
-              ))
-            : cis?.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name} ({c.tag})
-                </option>
-              ))}
-        </select>
-        <button onClick={addSeat} disabled={!targetId || assignSeat.isPending} className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1.5 rounded-md bg-brand text-white disabled:opacity-40">
-          <Plus className="w-3.5 h-3.5" />
-          {t({ tr: 'Koltuk Ata', en: 'Assign Seat' })}
-        </button>
-      </div>
+      {canManage && (
+        <div className="flex items-center gap-1.5 mb-3">
+          <select
+            value={targetType}
+            onChange={(e) => {
+              setTargetType(e.target.value as 'user' | 'ci')
+              setTargetId('')
+            }}
+            className="text-[11.5px] font-semibold bg-[var(--panel)] border border-[var(--border)] rounded-md px-2 py-1.5"
+          >
+            <option value="user">{t({ tr: 'Kullanıcı', en: 'User' })}</option>
+            <option value="ci">{t({ tr: 'Cihaz', en: 'Device' })}</option>
+          </select>
+          <select value={targetId} onChange={(e) => setTargetId(e.target.value)} className="flex-1 text-[12px] bg-[var(--panel)] border border-[var(--border)] rounded-md px-2 py-1.5">
+            <option value="">{t({ tr: 'Seçin…', en: 'Select…' })}</option>
+            {targetType === 'user'
+              ? users?.map((u) => (
+                  <option key={u.id} value={u.id}>
+                    {u.full_name}
+                  </option>
+                ))
+              : cis?.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name} ({c.tag})
+                  </option>
+                ))}
+          </select>
+          <button onClick={addSeat} disabled={!targetId || assignSeat.isPending} className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-1.5 rounded-md bg-brand text-white disabled:opacity-40">
+            <Plus className="w-3.5 h-3.5" />
+            {t({ tr: 'Koltuk Ata', en: 'Assign Seat' })}
+          </button>
+        </div>
+      )}
       {!assignments?.length && <p className="text-[11.5px] text-[var(--text-faint)] italic">{t({ tr: 'Henüz atanmış koltuk yok.', en: 'No seats assigned yet.' })}</p>}
       <div className="flex flex-col gap-1">
         {assignments?.map((a) => (
           <div key={a.id} className="flex items-center justify-between bg-[var(--panel)] border border-[var(--border)] rounded-lg px-3 py-1.5">
             <span className="text-[12px] font-medium">{a.user?.full_name ?? `${a.ci?.name} (${a.ci?.tag})`}</span>
-            <button
-              onClick={() => removeSeat.mutate(a.id)}
-              title={t({ tr: 'Koltuğu kaldır', en: 'Remove seat' })}
-              aria-label={t({ tr: 'Koltuğu kaldır', en: 'Remove seat' })}
-              className="text-[var(--text-faint)] hover:text-p1"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
+            {canManage && (
+              <button
+                onClick={() => removeSeat.mutate(a.id)}
+                title={t({ tr: 'Koltuğu kaldır', en: 'Remove seat' })}
+                aria-label={t({ tr: 'Koltuğu kaldır', en: 'Remove seat' })}
+                className="text-[var(--text-faint)] hover:text-p1"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
           </div>
         ))}
       </div>

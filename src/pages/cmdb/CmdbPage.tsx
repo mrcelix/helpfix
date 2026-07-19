@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useOpenParam } from '@/hooks/useOpenParam'
 import { Plus, List, Share2, Download, ShieldCheck, Layers, Package, Upload } from 'lucide-react'
 import { useLang, pickLang} from '@/contexts/LangContext'
+import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/Button'
 import { useConfigurationItems, useDuplicateCis, type CiSavedView } from './useCmdb'
 import { CiDrawer } from './CiDrawer'
@@ -47,6 +48,8 @@ function isWarrantySoon(dateStr: string | null) {
 
 export function CmdbPage() {
   const { lang, t } = useLang()
+  const { profile } = useAuth()
+  const canManage = profile && ['tenant_admin', 'manager'].includes(profile.role)
   const [view, setView] = useState<CiSavedView>('all')
   const [moduleTab, setModuleTab] = useState<'assets' | 'licenses' | 'services' | 'consumables'>('assets')
   const [showNewConsumableModal, setShowNewConsumableModal] = useState(false)
@@ -143,20 +146,26 @@ export function CmdbPage() {
               </Button>
             </>
           ) : moduleTab === 'licenses' ? (
-            <Button onClick={() => setShowNewLicenseModal(true)}>
-              <Plus className="w-[15px] h-[15px]" />
-              {t({ tr: 'Yeni Lisans', en: 'New License' })}
-            </Button>
+            canManage && (
+              <Button onClick={() => setShowNewLicenseModal(true)}>
+                <Plus className="w-[15px] h-[15px]" />
+                {t({ tr: 'Yeni Lisans', en: 'New License' })}
+              </Button>
+            )
           ) : moduleTab === 'consumables' ? (
-            <Button onClick={() => setShowNewConsumableModal(true)}>
-              <Plus className="w-[15px] h-[15px]" />
-              {t({ tr: 'Yeni Kalem', en: 'New Item' })}
-            </Button>
+            canManage && (
+              <Button onClick={() => setShowNewConsumableModal(true)}>
+                <Plus className="w-[15px] h-[15px]" />
+                {t({ tr: 'Yeni Kalem', en: 'New Item' })}
+              </Button>
+            )
           ) : (
-            <Button onClick={() => setShowNewServiceModal(true)}>
-              <Plus className="w-[15px] h-[15px]" />
-              {t({ tr: 'Yeni Hizmet', en: 'New Service' })}
-            </Button>
+            canManage && (
+              <Button onClick={() => setShowNewServiceModal(true)}>
+                <Plus className="w-[15px] h-[15px]" />
+                {t({ tr: 'Yeni Hizmet', en: 'New Service' })}
+              </Button>
+            )
           )}
         </div>
       </div>

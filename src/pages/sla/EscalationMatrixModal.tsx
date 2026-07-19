@@ -11,7 +11,17 @@ const ROLE_LABEL: Record<EscalationNotifyRole, { tr: string; en: string }> = {
   tenant_admin: { tr: 'Tenant Admin', en: 'Tenant Admin' },
 }
 
-export function EscalationMatrixModal({ policyId, policyName, onClose }: { policyId: string; policyName: string; onClose: () => void }) {
+export function EscalationMatrixModal({
+  policyId,
+  policyName,
+  canManage,
+  onClose,
+}: {
+  policyId: string
+  policyName: string
+  canManage: boolean
+  onClose: () => void
+}) {
   const { lang, t } = useLang()
   const { data: levels, isLoading, error } = useEscalationLevels(policyId)
   const createLevel = useCreateEscalationLevel(policyId)
@@ -46,14 +56,16 @@ export function EscalationMatrixModal({ policyId, policyName, onClose }: { polic
             <span className="text-[12.5px] flex-1">
               %{lvl.trigger_percent} {t({ tr: 'dolunca →', en: 'elapsed →' })} <b>{pickLang(ROLE_LABEL[lvl.notify_role], lang)}</b>
             </span>
-            <button
-              onClick={() => deleteLevel.mutate(lvl.id)}
-              title={t({ tr: 'Seviyeyi sil', en: 'Delete level' })}
-              aria-label={t({ tr: 'Seviyeyi sil', en: 'Delete level' })}
-              className="text-[var(--text-faint)] hover:text-p1 shrink-0"
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
+            {canManage && (
+              <button
+                onClick={() => deleteLevel.mutate(lvl.id)}
+                title={t({ tr: 'Seviyeyi sil', en: 'Delete level' })}
+                aria-label={t({ tr: 'Seviyeyi sil', en: 'Delete level' })}
+                className="text-[var(--text-faint)] hover:text-p1 shrink-0"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
           </div>
         ))}
         {!levels?.length && !isLoading && !error && (
@@ -63,40 +75,42 @@ export function EscalationMatrixModal({ policyId, policyName, onClose }: { polic
         )}
       </div>
 
-      <div className="bg-[var(--panel-2)] border border-[var(--border)] rounded-lg p-3 flex gap-2 items-end">
-        <div className="flex-1">
-          <label className="block text-[10px] font-bold text-[var(--text-faint)] uppercase mb-1">
-            % {t({ tr: 'Doluş Eşiği', en: 'Elapsed Threshold' })}
-          </label>
-          <input
-            type="number"
-            min={0}
-            max={100}
-            value={triggerPercent}
-            onChange={(e) => setTriggerPercent(Number(e.target.value))}
-            className="w-full bg-[var(--panel)] border border-[var(--border)] rounded-lg px-2.5 py-2 text-[12.5px]"
-          />
+      {canManage && (
+        <div className="bg-[var(--panel-2)] border border-[var(--border)] rounded-lg p-3 flex gap-2 items-end">
+          <div className="flex-1">
+            <label className="block text-[10px] font-bold text-[var(--text-faint)] uppercase mb-1">
+              % {t({ tr: 'Doluş Eşiği', en: 'Elapsed Threshold' })}
+            </label>
+            <input
+              type="number"
+              min={0}
+              max={100}
+              value={triggerPercent}
+              onChange={(e) => setTriggerPercent(Number(e.target.value))}
+              className="w-full bg-[var(--panel)] border border-[var(--border)] rounded-lg px-2.5 py-2 text-[12.5px]"
+            />
+          </div>
+          <div className="flex-1">
+            <label className="block text-[10px] font-bold text-[var(--text-faint)] uppercase mb-1">
+              {t({ tr: 'Bilgilendirilecek', en: 'Notify' })}
+            </label>
+            <select
+              value={notifyRole}
+              onChange={(e) => setNotifyRole(e.target.value as EscalationNotifyRole)}
+              className="w-full bg-[var(--panel)] border border-[var(--border)] rounded-lg px-2.5 py-2 text-[12.5px]"
+            >
+              {(['agent', 'manager', 'tenant_admin'] as EscalationNotifyRole[]).map((r) => (
+                <option key={r} value={r}>
+                  {pickLang(ROLE_LABEL[r], lang)}
+                </option>
+              ))}
+            </select>
+          </div>
+          <button onClick={addLevel} className="text-[12px] font-bold px-3.5 py-2 rounded-lg bg-brand text-white shrink-0">
+            {t({ tr: 'Seviye Ekle', en: 'Add Level' })}
+          </button>
         </div>
-        <div className="flex-1">
-          <label className="block text-[10px] font-bold text-[var(--text-faint)] uppercase mb-1">
-            {t({ tr: 'Bilgilendirilecek', en: 'Notify' })}
-          </label>
-          <select
-            value={notifyRole}
-            onChange={(e) => setNotifyRole(e.target.value as EscalationNotifyRole)}
-            className="w-full bg-[var(--panel)] border border-[var(--border)] rounded-lg px-2.5 py-2 text-[12.5px]"
-          >
-            {(['agent', 'manager', 'tenant_admin'] as EscalationNotifyRole[]).map((r) => (
-              <option key={r} value={r}>
-                {pickLang(ROLE_LABEL[r], lang)}
-              </option>
-            ))}
-          </select>
-        </div>
-        <button onClick={addLevel} className="text-[12px] font-bold px-3.5 py-2 rounded-lg bg-brand text-white shrink-0">
-          {t({ tr: 'Seviye Ekle', en: 'Add Level' })}
-        </button>
-      </div>
+      )}
     </Modal>
   )
 }
