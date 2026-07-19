@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Plus, AlertTriangle, FileText, ShoppingCart, Building2 } from 'lucide-react'
-import { useLang, pickLang} from '@/contexts/LangContext'
+import { useLang, pickLang, type Lang } from '@/contexts/LangContext'
+import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/Button'
 import {
   useContracts,
@@ -17,6 +18,11 @@ import { NewContractModal } from './NewContractModal'
 import { NewPurchaseOrderModal } from './NewPurchaseOrderModal'
 import { NewVendorModal } from './NewVendorModal'
 
+function formatMoney(amount: number, currency: string, lang: Lang): string {
+  const formatted = amount.toLocaleString(lang === 'tr' ? 'tr-TR' : 'en-US')
+  return currency === 'TRY' ? `₺${formatted}` : `${formatted} ${currency}`
+}
+
 const CONTRACT_TYPE_LABEL: Record<ContractType, { tr: string; en: string }> = {
   service: { tr: 'Hizmet', en: 'Service' },
   license: { tr: 'Lisans', en: 'License' },
@@ -27,14 +33,16 @@ const CONTRACT_TYPE_LABEL: Record<ContractType, { tr: string; en: string }> = {
 
 export function PurchasingPage() {
   const { lang, t } = useLang()
+  const { profile } = useAuth()
+  const canManage = profile && ['tenant_admin', 'manager'].includes(profile.role)
   const [tab, setTab] = useState<'contracts' | 'orders' | 'vendors'>('contracts')
   const [showNewContract, setShowNewContract] = useState(false)
   const [showNewPo, setShowNewPo] = useState(false)
   const [showNewVendor, setShowNewVendor] = useState(false)
 
-  const { data: contracts } = useContracts()
-  const { data: orders } = usePurchaseOrders()
-  const { data: vendors } = useVendors()
+  const { data: contracts, isLoading: contractsLoading, error: contractsError } = useContracts()
+  const { data: orders, isLoading: ordersLoading, error: ordersError } = usePurchaseOrders()
+  const { data: vendors, isLoading: vendorsLoading, error: vendorsError } = useVendors()
   const updatePoStatus = useUpdatePoStatus()
 
   const expiringSoon = contracts?.filter((c) => contractHealth(c) === 'expiring_soon').length ?? 0
@@ -49,19 +57,19 @@ export function PurchasingPage() {
           <p className="text-[13px] text-[var(--text-faint)] mt-1">{t({ tr: 'Tedarikçiler, sözleşmeler ve satın alma siparişleri', en: 'Vendors, contracts, and purchase orders' })}</p>
         </div>
         <div className="flex items-center gap-2">
-          {tab === 'contracts' && (
+          {canManage && tab === 'contracts' && (
             <Button onClick={() => setShowNewContract(true)}>
               <Plus className="w-[15px] h-[15px]" />
               {t({ tr: 'Yeni Sözleşme', en: 'New Contract' })}
             </Button>
           )}
-          {tab === 'orders' && (
+          {canManage && tab === 'orders' && (
             <Button onClick={() => setShowNewPo(true)}>
               <Plus className="w-[15px] h-[15px]" />
               {t({ tr: 'Yeni Sipariş', en: 'New Order' })}
             </Button>
           )}
-          {tab === 'vendors' && (
+          {canManage && tab === 'vendors' && (
             <Button onClick={() => setShowNewVendor(true)}>
               <Plus className="w-[15px] h-[15px]" />
               {t({ tr: 'Yeni Tedarikçi', en: 'New Vendor' })}
@@ -97,6 +105,7 @@ export function PurchasingPage() {
                 <Th>{t({ tr: 'Ref', en: 'Ref' })}</Th>
                 <Th>{t({ tr: 'Ad', en: 'Name' })}</Th>
                 <Th>{t({ tr: 'Tedarikçi', en: 'Vendor' })}</Th>
+                <Th>{t({ tr: 'Sahibi', en: 'Owner' })}</Th>
                 <Th>{t({ tr: 'Tip', en: 'Type' })}</Th>
                 <Th>{t({ tr: 'Bitiş Tarihi', en: 'End Date' })}</Th>
                 <Th>{t({ tr: 'Maliyet', en: 'Cost' })}</Th>
@@ -104,9 +113,19 @@ export function PurchasingPage() {
               </tr>
             </thead>
             <tbody>
-              {!contracts?.length && (
+              {contractsLoading && (
                 <tr>
-                  <td colSpan={7} className="text-center py-10 text-[var(--text-faint)]">
+                  <td colSpan={8} className="text-center py-10 text-[var(--text-faint)]">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</td>
+                </tr>
+              )}
+              {contractsError && (
+                <tr>
+                  <td colSpan={8} className="text-center py-10 text-p1">{t({ tr: 'Sözleşmeler yüklenemedi.', en: 'Failed to load contracts.' })}</td>
+                </tr>
+              )}
+              {!contractsLoading && !contractsError && !contracts?.length && (
+                <tr>
+                  <td colSpan={8} className="text-center py-10 text-[var(--text-faint)]">
                     {t({ tr: 'Henüz sözleşme yok.', en: 'No contracts yet.' })}
                   </td>
                 </tr>
@@ -118,9 +137,10 @@ export function PurchasingPage() {
                     <td className="px-3.5 py-3 font-mono text-[var(--text-faint)]">{c.ref}</td>
                     <td className="px-3.5 py-3 font-semibold">{c.name}</td>
                     <td className="px-3.5 py-3 text-[var(--text-sub)]">{c.vendor?.name ?? '—'}</td>
+                    <td className="px-3.5 py-3 text-[var(--text-sub)]">{c.owner?.full_name ?? '—'}</td>
                     <td className="px-3.5 py-3 text-[var(--text-sub)]">{pickLang(CONTRACT_TYPE_LABEL[c.contract_type], lang)}</td>
                     <td className="px-3.5 py-3 text-[var(--text-sub)]">{new Date(c.end_date).toLocaleDateString(lang === 'tr' ? 'tr-TR' : 'en-US')}</td>
-                    <td className="px-3.5 py-3 text-[var(--text-sub)]">{c.cost != null ? `₺${c.cost.toLocaleString(lang === 'tr' ? 'tr-TR' : 'en-US')}` : '—'}</td>
+                    <td className="px-3.5 py-3 text-[var(--text-sub)]">{c.cost != null ? formatMoney(c.cost, c.currency, lang) : '—'}</td>
                     <td className="px-3.5 py-3">
                       {health === 'expired' && (
                         <span className="flex items-center gap-1 text-[10.5px] font-bold bg-p1-tint text-p1 rounded-full px-2 py-0.5 w-fit">
@@ -163,7 +183,17 @@ export function PurchasingPage() {
               </tr>
             </thead>
             <tbody>
-              {!orders?.length && (
+              {ordersLoading && (
+                <tr>
+                  <td colSpan={7} className="text-center py-10 text-[var(--text-faint)]">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</td>
+                </tr>
+              )}
+              {ordersError && (
+                <tr>
+                  <td colSpan={7} className="text-center py-10 text-p1">{t({ tr: 'Siparişler yüklenemedi.', en: 'Failed to load orders.' })}</td>
+                </tr>
+              )}
+              {!ordersLoading && !ordersError && !orders?.length && (
                 <tr>
                   <td colSpan={7} className="text-center py-10 text-[var(--text-faint)]">
                     {t({ tr: 'Henüz sipariş yok.', en: 'No orders yet.' })}
@@ -179,12 +209,12 @@ export function PurchasingPage() {
                     <td className="px-3.5 py-3 font-semibold">{o.title}</td>
                     <td className="px-3.5 py-3 text-[var(--text-sub)]">{o.vendor?.name ?? '—'}</td>
                     <td className="px-3.5 py-3 text-[var(--text-sub)]">{o.requester?.full_name ?? '—'}</td>
-                    <td className="px-3.5 py-3 text-[var(--text-sub)]">₺{o.total_cost.toLocaleString(lang === 'tr' ? 'tr-TR' : 'en-US')}</td>
+                    <td className="px-3.5 py-3 text-[var(--text-sub)]">{formatMoney(o.total_cost, o.currency, lang)}</td>
                     <td className="px-3.5 py-3">
                       <PoStatusBadge status={o.status} />
                     </td>
                     <td className="px-3.5 py-3">
-                      {nextStatus && o.status !== 'cancelled' && (
+                      {canManage && nextStatus && o.status !== 'cancelled' && (
                         <button
                           onClick={() => updatePoStatus.mutate({ id: o.id, status: nextStatus as PoStatus })}
                           className="text-[10.5px] font-bold px-2.5 py-1 rounded-md bg-brand text-white"
@@ -203,7 +233,9 @@ export function PurchasingPage() {
 
       {tab === 'vendors' && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {!vendors?.length && <p className="text-[13px] text-[var(--text-faint)] py-10 text-center col-span-2">{t({ tr: 'Henüz tedarikçi yok.', en: 'No vendors yet.' })}</p>}
+          {vendorsLoading && <p className="text-[13px] text-[var(--text-faint)] py-10 text-center col-span-2">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</p>}
+          {vendorsError && <p className="text-[13px] text-p1 py-10 text-center col-span-2">{t({ tr: 'Tedarikçiler yüklenemedi.', en: 'Failed to load vendors.' })}</p>}
+          {!vendorsLoading && !vendorsError && !vendors?.length && <p className="text-[13px] text-[var(--text-faint)] py-10 text-center col-span-2">{t({ tr: 'Henüz tedarikçi yok.', en: 'No vendors yet.' })}</p>}
           {vendors?.map((v) => (
             <div key={v.id} className="border border-[var(--border)] rounded-[var(--radius-app)] bg-[var(--panel)] p-4">
               <div className="font-semibold text-[14px] mb-1">{v.name}</div>
