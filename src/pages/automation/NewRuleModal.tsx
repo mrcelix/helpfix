@@ -26,19 +26,39 @@ export function NewRuleModal({ onClose }: { onClose: () => void }) {
   const [actionType, setActionType] = useState<AutomationAction>('assign_to_user')
   const [actionAssigneeId, setActionAssigneeId] = useState('')
   const [actionPriority, setActionPriority] = useState<Priority>('P2')
+  const [submitError, setSubmitError] = useState('')
+
+  // "Yeni Değişiklik" tetikleyicisinde changes tablosunun priority sütunu
+  // olmadığı için sunucu tarafı (apply_automation_rules_changes) hem
+  // condition_priority'yi hem de set_priority eylemini yok sayar —
+  // bu yüzden UI'da da bu iki alan bu tetikleyicide gösterilmiyor.
+  const isChangeTrigger = triggerType === 'change_created'
+
+  function selectTrigger(key: AutomationTrigger) {
+    setTriggerType(key)
+    if (key === 'change_created') {
+      setConditionPriority('')
+      if (actionType === 'set_priority') setActionType('assign_to_user')
+    }
+  }
 
   async function handleSubmit() {
     if (!name.trim()) return
-    await createRule.mutateAsync({
-      name: name.trim(),
-      triggerType,
-      conditionCategory: conditionCategory.trim() || null,
-      conditionPriority: conditionPriority || null,
-      actionType,
-      actionAssigneeId: actionType === 'assign_to_user' ? actionAssigneeId || null : null,
-      actionPriority: actionType === 'set_priority' ? actionPriority : null,
-    })
-    onClose()
+    setSubmitError('')
+    try {
+      await createRule.mutateAsync({
+        name: name.trim(),
+        triggerType,
+        conditionCategory: conditionCategory.trim() || null,
+        conditionPriority: conditionPriority || null,
+        actionType,
+        actionAssigneeId: actionType === 'assign_to_user' ? actionAssigneeId || null : null,
+        actionPriority: actionType === 'set_priority' ? actionPriority : null,
+      })
+      onClose()
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : String(err))
+    }
   }
 
   return (
@@ -80,10 +100,11 @@ export function NewRuleModal({ onClose }: { onClose: () => void }) {
               <button
                 type="button"
                 key={tr.key}
-                onClick={() => setTriggerType(tr.key)}
+                onClick={() => selectTrigger(tr.key)}
+                aria-pressed={triggerType === tr.key}
                 className={`flex-1 text-[11px] font-bold py-2 rounded-lg border ${triggerType === tr.key ? 'bg-brand border-brand text-white' : 'bg-[var(--panel-2)] border-[var(--border)] text-[var(--text-sub)]'}`}
               >
-                {tr.label.tr}
+                {t(tr.label)}
               </button>
             ))}
           </div>
@@ -93,26 +114,39 @@ export function NewRuleModal({ onClose }: { onClose: () => void }) {
           <div className="text-[10.5px] font-bold text-[var(--text-faint)] uppercase mb-2">
             {t({ tr: 'KOŞUL', en: 'CONDITION' })}
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className={isChangeTrigger ? 'grid grid-cols-1 gap-2' : 'grid grid-cols-2 gap-2'}>
             <input
               value={conditionCategory}
               onChange={(e) => setConditionCategory(e.target.value)}
               placeholder={t({ tr: 'Kategori (boş = hepsi)', en: 'Category (empty = any)' })}
               className="bg-[var(--panel)] border border-[var(--border)] rounded-lg px-2.5 py-2 text-[12.5px]"
             />
-            <select
-              value={conditionPriority}
-              onChange={(e) => setConditionPriority(e.target.value as Priority | '')}
-              className="bg-[var(--panel)] border border-[var(--border)] rounded-lg px-2.5 py-2 text-[12.5px]"
-            >
-              <option value="">{t({ tr: 'Öncelik: Hepsi', en: 'Priority: Any' })}</option>
-              {PRIORITIES.map((p) => (
-                <option key={p} value={p}>
-                  {priorityLabel(p, lang)}
-                </option>
-              ))}
-            </select>
+            {!isChangeTrigger && (
+              <select
+                value={conditionPriority}
+                onChange={(e) => setConditionPriority(e.target.value as Priority | '')}
+                className="bg-[var(--panel)] border border-[var(--border)] rounded-lg px-2.5 py-2 text-[12.5px]"
+              >
+                <option value="">{t({ tr: 'Öncelik: Hepsi', en: 'Priority: Any' })}</option>
+                {PRIORITIES.map((p) => (
+                  <option key={p} value={p}>
+                    {priorityLabel(p, lang)}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
+          <p className="text-[10px] text-[var(--text-faint)] mt-1.5">
+            {t({
+              tr: 'Kategori, kaydın kategori metniyle birebir eşleşmelidir (örn. "Ağ & VPN – VPN bağlantı sorunu"); kısmi veya farklı yazımlı girişler eşleşmez.',
+              en: 'Category must match the record\'s category text exactly (e.g. "Network & VPN – VPN connection issue"); partial or differently-worded entries won\'t match.',
+            })}
+          </p>
+          {isChangeTrigger && (
+            <p className="text-[10px] text-[var(--text-faint)] mt-1">
+              {t({ tr: 'Değişikliklerde öncelik alanı yoktur, bu yüzden öncelik koşulu bu tetikleyicide kullanılamaz.', en: 'Changes have no priority field, so a priority condition is not available for this trigger.' })}
+            </p>
+          )}
         </div>
 
         <div className="bg-purple-tint/40 border border-purple/40 rounded-lg p-3">
@@ -121,6 +155,7 @@ export function NewRuleModal({ onClose }: { onClose: () => void }) {
             <button
               type="button"
               onClick={() => setActionType('assign_to_user')}
+              aria-pressed={actionType === 'assign_to_user'}
               className={`flex-1 text-[11.5px] font-bold py-2 rounded-lg border ${actionType === 'assign_to_user' ? 'bg-purple border-purple text-white' : 'bg-[var(--panel)] border-[var(--border)] text-[var(--text-sub)]'}`}
             >
               {t({ tr: 'Ata', en: 'Assign' })}
@@ -128,17 +163,21 @@ export function NewRuleModal({ onClose }: { onClose: () => void }) {
             <button
               type="button"
               onClick={() => setActionType('assign_by_skill')}
+              aria-pressed={actionType === 'assign_by_skill'}
               className={`flex-1 text-[11.5px] font-bold py-2 rounded-lg border ${actionType === 'assign_by_skill' ? 'bg-purple border-purple text-white' : 'bg-[var(--panel)] border-[var(--border)] text-[var(--text-sub)]'}`}
             >
               {t({ tr: 'Beceriye Göre Ata', en: 'Assign by Skill' })}
             </button>
-            <button
-              type="button"
-              onClick={() => setActionType('set_priority')}
-              className={`flex-1 text-[11.5px] font-bold py-2 rounded-lg border ${actionType === 'set_priority' ? 'bg-purple border-purple text-white' : 'bg-[var(--panel)] border-[var(--border)] text-[var(--text-sub)]'}`}
-            >
-              {t({ tr: 'Öncelik Ayarla', en: 'Set Priority' })}
-            </button>
+            {!isChangeTrigger && (
+              <button
+                type="button"
+                onClick={() => setActionType('set_priority')}
+                aria-pressed={actionType === 'set_priority'}
+                className={`flex-1 text-[11.5px] font-bold py-2 rounded-lg border ${actionType === 'set_priority' ? 'bg-purple border-purple text-white' : 'bg-[var(--panel)] border-[var(--border)] text-[var(--text-sub)]'}`}
+              >
+                {t({ tr: 'Öncelik Ayarla', en: 'Set Priority' })}
+              </button>
+            )}
           </div>
           {actionType === 'assign_to_user' && (
             <select
@@ -176,6 +215,7 @@ export function NewRuleModal({ onClose }: { onClose: () => void }) {
             </select>
           )}
         </div>
+        {submitError && <p className="text-[12px] text-p1">{submitError}</p>}
       </div>
     </Modal>
   )
