@@ -31,7 +31,7 @@ export function EmployeeHomePage() {
   const { lang, t } = useLang()
   const { profile } = useAuth()
   const navigate = useNavigate()
-  const { data: myRequests } = useMyRequests()
+  const { data: myRequests, error: myRequestsError } = useMyRequests()
 
   const openCount = myRequests?.filter((r) => !['resolved', 'closed'].includes(r.status)).length ?? 0
   const resolvedCount = myRequests?.filter((r) => ['resolved', 'closed'].includes(r.status)).length ?? 0
@@ -132,6 +132,9 @@ export function EmployeeHomePage() {
         <TodoWidget />
       </div>
 
+      {myRequestsError && (
+        <p className="text-p1 text-[12px] mb-4">{t({ tr: 'Taleplerim yüklenemedi.', en: 'Failed to load my tickets.' })}</p>
+      )}
       {!!myRequests?.length && (
         <div>
           <div className="text-[10.5px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-2.5">
@@ -145,6 +148,14 @@ export function EmployeeHomePage() {
                 <div
                   key={r.id}
                   onClick={() => navigate('/my-tickets')}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      navigate('/my-tickets')
+                    }
+                  }}
                   className="flex items-center gap-3 bg-[var(--panel)] border border-[var(--border)] rounded-xl px-4 py-3 cursor-pointer hover:border-brand"
                 >
                   <span className="font-semibold text-[13px] flex-1 truncate">{r.title}</span>

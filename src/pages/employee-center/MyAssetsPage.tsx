@@ -13,7 +13,7 @@ const TYPE_LABEL: Record<string, { tr: string; en: string; fr?: string; it?: str
 
 export function MyAssetsPage() {
   const { lang, t } = useLang()
-  const { data: items, isLoading } = useConfigurationItems('mine')
+  const { data: items, isLoading, error } = useConfigurationItems('mine')
 
   return (
     <div>
@@ -25,7 +25,8 @@ export function MyAssetsPage() {
       </div>
 
       {isLoading && <p className="text-[var(--text-faint)] text-sm py-8 text-center">{t({ tr: 'Yükleniyor…', en: 'Loading…', fr: 'Chargement…', it: 'Caricamento…', ar: 'جارٍ التحميل…' })}</p>}
-      {!isLoading && items?.length === 0 && (
+      {error && <p className="text-p1 text-sm py-8 text-center">{t({ tr: 'Varlıklar yüklenemedi.', en: 'Failed to load assets.' })}</p>}
+      {!isLoading && !error && items?.length === 0 && (
         <p className="text-[var(--text-faint)] text-sm py-14 text-center">
           {t({ tr: 'Size zimmetli bir varlık bulunmuyor.', en: 'No assets are currently assigned to you.', fr: 'Aucun actif ne vous est actuellement attribué.', it: 'Nessun asset è attualmente assegnato a te.', ar: 'لا توجد أصول مخصصة لك حاليًا.' })}
         </p>
@@ -35,7 +36,7 @@ export function MyAssetsPage() {
         {items?.map((ci) => (
           <div key={ci.id} className="bg-[var(--panel)] border border-[var(--border)] rounded-2xl p-4">
             <div className="font-bold text-[13.5px] mb-1">{ci.name}</div>
-            <div className="text-[11px] text-[var(--text-faint)] mb-3">{(TYPE_LABEL[ci.ci_type] ? pickLang(TYPE_LABEL[ci.ci_type], lang) : undefined)}</div>
+            <div className="text-[11px] text-[var(--text-faint)] mb-3">{TYPE_LABEL[ci.ci_type] ? pickLang(TYPE_LABEL[ci.ci_type], lang) : ci.ci_type}</div>
             <div className="flex items-center justify-between text-[10.5px] text-[var(--text-faint)] font-mono">
               <span>{ci.tag}</span>
               {ci.warranty_expiry && (

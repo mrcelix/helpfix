@@ -14,7 +14,7 @@ export function ChatWidget() {
   const [deflectionLogged, setDeflectionLogged] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  const { data: messages } = useChatMessages(conversationId)
+  const { data: messages, error: messagesError } = useChatMessages(conversationId)
   const sendMessage = useSendChatMessage()
 
   useEffect(() => {
@@ -38,7 +38,9 @@ export function ChatWidget() {
       <button
         onClick={() => setOpen((o) => !o)}
         className="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-40 w-14 h-14 rounded-full bg-gradient-to-br from-brand to-brand-dim shadow-2xl flex items-center justify-center text-white hover:scale-105 transition-transform"
-        aria-label="AI Asistan"
+        title={t({ tr: 'AI Asistan', en: 'AI Assistant' })}
+        aria-label={t({ tr: 'AI Asistan', en: 'AI Assistant' })}
+        aria-expanded={open}
       >
         {open ? <X className="w-5 h-5" /> : <MessageCircle className="w-6 h-6" />}
       </button>
@@ -54,7 +56,12 @@ export function ChatWidget() {
           </div>
 
           <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 py-3 flex flex-col gap-2.5">
-            {!messages?.length && (
+            {messagesError && (
+              <div className="text-[12px] text-p1 text-center py-8 px-4">
+                {t({ tr: 'Sohbet geçmişi yüklenemedi.', en: 'Failed to load chat history.' })}
+              </div>
+            )}
+            {!messagesError && !messages?.length && (
               <div className="text-[12px] text-[var(--text-faint)] italic text-center py-8 px-4">
                 {t({
                   tr: 'Merhaba! Bir IT sorununuz mu var? Yazın, birlikte çözelim — çözemezsem sizin adınıza talep açabilirim.',
@@ -128,6 +135,8 @@ export function ChatWidget() {
             <button
               onClick={handleSend}
               disabled={!draft.trim() || sendMessage.isPending}
+              title={t({ tr: 'Gönder', en: 'Send' })}
+              aria-label={t({ tr: 'Gönder', en: 'Send' })}
               className="w-9 h-9 shrink-0 rounded-lg bg-brand text-white flex items-center justify-center disabled:opacity-40"
             >
               <Send className="w-4 h-4" />

@@ -30,7 +30,7 @@ export function MyTicketsPage() {
   const { lang, t } = useLang()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [showNewModal, setShowNewModal] = useState(false)
-  const { data: requests, isLoading } = useMyRequests()
+  const { data: requests, isLoading, error } = useMyRequests()
   const openId = useOpenParam()
   useEffect(() => {
     if (openId) setSelectedId(openId)
@@ -52,7 +52,8 @@ export function MyTicketsPage() {
       </div>
 
       {isLoading && <p className="text-[var(--text-faint)] text-sm py-8 text-center">{t({ tr: 'Yükleniyor…', en: 'Loading…', fr: 'Chargement…', it: 'Caricamento…', ar: 'جارٍ التحميل…' })}</p>}
-      {!isLoading && requests?.length === 0 && (
+      {error && <p className="text-p1 text-sm py-8 text-center">{t({ tr: 'Talepler yüklenemedi.', en: 'Failed to load tickets.' })}</p>}
+      {!isLoading && !error && requests?.length === 0 && (
         <p className="text-[var(--text-faint)] text-sm py-14 text-center">
           {t({ tr: 'Henüz bir talebiniz yok.', en: "You haven't created any tickets yet.", fr: "Vous n'avez encore créé aucun ticket.", it: 'Non hai ancora creato alcun ticket.', ar: 'لم تقم بإنشاء أي طلبات بعد.' })}
         </p>
@@ -66,6 +67,14 @@ export function MyTicketsPage() {
           <div
             key={r.id}
             onClick={() => setSelectedId(r.id)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                setSelectedId(r.id)
+              }
+            }}
             className="flex items-center gap-3.5 bg-[var(--panel)] border border-[var(--border)] rounded-xl px-4 py-3.5 cursor-pointer hover:border-brand transition-colors"
           >
             <PriorityBadge priority={r.priority} lang={lang} />

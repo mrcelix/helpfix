@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
-import { useAuth } from '@/contexts/AuthContext'
 
 export interface ChatMessage {
   id: string
@@ -22,25 +21,6 @@ export function useChatMessages(conversationId: string | null) {
         .order('created_at')
       if (error) throw error
       return data as ChatMessage[]
-    },
-  })
-}
-
-export interface ChatConversation {
-  id: string
-  title: string | null
-  updated_at: string
-}
-
-export function useRecentConversations() {
-  const { profile } = useAuth()
-  return useQuery({
-    queryKey: ['chat-conversations', profile?.id],
-    enabled: !!profile,
-    queryFn: async () => {
-      const { data, error } = await supabase.from('chat_conversations').select('id, title, updated_at').order('updated_at', { ascending: false }).limit(10)
-      if (error) throw error
-      return data as ChatConversation[]
     },
   })
 }
