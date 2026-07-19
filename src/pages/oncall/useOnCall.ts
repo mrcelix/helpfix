@@ -20,6 +20,7 @@ export interface SwapRequest {
   id: string
   status: SwapStatus
   created_at: string
+  requested_to: string
   shift: { start_time: string; end_time: string } | null
   requested_by_user: { full_name: string } | null
   requested_to_user: { full_name: string } | null
@@ -51,7 +52,7 @@ export function useCurrentOnCall(scheduleId: string | null) {
         .select('id, start_time, end_time, user:user_id ( id, full_name, avatar_initials )')
         .eq('schedule_id', scheduleId!)
         .lte('start_time', now)
-        .gte('end_time', now)
+        .gt('end_time', now)
         .limit(1)
         .maybeSingle()
       if (error) throw error
@@ -88,7 +89,7 @@ export function useMySwapRequests() {
       const { data, error } = await supabase
         .from('oncall_swap_requests')
         .select(
-          'id, status, created_at, shift:shift_id ( start_time, end_time ), requested_by_user:requested_by ( full_name ), requested_to_user:requested_to ( full_name )'
+          'id, status, created_at, requested_to, shift:shift_id ( start_time, end_time ), requested_by_user:requested_by ( full_name ), requested_to_user:requested_to ( full_name )'
         )
         .order('created_at', { ascending: false })
       if (error) throw error
@@ -156,7 +157,23 @@ export function useDecideSwap() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (input: { id: string; status: 'approved' | 'rejected' }) => {
-      const { error } = await supabase.from('oncall_swap_requests').update({ status: input.status }).eq('id', input.id)
+      if (input.status === 'approved') {
+        const { data: swap, error: fetchError } = await supabase
+          .from('oncall_swap_requests')
+          .select('shift_id, requested_to')
+          .eq('id', input.id)
+          .single()
+        if (fetchError) throw fetchError
+        const { error: shiftError } = await supabase
+          .from('oncall_shifts')
+          .update({ user_id: swap.requested_to })
+          .eq('id', swap.shift_id)
+        if (shiftError) throw shiftError
+      }
+      const { error } = await supabase
+        .from('oncall_swap_requests')
+        .update({ status: input.status, decided_at: new Date().toISOString() })
+        .eq('id', input.id)
       if (error) throw error
     },
     onSuccess: () => {

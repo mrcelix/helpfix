@@ -17,7 +17,7 @@ const METHOD_COLOR: Record<string, string> = {
 
 export function EscalationChain({ scheduleId }: { scheduleId: string }) {
   const { lang, t } = useLang()
-  const { data: steps } = useEscalationSteps(scheduleId)
+  const { data: steps, error: stepsError } = useEscalationSteps(scheduleId)
   const addStep = useAddEscalationStep(scheduleId)
   const deleteStep = useDeleteEscalationStep(scheduleId)
   const [delayMinutes, setDelayMinutes] = useState(5)
@@ -45,7 +45,12 @@ export function EscalationChain({ scheduleId }: { scheduleId: string }) {
                         : `+${s.delay_minutes} ${t({ tr: 'dk', en: 'min' })}`}
                     </div>
                   </div>
-                  <button onClick={() => deleteStep.mutate(s.id)} className="opacity-60 hover:opacity-100">
+                  <button
+                    onClick={() => deleteStep.mutate(s.id)}
+                    title={t({ tr: 'Adımı sil', en: 'Delete step' })}
+                    aria-label={t({ tr: 'Adımı sil', en: 'Delete step' })}
+                    className="opacity-60 hover:opacity-100"
+                  >
                     <Trash2 className="w-3 h-3" />
                   </button>
                 </div>
@@ -55,7 +60,10 @@ export function EscalationChain({ scheduleId }: { scheduleId: string }) {
           })}
         </div>
       )}
-      {!steps?.length && (
+      {stepsError && (
+        <p className="text-[11.5px] text-p1 mb-3">{t({ tr: 'Eskalasyon adımları yüklenemedi.', en: 'Failed to load escalation steps.' })}</p>
+      )}
+      {!steps?.length && !stepsError && (
         <p className="text-[11.5px] text-[var(--text-faint)] italic mb-3">
           {t({ tr: 'Henüz eskalasyon adımı tanımlanmadı.', en: 'No escalation steps defined yet.' })}
         </p>

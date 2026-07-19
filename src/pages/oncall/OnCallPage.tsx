@@ -26,12 +26,12 @@ export function OnCallPage() {
   const [newScheduleName, setNewScheduleName] = useState('')
   const [showNewSchedule, setShowNewSchedule] = useState(false)
 
-  const { data: schedules } = useSchedules()
+  const { data: schedules, isLoading: schedulesLoading, error: schedulesError } = useSchedules()
   const activeScheduleId = scheduleId ?? schedules?.[0]?.id ?? null
-  const { data: fairness } = useOnCallFairness(activeScheduleId)
-  const { data: current } = useCurrentOnCall(activeScheduleId)
-  const { data: upcoming } = useUpcomingShifts(activeScheduleId)
-  const { data: swapRequests } = useMySwapRequests()
+  const { data: fairness, error: fairnessError } = useOnCallFairness(activeScheduleId)
+  const { data: current, error: currentError } = useCurrentOnCall(activeScheduleId)
+  const { data: upcoming, error: upcomingError } = useUpcomingShifts(activeScheduleId)
+  const { data: swapRequests, error: swapRequestsError } = useMySwapRequests()
   const decideSwap = useDecideSwap()
   const createSchedule = useCreateSchedule()
 
@@ -39,9 +39,13 @@ export function OnCallPage() {
 
   async function addSchedule() {
     if (!newScheduleName.trim()) return
-    await createSchedule.mutateAsync(newScheduleName.trim())
-    setNewScheduleName('')
-    setShowNewSchedule(false)
+    try {
+      await createSchedule.mutateAsync(newScheduleName.trim())
+      setNewScheduleName('')
+      setShowNewSchedule(false)
+    } catch {
+      // global MutationCache.onError toast'u kullanıcıya hatayı gösterir
+    }
   }
 
   return (
@@ -64,6 +68,7 @@ export function OnCallPage() {
           <button
             key={s.id}
             onClick={() => setScheduleId(s.id)}
+            aria-pressed={activeScheduleId === s.id}
             className={
               'text-[12.5px] font-bold px-3.5 py-2 rounded-lg border transition-colors ' +
               (activeScheduleId === s.id
@@ -98,7 +103,13 @@ export function OnCallPage() {
         )}
       </div>
 
-      {!schedules?.length && (
+      {schedulesLoading && (
+        <p className="text-[var(--text-faint)] text-sm py-14 text-center">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</p>
+      )}
+      {schedulesError && (
+        <p className="text-p1 text-sm py-14 text-center">{t({ tr: 'Çizelgeler yüklenemedi.', en: 'Failed to load schedules.' })}</p>
+      )}
+      {!schedulesLoading && !schedulesError && !schedules?.length && (
         <p className="text-[var(--text-faint)] text-sm py-14 text-center">
           {t({ tr: 'Henüz bir nöbet çizelgesi yok — yukarıdan oluşturun.', en: 'No on-call schedule yet — create one above.' })}
         </p>
@@ -112,7 +123,9 @@ export function OnCallPage() {
               <span className="w-1.5 h-1.5 rounded-full bg-ok animate-pulse" />
               {t({ tr: 'ŞU AN NÖBETTE', en: 'CURRENTLY ON CALL' })}
             </div>
-            {current ? (
+            {currentError ? (
+              <div className="text-[13px] text-p1">{t({ tr: 'Nöbetçi bilgisi yüklenemedi.', en: 'Failed to load on-call info.' })}</div>
+            ) : current ? (
               <>
                 <div className="font-display text-xl font-bold">{current.user?.full_name}</div>
                 <div className="text-[12px] text-[var(--text-faint)] mt-1">
@@ -127,6 +140,9 @@ export function OnCallPage() {
             )}
           </div>
 
+          {swapRequestsError && (
+            <p className="text-p1 text-[12px] mb-4">{t({ tr: 'Değişim talepleri yüklenemedi.', en: 'Failed to load swap requests.' })}</p>
+          )}
           {!!myPendingDecisions?.length && (
             <div className="mb-6">
               <div className="text-[10.5px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-2.5">
@@ -139,7 +155,7 @@ export function OnCallPage() {
                       <b>{r.requested_by_user?.full_name}</b> → <b>{r.requested_to_user?.full_name}</b>
                       {r.shift && <span className="text-[var(--text-faint)]"> · {new Date(r.shift.start_time).toLocaleDateString(lang === 'tr' ? 'tr-TR' : 'en-US')}</span>}
                     </span>
-                    {profile?.role !== 'requester' && (
+                    {profile?.id === r.requested_to ? (
                       <div className="flex gap-1.5">
                         <button onClick={() => decideSwap.mutate({ id: r.id, status: 'approved' })} className="text-[10.5px] font-bold px-2 py-1 rounded-md bg-ok text-white">
                           {t({ tr: 'Onayla', en: 'Approve' })}
@@ -148,6 +164,10 @@ export function OnCallPage() {
                           {t({ tr: 'Reddet', en: 'Reject' })}
                         </button>
                       </div>
+                    ) : (
+                      <span className="text-[10.5px] text-[var(--text-faint)] italic">
+                        {t({ tr: 'Kararı bekleniyor', en: 'Awaiting decision' })}
+                      </span>
                     )}
                   </div>
                 ))}
@@ -157,6 +177,9 @@ export function OnCallPage() {
 
           <EscalationChain scheduleId={activeScheduleId} />
 
+          {fairnessError && (
+            <p className="text-p1 text-[12px] mb-4">{t({ tr: 'Adalet analitiği yüklenemedi.', en: 'Failed to load fairness analytics.' })}</p>
+          )}
           {!!fairness?.length && (
             <div className="mb-6">
               <div className="text-[10.5px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-2.5">
@@ -181,7 +204,12 @@ export function OnCallPage() {
           <div className="border border-[var(--border)] rounded-[var(--radius-app)] overflow-x-auto bg-[var(--panel)]">
             <table className="w-full text-[12.5px] min-w-[720px]">
               <tbody>
-                {upcoming?.length === 0 && (
+                {upcomingError && (
+                  <tr>
+                    <td className="text-center py-10 text-p1">{t({ tr: 'Vardiyalar yüklenemedi.', en: 'Failed to load shifts.' })}</td>
+                  </tr>
+                )}
+                {!upcomingError && upcoming?.length === 0 && (
                   <tr>
                     <td className="text-center py-10 text-[var(--text-faint)]">{t({ tr: 'Yaklaşan vardiya yok.', en: 'No upcoming shifts.' })}</td>
                   </tr>

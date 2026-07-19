@@ -9,11 +9,17 @@ export function SwapRequestModal({ shift, onClose }: { shift: Shift; onClose: ()
   const requestSwap = useRequestSwap()
   const { data: users } = useAssignableUsers()
   const [requestedTo, setRequestedTo] = useState('')
+  const [submitError, setSubmitError] = useState('')
 
   async function handleSubmit() {
     if (!requestedTo) return
-    await requestSwap.mutateAsync({ shiftId: shift.id, requestedTo })
-    onClose()
+    setSubmitError('')
+    try {
+      await requestSwap.mutateAsync({ shiftId: shift.id, requestedTo })
+      onClose()
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : String(err))
+    }
   }
 
   return (
@@ -59,6 +65,7 @@ export function SwapRequestModal({ shift, onClose }: { shift: Shift; onClose: ()
               ))}
           </select>
         </div>
+        {submitError && <p className="text-[12px] text-p1">{submitError}</p>}
       </div>
     </Modal>
   )

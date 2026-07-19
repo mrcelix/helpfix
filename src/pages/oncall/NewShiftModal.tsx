@@ -12,15 +12,23 @@ export function NewShiftModal({ scheduleId, onClose }: { scheduleId: string; onC
   const [userId, setUserId] = useState('')
   const [startTime, setStartTime] = useState('')
   const [endTime, setEndTime] = useState('')
+  const [formError, setFormError] = useState('')
 
   async function handleSubmit() {
     if (!userId || !startTime || !endTime) return
-    await createShift.mutateAsync({
-      userId,
-      startTime: new Date(startTime).toISOString(),
-      endTime: new Date(endTime).toISOString(),
-    })
-    onClose()
+    const start = new Date(startTime)
+    const end = new Date(endTime)
+    if (end <= start) {
+      setFormError(t({ tr: 'Bitiş zamanı başlangıçtan sonra olmalı.', en: 'End time must be after start time.' }))
+      return
+    }
+    setFormError('')
+    try {
+      await createShift.mutateAsync({ userId, startTime: start.toISOString(), endTime: end.toISOString() })
+      onClose()
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : String(err))
+    }
   }
 
   return (
@@ -81,6 +89,7 @@ export function NewShiftModal({ scheduleId, onClose }: { scheduleId: string; onC
             />
           </div>
         </div>
+        {formError && <p className="text-[12px] text-p1">{formError}</p>}
       </div>
     </Modal>
   )
