@@ -19,7 +19,7 @@ export function ProblemAnalytics() {
   const { lang, t } = useLang()
   const { data: breakdown, isLoading: breakdownLoading } = useRootCauseBreakdown()
   const { data: trend, isLoading: trendLoading } = useProblemWeeklyTrend()
-  const { data: avgDays } = useAvgProblemResolutionDays()
+  const { data: avgDays, isLoading: avgDaysLoading } = useAvgProblemResolutionDays()
 
   const pieData = breakdown?.map((b) => ({ name: (CATEGORY_LABEL[b.category] ? pickLang(CATEGORY_LABEL[b.category], lang) : undefined) ?? b.category, value: b.confirmed_count, key: b.category }))
   const chartTrend = trend?.map((p) => ({
@@ -31,7 +31,9 @@ export function ProblemAnalytics() {
   return (
     <div>
       <div className="bg-[var(--panel)] border border-[var(--border)] rounded-xl p-4 mb-4 inline-block">
-        <div className="font-display text-2xl font-bold text-brand">{avgDays ?? 0} {t({ tr: 'gün', en: 'days' })}</div>
+        <div className="font-display text-2xl font-bold text-brand">
+          {avgDaysLoading ? '…' : `${avgDays ?? 0} ${t({ tr: 'gün', en: 'days' })}`}
+        </div>
         <div className="text-[11px] text-[var(--text-faint)] mt-1">{t({ tr: 'Ortalama Kök Neden Çözüm Süresi', en: 'Avg. Root Cause Resolution Time' })}</div>
       </div>
 

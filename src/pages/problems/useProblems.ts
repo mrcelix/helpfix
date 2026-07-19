@@ -263,10 +263,18 @@ export function useConfirmRootCause(problemId: string) {
         .eq('id', cause.id)
       if (e2) throw e2
 
-      const { error: e3 } = await supabase
-        .from('problems')
-        .update({ root_cause: cause.description, status: 'root_cause_identified' })
-        .eq('id', problemId)
+      // Zaten resolved/closed/known_error/monitoring aşamasına geçmiş bir
+      // problemi kök neden onayı GERİ AÇMASIN — status sadece henüz erken
+      // aşamadaki (investigating/root_cause_identified) problemlerde
+      // otomatik ilerletilir. Fishbone diyagramı problemin güncel
+      // statüsünü prop olarak almadığından bu kontrol burada yapılıyor.
+      const { data: current, error: eStatus } = await supabase.from('problems').select('status').eq('id', problemId).single()
+      if (eStatus) throw eStatus
+      const patch: { root_cause: string; status?: 'root_cause_identified' } = { root_cause: cause.description }
+      if (current.status === 'investigating' || current.status === 'root_cause_identified') {
+        patch.status = 'root_cause_identified'
+      }
+      const { error: e3 } = await supabase.from('problems').update(patch).eq('id', problemId)
       if (e3) throw e3
     },
     onSuccess: () => {

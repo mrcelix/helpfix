@@ -18,12 +18,24 @@ const STATUS_OPTIONS: ProblemStatus[] = [
   'closed',
 ]
 
+// ProblemsPage.tsx'teki liste sayfasıyla aynı etiketler — durum seçici
+// önceden ham enum değerlerini (örn. "root_cause_identified") gösteriyordu,
+// aynı modülün liste görünümüyle tutarsızdı.
+const STATUS_LABEL: Record<ProblemStatus, { tr: string; en: string }> = {
+  investigating: { tr: 'Araştırılıyor', en: 'Investigating' },
+  root_cause_identified: { tr: 'Kök Neden Bulundu', en: 'Root Cause Found' },
+  known_error: { tr: 'Bilinen Hata', en: 'Known Error' },
+  monitoring: { tr: 'İzleniyor', en: 'Monitoring' },
+  resolved: { tr: 'Çözüldü', en: 'Resolved' },
+  closed: { tr: 'Kapatıldı', en: 'Closed' },
+}
+
 export function ProblemDrawer({ id, onClose }: { id: string; onClose: () => void }) {
   const { lang, t } = useLang()
   const { data: problem, isLoading } = useProblemDetail(id)
-  const { data: linkedIncidents } = useLinkedIncidents(id)
-  const { data: timeline } = useProblemTimeline(id)
-  const { data: linkedChanges } = useLinkedChanges(id)
+  const { data: linkedIncidents, isLoading: linkedIncidentsLoading } = useLinkedIncidents(id)
+  const { data: timeline, isLoading: timelineLoading } = useProblemTimeline(id)
+  const { data: linkedChanges, isLoading: linkedChangesLoading } = useLinkedChanges(id)
   const updateProblem = useUpdateProblem(id)
   const [showNewChangeModal, setShowNewChangeModal] = useState(false)
 
@@ -69,7 +81,7 @@ export function ProblemDrawer({ id, onClose }: { id: string; onClose: () => void
             >
               {STATUS_OPTIONS.map((s) => (
                 <option key={s} value={s}>
-                  {s}
+                  {lang === 'tr' ? STATUS_LABEL[s].tr : STATUS_LABEL[s].en}
                 </option>
               ))}
             </select>
@@ -87,7 +99,7 @@ export function ProblemDrawer({ id, onClose }: { id: string; onClose: () => void
             <FishboneDiagram problemId={problem.id} problemTitle={problem.title} />
           </div>
 
-          <div className="flex items-center justify-between rounded-lg bg-[var(--panel-2)] border border-[var(--border)] px-3 py-2.5">
+          <label className="flex items-center justify-between rounded-lg bg-[var(--panel-2)] border border-[var(--border)] px-3 py-2.5 cursor-pointer">
             <span className="text-[12px] font-semibold">
               {t({ tr: 'Bilinen Hata olarak işaretle', en: 'Mark as Known Error' })}
             </span>
@@ -96,7 +108,7 @@ export function ProblemDrawer({ id, onClose }: { id: string; onClose: () => void
               checked={problem.is_known_error}
               onChange={(e) => updateProblem.mutate({ is_known_error: e.target.checked })}
             />
-          </div>
+          </label>
 
           {problem.is_known_error && (
             <div>
@@ -138,6 +150,9 @@ export function ProblemDrawer({ id, onClose }: { id: string; onClose: () => void
               </button>
             </div>
             <ul className="space-y-1.5">
+              {linkedChangesLoading && (
+                <li className="text-[11.5px] text-[var(--text-faint)] italic">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</li>
+              )}
               {linkedChanges?.map((c) => (
                 <li key={c.id} className="text-[12px] flex justify-between bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2">
                   <span className="font-mono text-[var(--text-faint)]">{c.ref}</span>
@@ -145,7 +160,7 @@ export function ProblemDrawer({ id, onClose }: { id: string; onClose: () => void
                   <span className="text-[10.5px] text-[var(--text-faint)] shrink-0 ml-2">{c.status}</span>
                 </li>
               ))}
-              {!linkedChanges?.length && (
+              {!linkedChangesLoading && !linkedChanges?.length && (
                 <li className="text-[11.5px] text-[var(--text-faint)] italic">
                   {t({
                     tr: 'Bu problem için henüz kalıcı çözüm değişikliği oluşturulmadı.',
@@ -161,6 +176,9 @@ export function ProblemDrawer({ id, onClose }: { id: string; onClose: () => void
               {t({ tr: 'Bağlı Olaylar', en: 'Linked Incidents' })} ({linkedIncidents?.length ?? 0})
             </div>
             <ul className="space-y-1.5">
+              {linkedIncidentsLoading && (
+                <li className="text-[11.5px] text-[var(--text-faint)] italic">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</li>
+              )}
               {linkedIncidents?.map((li) => (
                 <li
                   key={li.incident_id}
@@ -170,7 +188,7 @@ export function ProblemDrawer({ id, onClose }: { id: string; onClose: () => void
                   <span className="truncate flex-1 ml-2">{li.incident?.title}</span>
                 </li>
               ))}
-              {!linkedIncidents?.length && (
+              {!linkedIncidentsLoading && !linkedIncidents?.length && (
                 <li className="text-[11.5px] text-[var(--text-faint)] italic">
                   {t({ tr: 'Henüz bağlı olay yok', en: 'No linked incidents yet' })}
                 </li>
@@ -183,6 +201,9 @@ export function ProblemDrawer({ id, onClose }: { id: string; onClose: () => void
               {t({ tr: 'Zaman Çizelgesi', en: 'Timeline' })}
             </div>
             <ul className="space-y-2">
+              {timelineLoading && (
+                <li className="text-[11.5px] text-[var(--text-faint)] italic">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</li>
+              )}
               {timeline?.map((ev) => (
                 <li key={ev.id} className="text-[11.5px] text-[var(--text-faint)] flex justify-between">
                   <span>
@@ -192,7 +213,7 @@ export function ProblemDrawer({ id, onClose }: { id: string; onClose: () => void
                   <span>{new Date(ev.created_at).toLocaleTimeString(lang === 'tr' ? 'tr-TR' : 'en-US')}</span>
                 </li>
               ))}
-              {!timeline?.length && (
+              {!timelineLoading && !timeline?.length && (
                 <li className="text-[11.5px] text-[var(--text-faint)] italic">
                   {t({ tr: 'Henüz olay yok', en: 'No events yet' })}
                 </li>

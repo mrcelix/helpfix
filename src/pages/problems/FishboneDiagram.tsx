@@ -67,7 +67,11 @@ export function FishboneDiagram({ problemId, problemTitle }: { problemId: string
                         <button onClick={() => confirmRoot.mutate(c)} title={t({ tr: 'Kök neden olarak onayla', en: 'Confirm as root cause' })}>
                           <CheckCircle2 className="w-3 h-3 text-[var(--text-faint)] hover:text-ok" />
                         </button>
-                        <button onClick={() => deleteCause.mutate(c.id)}>
+                        <button
+                          onClick={() => deleteCause.mutate(c.id)}
+                          title={t({ tr: 'Nedeni sil', en: 'Delete cause' })}
+                          aria-label={t({ tr: 'Nedeni sil', en: 'Delete cause' })}
+                        >
                           <X className="w-3 h-3 text-[var(--text-faint)] hover:text-p1" />
                         </button>
                       </div>

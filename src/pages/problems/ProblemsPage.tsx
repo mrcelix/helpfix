@@ -213,7 +213,11 @@ export function ProblemsPage() {
             {sortedProblems?.map((p) => (
               <tr
                 key={p.id}
+                tabIndex={0}
                 onClick={() => setSelectedId(p.id)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') setSelectedId(p.id)
+                }}
                 className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--row-hover)] cursor-pointer"
               >
                 <td className="px-3.5 py-3 font-mono text-[var(--text-faint)]">{p.ref}</td>
