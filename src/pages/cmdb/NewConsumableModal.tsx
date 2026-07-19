@@ -88,7 +88,7 @@ export function NewConsumableModal({ onClose }: { onClose: () => void }) {
           </div>
           <div>
             <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">{t({ tr: 'Birim Maliyet (₺)', en: 'Unit Cost (₺)' })}</label>
-            <input type="number" value={unitCost} onChange={(e) => setUnitCost(e.target.value)} className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2 text-[13px]" />
+            <input type="number" min={0} value={unitCost} onChange={(e) => setUnitCost(e.target.value)} className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2 text-[13px]" />
           </div>
         </div>
 

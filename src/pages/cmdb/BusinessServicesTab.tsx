@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronDown, ChevronUp, AlertTriangle, Plus, X, Link2, Ticket, AlertCircle, GitBranch } from 'lucide-react'
+import { ChevronDown, ChevronUp, AlertTriangle, Plus, X, Link2, Ticket, AlertCircle, GitBranch, Radio } from 'lucide-react'
 import { useLang, pickLang, type Lang } from '@/contexts/LangContext'
 import {
   useBusinessServiceHealth,
@@ -27,7 +27,7 @@ const HEALTH_STYLE: Record<string, { bg: string; text: string; label: { tr: stri
 
 export function BusinessServicesTab() {
   const { lang, t } = useLang()
-  const { data: services, isLoading } = useBusinessServiceHealth()
+  const { data: services, isLoading, error } = useBusinessServiceHealth()
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   const outages = services?.filter((s) => s.health_status === 'outage').length ?? 0
@@ -44,7 +44,10 @@ export function BusinessServicesTab() {
       )}
 
       {isLoading && <div className="text-[12px] text-[var(--text-faint)] py-10 text-center">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</div>}
-      {!isLoading && !services?.length && (
+      {error && (
+        <div className="text-[12px] text-p1 py-10 text-center">{t({ tr: 'İş hizmetleri yüklenemedi.', en: 'Failed to load business services.' })}</div>
+      )}
+      {!isLoading && !error && !services?.length && (
         <div className="text-[12px] text-[var(--text-faint)] py-12 text-center px-6 border border-dashed border-[var(--border)] rounded-xl">
           {t({
             tr: 'Henüz iş hizmeti tanımlanmadı. "Yeni Hizmet" ile örn. "E-posta Hizmeti" veya "POS Sistemi" gibi bir iş hizmeti ekleyin, ardından onu oluşturan cihazları (CI) bağlayın.',
@@ -67,10 +70,22 @@ export function BusinessServicesTab() {
                     <span className="text-[9px] font-bold bg-[var(--panel-2)] border border-[var(--border)] text-[var(--text-faint)] rounded-full px-1.5 py-0.5">
                       {pickLang(CRITICALITY_LABEL[s.criticality], lang)}
                     </span>
+                    {s.has_active_major_incident && (
+                      <span
+                        className="flex items-center gap-1 text-[9px] font-bold bg-p1-tint text-p1 rounded-full px-1.5 py-0.5"
+                        title={t({ tr: 'Aktif büyük olay', en: 'Active major incident' })}
+                      >
+                        <Radio className="w-2.5 h-2.5 animate-pulse" />
+                        {t({ tr: 'Büyük Olay', en: 'Major Incident' })}
+                      </span>
+                    )}
                   </div>
                   <div className="text-[11px] text-[var(--text-faint)] mt-0.5">
                     {s.owner_name ?? t({ tr: 'Sahibi atanmadı', en: 'No owner assigned' })} · {s.linked_ci_count} {t({ tr: 'bağlı cihaz', en: 'linked devices' })}
                     {s.open_incidents > 0 && ` · ${s.open_incidents} ${t({ tr: 'açık talep', en: 'open tickets' })}`}
+                    {s.critical_open_incidents > 0 && (
+                      <span className="text-p1 font-bold"> · {s.critical_open_incidents} {t({ tr: 'kritik', en: 'critical' })}</span>
+                    )}
                   </div>
                 </div>
                 <span className={`text-[10.5px] font-bold rounded-full px-2.5 py-1 shrink-0 ${style.bg} ${style.text}`}>{pickLang(style.label, lang)}</span>
@@ -140,7 +155,11 @@ function ServiceDetailPanel({ service }: { service: BusinessServiceHealth }) {
             <span key={c.id} className="flex items-center gap-1.5 text-[11px] font-semibold bg-[var(--panel)] border border-[var(--border)] rounded-full pl-2.5 pr-1.5 py-1">
               <span className={`w-1.5 h-1.5 rounded-full ${c.is_online ? 'bg-ok' : 'bg-p1'}`} />
               {c.name}
-              <button onClick={() => unlinkCi.mutate({ serviceId: service.service_id, ciId: c.id })}>
+              <button
+                onClick={() => unlinkCi.mutate({ serviceId: service.service_id, ciId: c.id })}
+                title={t({ tr: 'Bağlantıyı kaldır', en: 'Unlink' })}
+                aria-label={t({ tr: 'Bağlantıyı kaldır', en: 'Unlink' })}
+              >
                 <X className="w-3 h-3 text-[var(--text-faint)] hover:text-p1" />
               </button>
             </span>
@@ -187,6 +206,11 @@ function LifecycleColumn({
             <span className="font-mono text-[var(--text-faint)]">{r.ref}</span> {r.title}
           </div>
         ))}
+        {!!records?.length && records.length > 4 && (
+          <div className="text-[10px] text-[var(--text-faint)] italic">
+            {lang === 'tr' ? `+${records.length - 4} daha` : `+${records.length - 4} more`}
+          </div>
+        )}
       </div>
     </div>
   )

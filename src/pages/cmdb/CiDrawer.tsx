@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Trash2, Wifi, WifiOff, UserCheck, UserX, QrCode, History, Settings2 } from 'lucide-react'
 import { Drawer } from '@/components/ui/Drawer'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang } from '@/contexts/LangContext'
 import { useCiDetail, useLinkedRecords, useUpdateCi, useConfigurationItems, useCiRelationships, useCreateRelationship, useDeleteRelationship } from './useCmdb'
 import { useCiCheckoutHistory, useCheckoutCi, useCheckinCi, useCiTypeFields, useSetCiTypeFields } from './useAssetOps'
 import { useAssignableUsers } from '@/pages/oncall/useOnCall'
@@ -10,9 +10,35 @@ import type { CiStatus } from '@/types/database'
 
 const STATUS_OPTIONS: CiStatus[] = ['active', 'in_repair', 'retired', 'unmanaged']
 
+// CmdbPage.tsx'teki liste/CSV etiketleriyle aynı — durum seçici önceden
+// ham enum değerini (in_repair, unmanaged...) gösteriyordu.
+const STATUS_LABEL: Record<string, { tr: string; en: string }> = {
+  active: { tr: 'Aktif', en: 'Active' },
+  in_repair: { tr: 'Tamirde', en: 'In Repair' },
+  retired: { tr: 'Emekli', en: 'Retired' },
+  unmanaged: { tr: 'Yönetilmeyen', en: 'Unmanaged' },
+}
+
+const TYPE_LABEL: Record<string, { tr: string; en: string }> = {
+  server: { tr: 'Sunucu', en: 'Server' },
+  laptop: { tr: 'Dizüstü', en: 'Laptop' },
+  desktop: { tr: 'Masaüstü', en: 'Desktop' },
+  network_device: { tr: 'Ağ Cihazı', en: 'Network Device' },
+  software_license: { tr: 'Yazılım Lisansı', en: 'Software License' },
+  mobile_device: { tr: 'Mobil Cihaz', en: 'Mobile Device' },
+  other: { tr: 'Diğer', en: 'Other' },
+}
+
+// ServiceMap.tsx'teki servis haritasıyla aynı etiketler.
+const REL_LABEL: Record<string, { tr: string; en: string }> = {
+  depends_on: { tr: 'bağımlı', en: 'depends on' },
+  hosted_on: { tr: 'barındırılıyor', en: 'hosted on' },
+  connected_to: { tr: 'bağlı', en: 'connected to' },
+}
+
 export function CiDrawer({ id, onClose }: { id: string; onClose: () => void }) {
   const { lang, t } = useLang()
-  const { data: ci, isLoading } = useCiDetail(id)
+  const { data: ci, isLoading, error } = useCiDetail(id)
   const { data: linked } = useLinkedRecords(id)
   const updateCi = useUpdateCi(id)
   const { data: allCis } = useConfigurationItems('all')
@@ -50,7 +76,12 @@ export function CiDrawer({ id, onClose }: { id: string; onClose: () => void }) {
 
   return (
     <Drawer open onClose={onClose} title={ci?.name ?? '…'} subtitle={ci && <span className="font-mono">{ci.tag}</span>} widthClass="w-[460px]">
-      {isLoading || !ci ? (
+      {error ? (
+        <div className="text-p1 text-sm py-10 text-center px-6">
+          {t({ tr: 'Kayıt yüklenemedi.', en: 'Failed to load this record.' })}
+          <div className="text-[var(--text-faint)] text-[11.5px] mt-1">{error instanceof Error ? error.message : String(error)}</div>
+        </div>
+      ) : isLoading || !ci ? (
         <div className="text-[var(--text-faint)] text-sm py-10 text-center">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</div>
       ) : (
         <div className="space-y-5">
@@ -65,7 +96,7 @@ export function CiDrawer({ id, onClose }: { id: string; onClose: () => void }) {
             >
               {STATUS_OPTIONS.map((s) => (
                 <option key={s} value={s}>
-                  {s}
+                  {lang === 'tr' ? STATUS_LABEL[s].tr : STATUS_LABEL[s].en}
                 </option>
               ))}
             </select>
@@ -199,14 +230,25 @@ export function CiDrawer({ id, onClose }: { id: string; onClose: () => void }) {
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="block text-[10.5px] font-bold text-[var(--text-faint)] uppercase tracking-wide">
-                  {t({ tr: 'Özel Alanlar', en: 'Custom Fields' })} ({ci.ci_type})
+                  {t({ tr: 'Özel Alanlar', en: 'Custom Fields' })} ({TYPE_LABEL[ci.ci_type] ? pickLang(TYPE_LABEL[ci.ci_type], lang) : ci.ci_type})
                 </label>
-                <button onClick={() => setEditingFields((e) => !e)} className="text-[var(--text-faint)] hover:text-brand-dim">
+                <button
+                  onClick={() => setEditingFields((e) => !e)}
+                  title={t({ tr: 'Özel alanları düzenle', en: 'Edit custom fields' })}
+                  aria-label={t({ tr: 'Özel alanları düzenle', en: 'Edit custom fields' })}
+                  className="text-[var(--text-faint)] hover:text-brand-dim"
+                >
                   <Settings2 className="w-3.5 h-3.5" />
                 </button>
               </div>
               {editingFields ? (
-                <CiTypeFieldsEditor ciType={ci.ci_type} initialFields={typeFields ?? []} onSave={(f) => setTypeFields.mutate({ ciType: ci.ci_type, fields: f })} isPending={setTypeFields.isPending} />
+                <CiTypeFieldsEditor
+                  key={ci.ci_type}
+                  ciType={ci.ci_type}
+                  initialFields={typeFields ?? []}
+                  onSave={(f) => setTypeFields.mutate({ ciType: ci.ci_type, fields: f })}
+                  isPending={setTypeFields.isPending}
+                />
               ) : (
                 <div className="space-y-3">
                   <DynamicFieldsRenderer
@@ -221,7 +263,10 @@ export function CiDrawer({ id, onClose }: { id: string; onClose: () => void }) {
           {!typeFields?.length && !editingFields && (
             <button onClick={() => setEditingFields(true)} className="flex items-center gap-1 text-[10.5px] font-bold text-brand-dim">
               <Settings2 className="w-3 h-3" />
-              {t({ tr: `Bu tip için özel alan tanımla (${ci.ci_type})`, en: `Define custom fields for this type (${ci.ci_type})` })}
+              {(() => {
+                const typeLabel = TYPE_LABEL[ci.ci_type] ? pickLang(TYPE_LABEL[ci.ci_type], lang) : ci.ci_type
+                return t({ tr: `Bu tip için özel alan tanımla (${typeLabel})`, en: `Define custom fields for this type (${typeLabel})` })
+              })()}
             </button>
           )}
 
@@ -276,9 +321,14 @@ export function CiDrawer({ id, onClose }: { id: string; onClose: () => void }) {
                         {r.source?.name} → <b>{ci.name}</b>
                       </>
                     )}
-                    <span className="text-[var(--text-faint)]"> ({r.relationship_type})</span>
+                    <span className="text-[var(--text-faint)]"> ({REL_LABEL[r.relationship_type] ? pickLang(REL_LABEL[r.relationship_type], lang) : r.relationship_type})</span>
                   </span>
-                  <button onClick={() => deleteRelationship.mutate(r.id)} className="text-[var(--text-faint)] hover:text-p1 shrink-0">
+                  <button
+                    onClick={() => deleteRelationship.mutate(r.id)}
+                    title={t({ tr: 'İlişkiyi kaldır', en: 'Remove relationship' })}
+                    aria-label={t({ tr: 'İlişkiyi kaldır', en: 'Remove relationship' })}
+                    className="text-[var(--text-faint)] hover:text-p1 shrink-0"
+                  >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -305,9 +355,9 @@ export function CiDrawer({ id, onClose }: { id: string; onClose: () => void }) {
                 onChange={(e) => setRelType(e.target.value as typeof relType)}
                 className="bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-2 py-1.5 text-[11.5px]"
               >
-                <option value="depends_on">depends_on</option>
-                <option value="hosted_on">hosted_on</option>
-                <option value="connected_to">connected_to</option>
+                <option value="depends_on">{pickLang(REL_LABEL.depends_on, lang)}</option>
+                <option value="hosted_on">{pickLang(REL_LABEL.hosted_on, lang)}</option>
+                <option value="connected_to">{pickLang(REL_LABEL.connected_to, lang)}</option>
               </select>
               <button
                 onClick={() => targetCiId && createRelationship.mutate({ sourceCiId: id, targetCiId, relationshipType: relType })}

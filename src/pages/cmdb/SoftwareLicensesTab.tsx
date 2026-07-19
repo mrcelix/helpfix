@@ -21,7 +21,7 @@ const TYPE_LABEL: Record<LicenseType, { tr: string; en: string }> = {
 
 export function SoftwareLicensesTab() {
   const { lang, t } = useLang()
-  const { data: licenses } = useSoftwareLicenses()
+  const { data: licenses, isLoading, error } = useSoftwareLicenses()
   const { data: usage } = useLicenseSeatUsage()
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
@@ -64,7 +64,11 @@ export function SoftwareLicensesTab() {
       )}
 
       <div className="flex flex-col gap-2">
-        {!licenses?.length && <p className="text-[13px] text-[var(--text-faint)] py-10 text-center">{t({ tr: 'Henüz lisans eklenmedi.', en: 'No licenses added yet.' })}</p>}
+        {isLoading && <p className="text-[13px] text-[var(--text-faint)] py-10 text-center">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</p>}
+        {error && <p className="text-[13px] text-p1 py-10 text-center">{t({ tr: 'Lisanslar yüklenemedi.', en: 'Failed to load licenses.' })}</p>}
+        {!isLoading && !error && !licenses?.length && (
+          <p className="text-[13px] text-[var(--text-faint)] py-10 text-center">{t({ tr: 'Henüz lisans eklenmedi.', en: 'No licenses added yet.' })}</p>
+        )}
         {licenses?.map((l) => {
           const used = usage?.get(l.id) ?? 0
           const pct = l.total_seats > 0 ? Math.min((used / l.total_seats) * 100, 100) : 0
@@ -75,9 +79,14 @@ export function SoftwareLicensesTab() {
             <div key={l.id} className="border border-[var(--border)] rounded-[var(--radius-app)] bg-[var(--panel)] overflow-hidden">
               <button onClick={() => setExpandedId(isOpen ? null : l.id)} className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-[var(--row-hover)]">
                 <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-[13.5px]">{l.name}</div>
+                  <div className="text-[13.5px] font-semibold flex items-center gap-1.5">
+                    {l.name}
+                    <span className="text-[9px] font-bold bg-[var(--panel-2)] border border-[var(--border)] text-[var(--text-faint)] rounded-full px-1.5 py-0.5">
+                      {pickLang(TYPE_LABEL[l.license_type], lang)}
+                    </span>
+                  </div>
                   <div className="text-[11px] text-[var(--text-faint)] mt-0.5">
-                    {l.vendor?.name ?? '—'} · {pickLang(TYPE_LABEL[l.license_type], lang)}
+                    {l.vendor?.name ?? '—'}
                     {l.renewal_date && ` · ${t({ tr: 'Yenileme', en: 'Renewal' })}: ${new Date(l.renewal_date).toLocaleDateString(lang === 'tr' ? 'tr-TR' : 'en-US')}`}
                   </div>
                 </div>
@@ -157,7 +166,12 @@ function LicenseAssignmentsPanel({ licenseId }: { licenseId: string }) {
         {assignments?.map((a) => (
           <div key={a.id} className="flex items-center justify-between bg-[var(--panel)] border border-[var(--border)] rounded-lg px-3 py-1.5">
             <span className="text-[12px] font-medium">{a.user?.full_name ?? `${a.ci?.name} (${a.ci?.tag})`}</span>
-            <button onClick={() => removeSeat.mutate(a.id)} className="text-[var(--text-faint)] hover:text-p1">
+            <button
+              onClick={() => removeSeat.mutate(a.id)}
+              title={t({ tr: 'Koltuğu kaldır', en: 'Remove seat' })}
+              aria-label={t({ tr: 'Koltuğu kaldır', en: 'Remove seat' })}
+              className="text-[var(--text-faint)] hover:text-p1"
+            >
               <X className="w-3.5 h-3.5" />
             </button>
           </div>

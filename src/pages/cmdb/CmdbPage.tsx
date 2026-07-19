@@ -110,12 +110,18 @@ export function CmdbPage() {
             <div className="flex border border-[var(--border)] rounded-lg overflow-hidden">
               <button
                 onClick={() => setViewMode('list')}
+                title={t({ tr: 'Liste görünümü', en: 'List view' })}
+                aria-label={t({ tr: 'Liste görünümü', en: 'List view' })}
+                aria-pressed={viewMode === 'list'}
                 className={`px-2.5 py-2 ${viewMode === 'list' ? 'bg-brand text-white' : 'bg-[var(--panel)] text-[var(--text-faint)]'}`}
               >
                 <List className="w-[14px] h-[14px]" />
               </button>
               <button
                 onClick={() => setViewMode('map')}
+                title={t({ tr: 'Harita görünümü', en: 'Map view' })}
+                aria-label={t({ tr: 'Harita görünümü', en: 'Map view' })}
+                aria-pressed={viewMode === 'map'}
                 className={`px-2.5 py-2 ${viewMode === 'map' ? 'bg-brand text-white' : 'bg-[var(--panel)] text-[var(--text-faint)]'}`}
               >
                 <Share2 className="w-[14px] h-[14px]" />
@@ -280,7 +286,11 @@ export function CmdbPage() {
             {sortedItems?.map((ci) => (
               <tr
                 key={ci.id}
+                tabIndex={0}
                 onClick={() => setSelectedId(ci.id)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') setSelectedId(ci.id)
+                }}
                 className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--row-hover)] cursor-pointer"
               >
                 <td className="px-3.5 py-3 font-mono text-[var(--text-faint)]">{ci.tag}</td>
@@ -305,7 +315,7 @@ export function CmdbPage() {
       </>
       )}
 
-      {selectedId && <CiDrawer id={selectedId} onClose={() => setSelectedId(null)} />}
+      {selectedId && <CiDrawer key={selectedId} id={selectedId} onClose={() => setSelectedId(null)} />}
       {showNewModal && <NewCiModal onClose={() => setShowNewModal(false)} />}
       {showNewLicenseModal && <NewSoftwareLicenseModal onClose={() => setShowNewLicenseModal(false)} />}
       {showNewServiceModal && <NewBusinessServiceModal onClose={() => setShowNewServiceModal(false)} />}

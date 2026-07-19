@@ -68,7 +68,7 @@ export function ImportCsvModal({ onClose }: { onClose: () => void }) {
   const [raw, setRaw] = useState('')
   const [parsed, setParsed] = useState<ParsedAsset[] | null>(null)
   const [importing, setImporting] = useState(false)
-  const [result, setResult] = useState<{ success: number; failed: number } | null>(null)
+  const [result, setResult] = useState<{ success: number; failed: number; errorMessage?: string } | null>(null)
 
   function handleParse() {
     const rows = parseCsv(raw.trim())
@@ -87,15 +87,18 @@ export function ImportCsvModal({ onClose }: { onClose: () => void }) {
       const costRaw = (r[idx('maliyet')] ?? '').trim()
       const warrantyRaw = (r[idx('garanti_bitis')] ?? '').trim()
 
+      const cost = costRaw ? Number(costRaw.replace(',', '.')) : null
+
       let error: string | null = null
       if (!name) error = t({ tr: "'ad' alanı boş olamaz", en: "'ad' field cannot be empty" })
+      else if (cost != null && Number.isNaN(cost)) error = t({ tr: "'maliyet' sayısal olmalı", en: "'cost' must be numeric" })
 
       return {
         name,
         ci_type,
         serial_number: (r[idx('seri_no')] ?? '').trim(),
         vendor: (r[idx('tedarikci')] ?? '').trim(),
-        cost: costRaw ? Number(costRaw.replace(',', '.')) : null,
+        cost,
         warranty_expiry: warrantyRaw || null,
         error,
       }
@@ -127,12 +130,17 @@ export function ImportCsvModal({ onClose }: { onClose: () => void }) {
     )
 
     if (error) {
+      // Tek bir toplu insert olduğu için tek satırlık bir kısıt ihlali TÜM
+      // grubu başarısız kılar (atomik) — sadece bir sayı göstermek yerine
+      // sunucudan gelen gerçek hatayı da gösteriyoruz ki kullanıcı HANGİ
+      // satırın sorunlu olduğunu tahmin edebilsin (ör. tarih formatı).
       failed = validItems.length
+      setResult({ success, failed, errorMessage: error.message })
     } else {
       success = validItems.length
+      setResult({ success, failed })
     }
     setImporting(false)
-    setResult({ success, failed })
     qc.invalidateQueries({ queryKey: ['cmdb'] })
   }
 
@@ -174,7 +182,10 @@ export function ImportCsvModal({ onClose }: { onClose: () => void }) {
             {t({ tr: `${result.success} varlık başarıyla eklendi.`, en: `${result.success} assets added successfully.` })}
           </p>
           {result.failed > 0 && (
-            <p className="text-[12px] text-p1 mt-1">{t({ tr: `${result.failed} kayıt eklenemedi.`, en: `${result.failed} records failed.` })}</p>
+            <>
+              <p className="text-[12px] text-p1 mt-1">{t({ tr: `${result.failed} kayıt eklenemedi.`, en: `${result.failed} records failed.` })}</p>
+              {result.errorMessage && <p className="text-[11px] text-[var(--text-faint)] mt-1">{result.errorMessage}</p>}
+            </>
           )}
         </div>
       ) : !parsed ? (

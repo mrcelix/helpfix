@@ -22,7 +22,7 @@ const REL_LABEL: Record<string, { tr: string; en: string }> = {
 
 export function ServiceMap() {
   const { lang, t } = useLang()
-  const { data, isLoading } = useServiceMap()
+  const { data, isLoading, error } = useServiceMap()
 
   const { nodes, edges } = useMemo(() => {
     if (!data) return { nodes: [] as Node[], edges: [] as Edge[] }
@@ -90,6 +90,14 @@ export function ServiceMap() {
 
   if (isLoading) {
     return <p className="text-[var(--text-faint)] text-sm py-16 text-center">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</p>
+  }
+
+  if (error) {
+    return (
+      <p className="text-p1 text-sm py-16 text-center">
+        {t({ tr: 'Servis haritası yüklenemedi.', en: 'Failed to load the service map.' })}
+      </p>
+    )
   }
 
   if (!data?.nodes.length) {

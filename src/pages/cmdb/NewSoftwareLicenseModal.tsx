@@ -97,7 +97,7 @@ export function NewSoftwareLicenseModal({ onClose }: { onClose: () => void }) {
           </div>
           <div>
             <label className="block text-[11px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">{t({ tr: 'Koltuk Başı Maliyet (₺)', en: 'Cost per Seat (₺)' })}</label>
-            <input type="number" value={costPerSeat} onChange={(e) => setCostPerSeat(e.target.value)} className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-2.5 py-2.5 text-[13px]" />
+            <input type="number" min={0} value={costPerSeat} onChange={(e) => setCostPerSeat(e.target.value)} className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-2.5 py-2.5 text-[13px]" />
           </div>
         </div>
 

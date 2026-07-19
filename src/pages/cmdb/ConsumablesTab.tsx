@@ -12,8 +12,8 @@ import {
 import { useAssignableUsers } from '@/pages/oncall/useOnCall'
 
 export function ConsumablesTab() {
-  const { t } = useLang()
-  const { data: items } = useConsumableItems()
+  const { lang, t } = useLang()
+  const { data: items, isLoading, error } = useConsumableItems()
   const { data: outQuantities } = useConsumableOutQuantities()
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
@@ -31,7 +31,15 @@ export function ConsumablesTab() {
         </div>
       )}
 
-      {!items?.length && (
+      {isLoading && (
+        <p className="text-[13px] text-[var(--text-faint)] py-12 text-center">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</p>
+      )}
+      {error && (
+        <p className="text-[13px] text-p1 py-12 text-center">
+          {t({ tr: 'Sarf malzemeleri yüklenemedi.', en: 'Failed to load consumables.' })}
+        </p>
+      )}
+      {!isLoading && !error && !items?.length && (
         <p className="text-[13px] text-[var(--text-faint)] py-12 text-center">
           {t({ tr: 'Henüz sarf malzemesi veya aksesuar eklenmedi.', en: 'No consumables or accessories added yet.' })}
         </p>
@@ -60,9 +68,16 @@ export function ConsumablesTab() {
                     {item.category ?? '—'} {item.site && `· ${item.site.name}`} {item.vendor && `· ${item.vendor.name}`}
                   </div>
                 </div>
-                <span className={`text-[13px] font-bold shrink-0 ${isLow ? 'text-p1' : 'text-[var(--text)]'}`}>
-                  {remaining} / {item.total_quantity}
-                </span>
+                <div className="text-right shrink-0">
+                  <span className={`text-[13px] font-bold ${isLow ? 'text-p2' : 'text-[var(--text)]'}`}>
+                    {remaining} / {item.total_quantity}
+                  </span>
+                  {item.unit_cost != null && (
+                    <div className="text-[10px] text-[var(--text-faint)] mt-0.5">
+                      ₺{(remaining * item.unit_cost).toLocaleString(lang === 'tr' ? 'tr-TR' : 'en-US')}
+                    </div>
+                  )}
+                </div>
                 {isOpen ? <ChevronUp className="w-4 h-4 text-[var(--text-faint)] shrink-0" /> : <ChevronDown className="w-4 h-4 text-[var(--text-faint)] shrink-0" />}
               </button>
               {isOpen && <ConsumableDetailPanel item={item} remaining={remaining} />}
