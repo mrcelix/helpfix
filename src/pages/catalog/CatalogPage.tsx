@@ -28,6 +28,19 @@ const STATUS_LABEL: Record<string, { tr: string; en: string; fr?: string; it?: s
   rejected: { tr: 'Reddedildi', en: 'Rejected', fr: 'Rejeté', it: 'Rifiutato', ar: 'مرفوض' },
 }
 
+// StatusBadge (Badge.tsx) TicketStatus'a sabit tipli olduğundan servis
+// talebi durumları için kullanılamıyor — aynı görsel dili (renkli pill)
+// burada yerel olarak uyguluyoruz, önceden düz metindi (uygulamanın geri
+// kalanındaki durum gösterimleriyle tutarsızdı).
+const STATUS_PILL_STYLE: Record<string, string> = {
+  submitted: 'bg-[var(--panel-2)] text-[var(--text-faint)]',
+  pending_approval: 'bg-p2-tint text-p2',
+  approved: 'bg-brand-tint text-brand-dim',
+  in_procurement: 'bg-p3-tint text-[#8CA3FF]',
+  fulfilled: 'bg-ok/15 text-ok',
+  rejected: 'bg-p1-tint text-p1',
+}
+
 const SAVED_VIEWS: { key: CatalogSavedView; label: { tr: string; en: string; fr?: string; it?: string; ar?: string } }[] = [
   { key: 'all', label: { tr: 'Tümü', en: 'All', fr: 'Tous', it: 'Tutti', ar: 'الكل' } },
   { key: 'mine', label: { tr: 'Benim Taleplerim', en: 'My Requests', fr: 'Mes demandes', it: 'Le mie richieste', ar: 'طلباتي' } },
@@ -47,6 +60,7 @@ export function CatalogPage() {
   const { data: bundles } = useBundles()
   const requestBundle = useRequestBundle()
   const [bundleSuccess, setBundleSuccess] = useState<number | null>(null)
+  const [bundleError, setBundleError] = useState<string | null>(null)
   const { data: requests, isLoading: requestsLoading } = useServiceRequests(view)
 
   // Faz BD — bekleyen onaylı taleplerin GÜNCEL aşamasını tek sorguda çek
@@ -97,8 +111,13 @@ export function CatalogPage() {
                     {b.description && <p className="text-[11px] text-[var(--text-faint)] mb-3">{b.description}</p>}
                     <button
                       onClick={async () => {
-                        const result = await requestBundle.mutateAsync(b.id)
-                        setBundleSuccess(result.count)
+                        setBundleError(null)
+                        try {
+                          const result = await requestBundle.mutateAsync(b.id)
+                          setBundleSuccess(result.count)
+                        } catch (err) {
+                          setBundleError(err instanceof Error ? err.message : t({ tr: 'Paket talep edilemedi.', en: 'Failed to request bundle.' }))
+                        }
                       }}
                       disabled={requestBundle.isPending}
                       className="w-full text-[11.5px] font-bold py-2 rounded-lg bg-purple text-white disabled:opacity-50"
@@ -113,6 +132,7 @@ export function CatalogPage() {
                   ✓ {t({ tr: `${bundleSuccess} hizmet için ayrı talep oluşturuldu.`, en: `${bundleSuccess} separate requests created.`, fr: `${bundleSuccess} demandes distinctes créées.`, it: `${bundleSuccess} richieste separate create.`, ar: `تم إنشاء ${bundleSuccess} طلبات منفصلة.` })}
                 </p>
               )}
+              {bundleError && <p className="text-[11.5px] text-p1 mt-2">{bundleError}</p>}
             </div>
           )}
 
@@ -147,7 +167,15 @@ export function CatalogPage() {
             {items?.map((item) => (
               <div
                 key={item.id}
+                role="button"
+                tabIndex={0}
                 onClick={() => setSelectedItem({ id: item.id, name: item.name, requiresApproval: item.requires_approval, formSchema: item.form_schema })}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    setSelectedItem({ id: item.id, name: item.name, requiresApproval: item.requires_approval, formSchema: item.form_schema })
+                  }
+                }}
                 className="bg-[var(--panel)] border border-[var(--border)] rounded-2xl p-4 cursor-pointer hover:border-brand transition-colors"
               >
                 <div className="font-bold text-[13px] mb-1">{item.name}</div>
@@ -231,29 +259,35 @@ function RequestRow({
   currentStage,
 }: {
   request: ServiceRequestItem
-  currentStage?: { id: string; stage: number; approver_type: RequestApproverType }
+  currentStage?: { id: string; stage: number; approver_type: RequestApproverType; approver_id: string | null }
 }) {
   const { lang, t } = useLang()
   const { profile } = useAuth()
   const updateRequest = useUpdateServiceRequest(request.id)
   const decideApproval = useDecideRequestApproval(request.id)
 
-  // Bu aşamayı karar verebilecek biri mi? (RLS zaten server-side uyguluyor,
-  // burada sadece UI'ı gereksiz butonlarla kalabalıklaştırmamak için.)
+  // Bu aşamayı karar verebilecek biri mi? RLS zaten server-side uyguluyor
+  // (bkz. request_approvals_update, 0043) — burada AYNI kuralı tekrarlıyoruz
+  // ki yetkisi olmayan biri "Onayla/Reddet" butonlarını hiç görmesin. Önceden
+  // specific_user aşamasında approver_id hiç kontrol edilmiyordu (sorguya
+  // dahil değildi), bu yüzden o talebi görebilen HERKESE buton gösteriliyordu
+  // — tıklayınca RLS engelliyordu ama kullanıcıya hiçbir açıklama verilmiyordu.
   const canDecideStage =
     !!currentStage &&
     !!profile &&
     ((currentStage.approver_type === 'tenant_admin' && profile.role === 'tenant_admin') ||
       (currentStage.approver_type === 'department_manager' && ['manager', 'tenant_admin'].includes(profile.role)) ||
-      currentStage.approver_type === 'specific_user') // spesifik kişi kontrolü RLS'te; burada iyimser göster
+      (currentStage.approver_type === 'specific_user' && currentStage.approver_id === profile.id))
 
   return (
     <tr className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--row-hover)]">
       <td className="px-3.5 py-3 font-mono text-[var(--text-faint)]">{request.ref}</td>
       <td className="px-3.5 py-3 font-semibold">{request.catalog_item?.name ?? '—'}</td>
       <td className="px-3.5 py-3 text-[var(--text-sub)]">{request.requester?.full_name ?? '—'}</td>
-      <td className="px-3.5 py-3 text-[var(--text-sub)]">
-        {(STATUS_LABEL[request.status] ? pickLang(STATUS_LABEL[request.status], lang) : undefined) ?? request.status}
+      <td className="px-3.5 py-3">
+        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold whitespace-nowrap ${STATUS_PILL_STYLE[request.status] ?? 'bg-[var(--panel-2)] text-[var(--text-faint)]'}`}>
+          {(STATUS_LABEL[request.status] ? pickLang(STATUS_LABEL[request.status], lang) : undefined) ?? request.status}
+        </span>
         {request.status === 'pending_approval' && currentStage && (
           <span className="ml-1.5 inline-flex items-center gap-1 text-[10px] font-bold bg-p2-tint text-p2 rounded-full px-1.5 py-0.5">
             <ShieldCheck className="w-2.5 h-2.5" />

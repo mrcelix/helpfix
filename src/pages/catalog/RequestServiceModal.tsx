@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
-import { DynamicFieldsRenderer } from '@/components/ui/DynamicFields'
+import { DynamicFieldsRenderer, isFieldVisible } from '@/components/ui/DynamicFields'
 import { useLang } from '@/contexts/LangContext'
 import { useCreateServiceRequest } from './useCatalog'
 import type { FormFieldSchema } from './useCatalog'
@@ -18,17 +18,32 @@ export function RequestServiceModal({
   const [notes, setNotes] = useState('')
   const [formValues, setFormValues] = useState<Record<string, string>>({})
   const [done, setDone] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const fields = item.formSchema?.fields ?? []
 
   async function handleSubmit() {
-    await createRequest.mutateAsync({
-      catalogItemId: item.id,
-      notes,
-      requiresApproval: item.requiresApproval,
-      formData: fields.length ? formValues : undefined,
-    })
-    setDone(true)
+    setSubmitError(null)
+    // showIf ile şu an gizli olan alanların eski değerlerini gönderiye dahil
+    // etme — kullanıcı görünürlüğü değiştirdikten sonra alakasız/eski bir
+    // değer sunucuya gitmesin.
+    const visibleValues = Object.fromEntries(
+      Object.entries(formValues).filter(([key]) => {
+        const field = fields.find((f) => f.key === key)
+        return !field || isFieldVisible(field, formValues)
+      })
+    )
+    try {
+      await createRequest.mutateAsync({
+        catalogItemId: item.id,
+        notes,
+        requiresApproval: item.requiresApproval,
+        formData: fields.length ? visibleValues : undefined,
+      })
+      setDone(true)
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : t({ tr: 'Talep gönderilemedi.', en: 'Failed to submit request.' }))
+    }
   }
 
   if (done) {
@@ -96,6 +111,7 @@ export function RequestServiceModal({
             ⚠️ {t({ tr: 'Bu hizmet onay gerektirir.', en: 'This service requires approval.' })}
           </p>
         )}
+        {submitError && <p className="text-[11.5px] text-p1">{submitError}</p>}
       </div>
     </Modal>
   )

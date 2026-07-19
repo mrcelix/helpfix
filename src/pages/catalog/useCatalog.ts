@@ -215,11 +215,11 @@ export function useCurrentApprovalStages(requestIds: string[]) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('request_approvals')
-        .select('id, request_id, stage, approver_type')
+        .select('id, request_id, stage, approver_type, approver_id')
         .in('request_id', requestIds)
         .eq('status', 'pending')
       if (error) throw error
-      return data as { id: string; request_id: string; stage: number; approver_type: RequestApproverType }[]
+      return data as { id: string; request_id: string; stage: number; approver_type: RequestApproverType; approver_id: string | null }[]
     },
   })
 }

@@ -100,6 +100,18 @@ export function FieldSchemaEditor({
 // RENDERER — Bir form şemasını, koşullu görünürlüğe (showIf) uyarak
 // gerçek input'lara çeviren paylaşılan bileşen.
 // ------------------------------------------------------------------
+
+/** Bir alanın showIf koşuluna göre şu an görünür olup olmadığını
+ * belirler. DynamicFieldsRenderer'ın kendisi (render sırasında) VE
+ * formu gönderen sayfalar (submit öncesi artık görünmeyen bir alanın
+ * eski değerini temizlemek için — aksi halde kullanıcı görünürlüğü
+ * değiştirdikten sonra alakasız bir değer sunucuya gider) tarafından
+ * paylaşılır. */
+export function isFieldVisible(field: FormFieldSchema, values: Record<string, string>): boolean {
+  if (!field.showIf) return true
+  return values[field.showIf.field] === field.showIf.equals
+}
+
 export function DynamicFieldsRenderer({
   fields,
   values,
@@ -112,8 +124,7 @@ export function DynamicFieldsRenderer({
   const { t } = useLang()
 
   function isVisible(field: FormFieldSchema): boolean {
-    if (!field.showIf) return true
-    return values[field.showIf.field] === field.showIf.equals
+    return isFieldVisible(field, values)
   }
 
   return (
