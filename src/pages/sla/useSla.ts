@@ -22,7 +22,6 @@ export interface MonitoredIncident {
   ref: string
   title: string
   priority: Priority
-  status: string
   sla_due_at: string | null
   sla_policy_id: string | null
   created_at: string
@@ -100,9 +99,9 @@ export function useMonitoredIncidents() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('incidents')
-        .select('id, ref, title, priority, status, sla_due_at, sla_policy_id, created_at')
+        .select('id, ref, title, priority, sla_due_at, sla_policy_id, created_at')
         .not('sla_due_at', 'is', null)
-        .not('status', 'in', '(resolved,closed,merged)')
+        .not('status', 'in', '(resolved,closed,merged,on_hold)')
         .order('sla_due_at', { ascending: true })
       if (error) throw error
       return data as MonitoredIncident[]

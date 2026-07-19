@@ -13,7 +13,7 @@ const ROLE_LABEL: Record<EscalationNotifyRole, { tr: string; en: string }> = {
 
 export function EscalationMatrixModal({ policyId, policyName, onClose }: { policyId: string; policyName: string; onClose: () => void }) {
   const { lang, t } = useLang()
-  const { data: levels, isLoading } = useEscalationLevels(policyId)
+  const { data: levels, isLoading, error } = useEscalationLevels(policyId)
   const createLevel = useCreateEscalationLevel(policyId)
   const deleteLevel = useDeleteEscalationLevel(policyId)
 
@@ -35,6 +35,7 @@ export function EscalationMatrixModal({ policyId, policyName, onClose }: { polic
       </p>
 
       {isLoading && <p className="text-[var(--text-faint)] text-sm text-center py-4">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</p>}
+      {error && <p className="text-p1 text-sm text-center py-4">{t({ tr: 'Eskalasyon seviyeleri yüklenemedi.', en: 'Failed to load escalation levels.' })}</p>}
 
       <div className="space-y-2 mb-4">
         {levels?.map((lvl) => (
@@ -45,12 +46,17 @@ export function EscalationMatrixModal({ policyId, policyName, onClose }: { polic
             <span className="text-[12.5px] flex-1">
               %{lvl.trigger_percent} {t({ tr: 'dolunca →', en: 'elapsed →' })} <b>{pickLang(ROLE_LABEL[lvl.notify_role], lang)}</b>
             </span>
-            <button onClick={() => deleteLevel.mutate(lvl.id)} className="text-[var(--text-faint)] hover:text-p1 shrink-0">
+            <button
+              onClick={() => deleteLevel.mutate(lvl.id)}
+              title={t({ tr: 'Seviyeyi sil', en: 'Delete level' })}
+              aria-label={t({ tr: 'Seviyeyi sil', en: 'Delete level' })}
+              className="text-[var(--text-faint)] hover:text-p1 shrink-0"
+            >
               <Trash2 className="w-4 h-4" />
             </button>
           </div>
         ))}
-        {!levels?.length && !isLoading && (
+        {!levels?.length && !isLoading && !error && (
           <p className="text-[11.5px] text-[var(--text-faint)] italic text-center py-2">
             {t({ tr: 'Henüz eskalasyon seviyesi tanımlanmadı.', en: 'No escalation levels defined yet.' })}
           </p>
@@ -64,6 +70,8 @@ export function EscalationMatrixModal({ policyId, policyName, onClose }: { polic
           </label>
           <input
             type="number"
+            min={0}
+            max={100}
             value={triggerPercent}
             onChange={(e) => setTriggerPercent(Number(e.target.value))}
             className="w-full bg-[var(--panel)] border border-[var(--border)] rounded-lg px-2.5 py-2 text-[12.5px]"

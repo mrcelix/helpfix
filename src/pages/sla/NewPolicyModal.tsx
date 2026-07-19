@@ -172,6 +172,7 @@ export function NewPolicyModal({ onClose }: { onClose: () => void }) {
             </label>
             <input
               type="number"
+              min={0}
               value={responseTime}
               onChange={(e) => setResponseTime(Number(e.target.value))}
               className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2 text-[13px] outline-none focus:border-brand"
@@ -183,6 +184,7 @@ export function NewPolicyModal({ onClose }: { onClose: () => void }) {
             </label>
             <input
               type="number"
+              min={0}
               value={resolutionTime}
               onChange={(e) => setResolutionTime(Number(e.target.value))}
               className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2 text-[13px] outline-none focus:border-brand"

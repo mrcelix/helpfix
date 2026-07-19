@@ -8,12 +8,12 @@ import { NewPolicyModal } from './NewPolicyModal'
 import { EscalationMatrixModal } from './EscalationMatrixModal'
 import { BusinessCalendarTab } from './BusinessCalendarTab'
 
-function slaState(incident: MonitoredIncident): 'ok' | 'warning' | 'breached' {
+function slaState(incident: MonitoredIncident, warningPercent: number): 'ok' | 'warning' | 'breached' {
   if (!incident.sla_due_at) return 'ok'
   const remainingMs = new Date(incident.sla_due_at).getTime() - Date.now()
   if (remainingMs < 0) return 'breached'
   const totalMs = new Date(incident.sla_due_at).getTime() - new Date(incident.created_at).getTime()
-  if (totalMs > 0 && remainingMs / totalMs < 0.2) return 'warning'
+  if (totalMs > 0 && remainingMs / totalMs < 1 - warningPercent / 100) return 'warning'
   return 'ok'
 }
 
@@ -45,13 +45,16 @@ export function SlaPage() {
   const [showNewModal, setShowNewModal] = useState(false)
   const [escalationPolicy, setEscalationPolicy] = useState<{ id: string; name: string } | null>(null)
 
-  const { data: incidents, isLoading: incidentsLoading } = useMonitoredIncidents()
-  const { data: policies, isLoading: policiesLoading } = usePolicies()
+  const { data: incidents, isLoading: incidentsLoading, error: incidentsError } = useMonitoredIncidents()
+  const { data: policies, isLoading: policiesLoading, error: policiesError } = usePolicies()
   const { data: escalationLevels } = useAllEscalationLevels()
   const togglePolicy = useTogglePolicy()
 
-  const breachedCount = incidents?.filter((i) => slaState(i) === 'breached').length ?? 0
-  const warningCount = incidents?.filter((i) => slaState(i) === 'warning').length ?? 0
+  const warningPercentByPolicy = new Map((policies ?? []).map((p) => [p.id, p.escalation_warning_percent]))
+  const warningPercentFor = (i: MonitoredIncident) => (i.sla_policy_id && warningPercentByPolicy.get(i.sla_policy_id)) || 80
+
+  const breachedCount = incidents?.filter((i) => slaState(i, warningPercentFor(i)) === 'breached').length ?? 0
+  const warningCount = incidents?.filter((i) => slaState(i, warningPercentFor(i)) === 'warning').length ?? 0
 
   return (
     <div>
@@ -104,7 +107,7 @@ export function SlaPage() {
           <table className="w-full text-[12.5px] min-w-[720px]">
             <thead>
               <tr className="bg-[var(--panel-2)] border-b border-[var(--border)]">
-                <Th>Ref</Th>
+                <Th>{t({ tr: 'Ref', en: 'Ref' })}</Th>
                 <Th>{t({ tr: 'Başlık', en: 'Title' })}</Th>
                 <Th>{t({ tr: 'Öncelik', en: 'Priority' })}</Th>
                 <Th>{t({ tr: 'SLA Durumu', en: 'SLA Status' })}</Th>
@@ -115,11 +118,14 @@ export function SlaPage() {
               {incidentsLoading && (
                 <tr><td colSpan={5} className="text-center py-10 text-[var(--text-faint)]">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</td></tr>
               )}
-              {!incidentsLoading && incidents?.length === 0 && (
+              {incidentsError && (
+                <tr><td colSpan={5} className="text-center py-10 text-p1">{t({ tr: 'Bir hata oluştu.', en: 'Something went wrong.' })}</td></tr>
+              )}
+              {!incidentsLoading && !incidentsError && incidents?.length === 0 && (
                 <tr><td colSpan={5} className="text-center py-14 text-[var(--text-faint)]">{t({ tr: 'İzlenecek açık kayıt yok.', en: 'No open records to monitor.' })}</td></tr>
               )}
               {incidents?.map((i) => {
-                const state = slaState(i)
+                const state = slaState(i, warningPercentFor(i))
                 const triggeredLevel = escalationLevels ? computeTriggeredLevel(i, escalationLevels) : null
                 return (
                   <tr key={i.id} className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--row-hover)]">
@@ -166,7 +172,10 @@ export function SlaPage() {
               {policiesLoading && (
                 <tr><td colSpan={6} className="text-center py-10 text-[var(--text-faint)]">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</td></tr>
               )}
-              {!policiesLoading && policies?.length === 0 && (
+              {policiesError && (
+                <tr><td colSpan={6} className="text-center py-10 text-p1">{t({ tr: 'Bir hata oluştu.', en: 'Something went wrong.' })}</td></tr>
+              )}
+              {!policiesLoading && !policiesError && policies?.length === 0 && (
                 <tr><td colSpan={6} className="text-center py-14 text-[var(--text-faint)]">{t({ tr: 'Henüz politika yok.', en: 'No policies yet.' })}</td></tr>
               )}
               {policies?.map((p) => (
@@ -187,6 +196,9 @@ export function SlaPage() {
                   <td className="px-3.5 py-3">
                     <button
                       onClick={() => togglePolicy.mutate({ id: p.id, is_active: !p.is_active })}
+                      aria-pressed={p.is_active}
+                      title={p.is_active ? t({ tr: 'Aktif — devre dışı bırak', en: 'Active — deactivate' }) : t({ tr: 'Pasif — etkinleştir', en: 'Inactive — activate' })}
+                      aria-label={p.is_active ? t({ tr: 'Aktif — devre dışı bırak', en: 'Active — deactivate' }) : t({ tr: 'Pasif — etkinleştir', en: 'Inactive — activate' })}
                       className={`w-9 h-5 rounded-full relative transition-colors ${p.is_active ? 'bg-ok' : 'bg-[var(--border)]'}`}
                     >
                       <span

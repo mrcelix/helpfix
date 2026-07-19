@@ -27,11 +27,11 @@ export function BusinessCalendarTab() {
   const { lang, t } = useLang()
   const { data: sites } = useSites()
   const [siteId, setSiteId] = useState<string | null>(null)
-  const { data: hours, isLoading: hoursLoading } = useBusinessHours(siteId)
+  const { data: hours, isLoading: hoursLoading, error: hoursError } = useBusinessHours(siteId)
   const setDay = useSetBusinessDay()
   const closeDay = useCloseBusinessDay()
 
-  const { data: holidays, isLoading: holidaysLoading } = useHolidays()
+  const { data: holidays, isLoading: holidaysLoading, error: holidaysError } = useHolidays()
   const createHoliday = useCreateHoliday()
   const deleteHoliday = useDeleteHoliday()
 
@@ -78,6 +78,7 @@ export function BusinessCalendarTab() {
           })}
         </p>
         {hoursLoading && <div className="text-[12px] text-[var(--text-faint)] py-4 text-center">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</div>}
+        {hoursError && <div className="text-[12px] text-p1 py-4 text-center">{t({ tr: 'Mesai saatleri yüklenemedi.', en: 'Failed to load business hours.' })}</div>}
         <div className="space-y-1.5">
           {DAY_ORDER.map((day) => {
             const row = hourFor(day)
@@ -86,6 +87,9 @@ export function BusinessCalendarTab() {
               <div key={day} className="flex items-center gap-2.5 bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2">
                 <button
                   onClick={() => (isOpen ? closeDay.mutate({ dayOfWeek: day, siteId }) : setDay.mutate({ dayOfWeek: day, startTime: '09:00', endTime: '18:00', siteId }))}
+                  aria-pressed={isOpen}
+                  title={isOpen ? t({ tr: 'Açık — kapat', en: 'Open — close' }) : t({ tr: 'Kapalı — aç', en: 'Closed — open' })}
+                  aria-label={isOpen ? t({ tr: 'Açık — kapat', en: 'Open — close' }) : t({ tr: 'Kapalı — aç', en: 'Closed — open' })}
                   className={`w-9 h-5 rounded-full relative transition-colors shrink-0 ${isOpen ? 'bg-ok' : 'bg-[var(--border)]'}`}
                 >
                   <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${isOpen ? 'left-[18px]' : 'left-0.5'}`} />
@@ -138,12 +142,18 @@ export function BusinessCalendarTab() {
             placeholder={t({ tr: 'örn. Ramazan Bayramı', en: 'e.g. Eid al-Fitr' })}
             className="flex-1 bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2 text-[12.5px] outline-none focus:border-brand"
           />
-          <Button onClick={addHoliday} disabled={createHoliday.isPending || !newHolidayDate || !newHolidayName.trim()}>
+          <Button
+            onClick={addHoliday}
+            disabled={createHoliday.isPending || !newHolidayDate || !newHolidayName.trim()}
+            title={t({ tr: 'Tatil Ekle', en: 'Add Holiday' })}
+            aria-label={t({ tr: 'Tatil Ekle', en: 'Add Holiday' })}
+          >
             <Plus className="w-[15px] h-[15px]" />
           </Button>
         </div>
         {holidaysLoading && <div className="text-[12px] text-[var(--text-faint)] py-4 text-center">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</div>}
-        {!holidaysLoading && holidays?.length === 0 && (
+        {holidaysError && <div className="text-[12px] text-p1 py-4 text-center">{t({ tr: 'Tatil günleri yüklenemedi.', en: 'Failed to load holidays.' })}</div>}
+        {!holidaysLoading && !holidaysError && holidays?.length === 0 && (
           <div className="text-[12px] text-[var(--text-faint)] italic py-6 text-center">{t({ tr: 'Henüz tatil günü eklenmedi.', en: 'No holidays added yet.' })}</div>
         )}
         <div className="space-y-1 max-h-[320px] overflow-y-auto">
@@ -157,6 +167,8 @@ export function BusinessCalendarTab() {
               </div>
               <button
                 onClick={() => deleteHoliday.mutate(h.id)}
+                title={t({ tr: 'Tatili sil', en: 'Delete holiday' })}
+                aria-label={t({ tr: 'Tatili sil', en: 'Delete holiday' })}
                 className="opacity-0 group-hover:opacity-100 text-[var(--text-faint)] hover:text-p1"
               >
                 <Trash2 className="w-3.5 h-3.5" />
