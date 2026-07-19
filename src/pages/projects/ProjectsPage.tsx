@@ -13,7 +13,7 @@ const HEALTH_COLOR: Record<string, string> = {
   red: 'bg-p1',
 }
 
-const STATUS_LABEL: Record<string, { tr: string; en: string }> = {
+export const STATUS_LABEL: Record<string, { tr: string; en: string }> = {
   planning: { tr: 'Planlama', en: 'Planning' },
   active: { tr: 'Aktif', en: 'Active' },
   on_hold: { tr: 'Beklemede', en: 'On Hold' },
@@ -75,6 +75,14 @@ export function ProjectsPage() {
           <div
             key={p.id}
             onClick={() => setSelectedId(p.id)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                setSelectedId(p.id)
+              }
+            }}
             className="bg-[var(--panel)] border border-[var(--border)] rounded-2xl p-4 cursor-pointer hover:border-brand transition-colors"
           >
             <div className="flex items-center gap-2 mb-2">
@@ -92,7 +100,7 @@ export function ProjectsPage() {
       </>
       )}
 
-      {selectedId && <ProjectDrawer id={selectedId} onClose={() => setSelectedId(null)} />}
+      {selectedId && <ProjectDrawer key={selectedId} id={selectedId} onClose={() => setSelectedId(null)} />}
       {showNewModal && <NewProjectModal onClose={() => setShowNewModal(false)} />}
     </div>
   )

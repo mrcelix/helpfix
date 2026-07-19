@@ -15,7 +15,6 @@ export interface ProjectListItem {
 
 export interface ProjectDetail extends ProjectListItem {
   description: string | null
-  budget: number | null
 }
 
 export interface ProjectTask {
@@ -59,7 +58,7 @@ export function useProjectDetail(id: string | null) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('projects')
-        .select('id, name, status, health, start_date, end_date, owner:owner_id ( full_name ), description, budget')
+        .select('id, name, status, health, start_date, end_date, owner:owner_id ( full_name ), description')
         .eq('id', id!)
         .single()
       if (error) throw error
@@ -185,6 +184,17 @@ export function useCreateRisk(projectId: string) {
         status: 'open',
         owner_id: profile.id,
       })
+      if (error) throw error
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['project-risks', projectId] }),
+  })
+}
+
+export function useUpdateRiskStatus(projectId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (input: { riskId: string; status: RiskStatus }) => {
+      const { error } = await supabase.from('project_risks').update({ status: input.status }).eq('id', input.riskId)
       if (error) throw error
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ['project-risks', projectId] }),

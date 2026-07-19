@@ -1,11 +1,16 @@
 import { useMemo } from 'react'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang } from '@/contexts/LangContext'
 import type { ProjectTask } from './useProjects'
 
 const STATUS_COLOR: Record<string, string> = {
   todo: '#8B95A8',
   in_progress: '#4C6FFF',
   done: '#22C55E',
+}
+const STATUS_LABEL: Record<string, { tr: string; en: string }> = {
+  todo: { tr: 'Yapılacak', en: 'To Do' },
+  in_progress: { tr: 'Yapılıyor', en: 'In Progress' },
+  done: { tr: 'Bitti', en: 'Done' },
 }
 
 export function GanttChart({ tasks }: { tasks: ProjectTask[] }) {
@@ -113,7 +118,7 @@ export function GanttChart({ tasks }: { tasks: ProjectTask[] }) {
         {Object.entries(STATUS_COLOR).map(([key, color]) => (
           <span key={key} className="flex items-center gap-1">
             <span className="w-2 h-2 rounded-full" style={{ background: color }} />
-            {key}
+            {pickLang(STATUS_LABEL[key], lang)}
           </span>
         ))}
       </div>
