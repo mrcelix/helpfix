@@ -11,6 +11,7 @@ import { ConfigMissingPage } from '@/pages/ConfigMissing'
 import { NAV_MODULES } from '@/components/layout/nav-modules'
 import { useFeatureFlags } from '@/pages/admin/useAdmin'
 import { useAuth } from '@/contexts/AuthContext'
+import { useLang } from '@/contexts/LangContext'
 import { useTenantBrandingSync } from '@/components/layout/useTenantBranding'
 import { isSupabaseConfigured } from '@/lib/supabase'
 import { getPanelFromUrl, getStoredPanelChoice, type PanelChoice } from '@/lib/panelPreference'
@@ -142,14 +143,41 @@ function AgentPanelRoutes() {
  * sahiptir — hangisine gireceklerini bir kez seçerler (istenirse
  * hatırlanır), ikisini de ayrı sekmelerde aynı anda açabilirler. */
 function RoleBasedShell() {
-  const { profile, loading } = useAuth()
+  const { profile, loading, profileError, signOut } = useAuth()
+  const { t } = useLang()
   const [panelOverride, setPanelOverride] = useState<PanelChoice | null>(null)
 
   // Giriş yapan kullanıcının tenant'ının varsayılan markasını uygula
   // (kişisel override yoksa). Tüm paneller bu shell'den geçtiği için tek yer yeterli.
   useTenantBrandingSync()
 
-  if (loading || !profile) return null
+  if (loading) return null
+
+  if (profileError) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-[var(--bg)] text-center px-6">
+        <p className="text-[13px] text-[var(--text-faint)] max-w-sm">
+          {t({ tr: 'Profil bilgileri yüklenemedi. Lütfen tekrar deneyin.', en: 'Failed to load your profile. Please try again.' })}
+        </p>
+        <div className="flex gap-2">
+          <button
+            onClick={() => window.location.reload()}
+            className="text-[12.5px] font-bold px-3.5 py-2 rounded-lg bg-brand text-white"
+          >
+            {t({ tr: 'Yeniden Dene', en: 'Retry' })}
+          </button>
+          <button
+            onClick={() => signOut()}
+            className="text-[12.5px] font-bold px-3.5 py-2 rounded-lg border border-[var(--border)] text-[var(--text-sub)]"
+          >
+            {t({ tr: 'Çıkış Yap', en: 'Sign Out' })}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  if (!profile) return null
 
   if (profile.role === 'requester') {
     return <EmployeeCenterRoutes />

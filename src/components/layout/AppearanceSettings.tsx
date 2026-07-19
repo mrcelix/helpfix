@@ -56,6 +56,7 @@ export function AppearanceSettings() {
               onClick={() => {
                 if (theme !== mode) toggleTheme()
               }}
+              aria-pressed={theme === mode}
               className={`flex items-center justify-center gap-2 py-2.5 rounded-lg border text-[13px] font-semibold ${
                 theme === mode ? 'border-brand text-brand-dim bg-brand-tint/40' : 'border-[var(--border)] text-[var(--text-sub)]'
               }`}
@@ -78,6 +79,7 @@ export function AppearanceSettings() {
               key={th.code}
               onClick={() => setTeam(th.code)}
               title={th.label}
+              aria-pressed={team === th.code}
               className="flex flex-col items-center gap-1.5 group"
             >
               <span
@@ -93,7 +95,12 @@ export function AppearanceSettings() {
             </button>
           ))}
           {/* Özel */}
-          <button onClick={() => setTeam('custom')} title={t({ tr: 'Özel', en: 'Custom' })} className="flex flex-col items-center gap-1.5 group">
+          <button
+            onClick={() => setTeam('custom')}
+            title={t({ tr: 'Özel', en: 'Custom' })}
+            aria-pressed={team === 'custom'}
+            className="flex flex-col items-center gap-1.5 group"
+          >
             <span
               className="w-9 h-9 rounded-full border-2 flex items-center justify-center"
               style={{ borderColor: team === 'custom' ? 'var(--color-brand)' : 'var(--border)' }}

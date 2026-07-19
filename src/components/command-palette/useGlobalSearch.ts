@@ -34,7 +34,7 @@ export function useGlobalSearch(query: string) {
         ...(problems.data ?? []).map((r) => ({ id: r.id, type: 'problem' as const, ref: r.ref, title: r.title, path: `/problems?open=${r.id}` })),
         ...(changes.data ?? []).map((r) => ({ id: r.id, type: 'change' as const, ref: r.ref, title: r.title, path: `/changes?open=${r.id}` })),
         ...(articles.data ?? []).map((r) => ({ id: r.id, type: 'article' as const, ref: null, title: r.title, path: `/knowledge-base?open=${r.id}` })),
-        ...(catalogItems.data ?? []).map((r) => ({ id: r.id, type: 'catalog_item' as const, ref: null, title: r.name, path: `/catalog` })),
+        ...(catalogItems.data ?? []).map((r) => ({ id: r.id, type: 'catalog_item' as const, ref: null, title: r.name, path: `/catalog?open=${r.id}` })),
         ...(cis.data ?? []).map((r) => ({ id: r.id, type: 'ci' as const, ref: r.tag, title: r.name, path: `/cmdb?open=${r.id}` })),
       ]
       return results

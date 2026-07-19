@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Package, Check, X, ShieldCheck } from 'lucide-react'
 import { useLang, pickLang} from '@/contexts/LangContext'
 import { useAuth } from '@/contexts/AuthContext'
+import { useOpenParam } from '@/hooks/useOpenParam'
 import {
   useCategories,
   useCatalogItems,
@@ -58,6 +59,24 @@ export function CatalogPage() {
   const { data: categories } = useCategories()
   const { data: items, isLoading: itemsLoading } = useCatalogItems(activeCategory)
   const { data: bundles } = useBundles()
+
+  // Komut Paleti'nden (⌘K) "?open=<id>" ile bir katalog öğesine gelindiğinde
+  // o öğeyi doğrudan açar — kategori filtresini kaldırarak öğenin listede
+  // olmasını garanti eder.
+  const openId = useOpenParam()
+  useEffect(() => {
+    if (openId) {
+      setTab('browse')
+      setActiveCategory(null)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openId])
+  useEffect(() => {
+    if (!openId || !items) return
+    const found = items.find((i) => i.id === openId)
+    if (found) setSelectedItem({ id: found.id, name: found.name, requiresApproval: found.requires_approval, formSchema: found.form_schema })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openId, items])
   const requestBundle = useRequestBundle()
   const [bundleSuccess, setBundleSuccess] = useState<number | null>(null)
   const [bundleError, setBundleError] = useState<string | null>(null)

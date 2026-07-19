@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { User, LogOut, ChevronDown, LayoutPanelTop } from 'lucide-react'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang } from '@/contexts/LangContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { AccountModal } from './AccountModal'
 import { clearStoredPanelChoice } from '@/lib/panelPreference'
@@ -13,7 +13,7 @@ const ROLE_LABEL: Record<string, { tr: string; en: string }> = {
 }
 
 export function AccountMenu() {
-  const { t } = useLang()
+  const { lang, t } = useLang()
   const { profile, signOut } = useAuth()
   const [open, setOpen] = useState(false)
   const [showAccountModal, setShowAccountModal] = useState(false)
@@ -24,6 +24,8 @@ export function AccountMenu() {
     <div className="relative">
       <button
         onClick={() => setOpen((o) => !o)}
+        aria-haspopup="true"
+        aria-expanded={open}
         className="flex items-center gap-2 pl-1.5 pr-2.5 py-1 rounded-lg border border-[var(--border)] bg-[var(--panel)] hover:border-brand"
       >
         <div className="w-7 h-7 rounded-lg bg-brand text-white flex items-center justify-center text-[11px] font-bold shrink-0">
@@ -43,7 +45,7 @@ export function AccountMenu() {
               <div className="text-[13px] font-bold truncate">{profile.fullName}</div>
               <div className="text-[11px] text-[var(--text-faint)] truncate">{profile.email}</div>
               <span className="inline-block mt-1.5 text-[9.5px] font-mono font-bold bg-brand-tint text-brand-dim rounded-full px-2 py-0.5">
-                {ROLE_LABEL[profile.role]?.tr ?? profile.role}
+                {ROLE_LABEL[profile.role] ? pickLang(ROLE_LABEL[profile.role], lang) : profile.role}
               </span>
             </div>
             <button

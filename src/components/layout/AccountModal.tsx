@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Check } from 'lucide-react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
-import { useLang } from '@/contexts/LangContext'
+import { useLang, pickLang } from '@/contexts/LangContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { AppearanceSettings } from './AppearanceSettings'
 
@@ -14,7 +14,7 @@ const ROLE_LABEL: Record<string, { tr: string; en: string }> = {
 }
 
 export function AccountModal({ onClose }: { onClose: () => void }) {
-  const { t } = useLang()
+  const { lang, t } = useLang()
   const { profile, updateFullName, updatePassword } = useAuth()
   const [tab, setTab] = useState<'profile' | 'security' | 'appearance'>('profile')
 
@@ -103,7 +103,7 @@ export function AccountModal({ onClose }: { onClose: () => void }) {
             <div>
               <div className="text-[14px] font-bold">{profile.fullName}</div>
               <span className="inline-block mt-1 text-[9.5px] font-mono font-bold bg-brand-tint text-brand-dim rounded-full px-2 py-0.5">
-                {ROLE_LABEL[profile.role]?.tr ?? profile.role}
+                {ROLE_LABEL[profile.role] ? pickLang(ROLE_LABEL[profile.role], lang) : profile.role}
               </span>
             </div>
           </div>

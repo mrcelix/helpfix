@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from 'react'
 import { Globe, Check } from 'lucide-react'
-import { useLang, SUPPORTED_LANGS } from '@/contexts/LangContext'
+import { useLang, SUPPORTED_LANGS, pickLang } from '@/contexts/LangContext'
 import { cn } from '@/lib/utils'
+
+const LABEL = { tr: 'Dil', en: 'Language', fr: 'Langue', it: 'Lingua', ar: 'اللغة' }
 
 /** Topbar'daki dil seçici — TR/EN/FR/IT/AR arasında geçiş yapar.
  * Önceden sadece TR/EN buton çifti vardı; 5 dile çıkınca dropdown'a
@@ -25,7 +27,10 @@ export function LanguageSwitcher({ alwaysVisible = false }: { alwaysVisible?: bo
       <button
         onClick={() => setOpen((o) => !o)}
         className="flex items-center gap-1.5 h-[34px] px-2.5 rounded-lg border border-[var(--border)] bg-[var(--panel)] text-[11.5px] font-bold text-[var(--text-sub)] hover:border-brand/40"
-        aria-label="Language"
+        title={pickLang(LABEL, lang)}
+        aria-label={pickLang(LABEL, lang)}
+        aria-haspopup="true"
+        aria-expanded={open}
       >
         <Globe className="w-3.5 h-3.5" />
         {lang.toUpperCase()}

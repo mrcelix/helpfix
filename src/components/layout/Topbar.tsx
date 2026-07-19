@@ -50,7 +50,7 @@ export function Topbar({
     }
   }
 
-  const { data: notifications } = useNotifications()
+  const { data: notifications, error: notificationsError } = useNotifications()
   const markAsRead = useMarkAsRead()
   const markAllAsRead = useMarkAllAsRead()
   const unreadCount = notifications?.filter((n) => !n.is_read).length ?? 0
@@ -67,7 +67,8 @@ export function Topbar({
         <button
           onClick={onMenuClick}
           className="lg:hidden w-8 h-8 shrink-0 rounded-lg flex items-center justify-center text-[var(--text-sub)] hover:bg-[var(--panel)]"
-          aria-label="Menu"
+          title={t({ tr: 'Menü', en: 'Menu' })}
+          aria-label={t({ tr: 'Menü', en: 'Menu' })}
         >
           <Menu className="w-[19px] h-[19px]" />
         </button>
@@ -97,7 +98,8 @@ export function Topbar({
         <button
           onClick={toggleFullscreen}
           className="hidden sm:flex w-[34px] h-[34px] shrink-0 rounded-lg border border-[var(--border)] bg-[var(--panel)] items-center justify-center text-[var(--text-sub)]"
-          aria-label="Toggle fullscreen"
+          aria-label={isFullscreen ? t({ tr: 'Tam Ekrandan Çık', en: 'Exit Fullscreen' }) : t({ tr: 'Tam Ekran', en: 'Fullscreen' })}
+          aria-pressed={isFullscreen}
           title={isFullscreen ? t({ tr: 'Tam Ekrandan Çık', en: 'Exit Fullscreen', fr: 'Quitter le plein écran', it: 'Esci da schermo intero', ar: 'الخروج من ملء الشاشة' }) : t({ tr: 'Tam Ekran', en: 'Fullscreen', fr: 'Plein écran', it: 'Schermo intero', ar: 'ملء الشاشة' })}
         >
           {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
@@ -106,7 +108,9 @@ export function Topbar({
         <button
           onClick={toggleTheme}
           className="w-[34px] h-[34px] shrink-0 rounded-lg border border-[var(--border)] bg-[var(--panel)] flex items-center justify-center text-[var(--text-sub)]"
-          aria-label="Toggle theme"
+          title={theme === 'dark' ? t({ tr: 'Açık Moda Geç', en: 'Switch to Light Mode' }) : t({ tr: 'Koyu Moda Geç', en: 'Switch to Dark Mode' })}
+          aria-label={theme === 'dark' ? t({ tr: 'Açık Moda Geç', en: 'Switch to Light Mode' }) : t({ tr: 'Koyu Moda Geç', en: 'Switch to Dark Mode' })}
+          aria-pressed={theme === 'dark'}
         >
           {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </button>
@@ -120,7 +124,10 @@ export function Topbar({
                 ? 'border-p1/40 bg-p1-tint text-p1'
                 : 'border-[var(--border)] bg-[var(--panel)] text-[var(--text-sub)]'
             )}
-            aria-label="Notifications"
+            title={t({ tr: 'Bildirimler', en: 'Notifications' })}
+            aria-label={t({ tr: 'Bildirimler', en: 'Notifications' })}
+            aria-haspopup="true"
+            aria-expanded={showNotifications}
           >
             <Bell className={unreadCount > 0 ? 'w-4 h-4 animate-bell-ring' : 'w-4 h-4'} />
             {unreadCount > 0 && (
@@ -144,7 +151,12 @@ export function Topbar({
                   )}
                 </div>
                 <div className="max-h-[360px] overflow-y-auto">
-                  {!notifications?.length && (
+                  {notificationsError && (
+                    <p className="text-[12px] text-p1 text-center py-8">
+                      {t({ tr: 'Bildirimler yüklenemedi.', en: 'Failed to load notifications.' })}
+                    </p>
+                  )}
+                  {!notificationsError && !notifications?.length && (
                     <p className="text-[12px] text-[var(--text-faint)] text-center py-8">
                       {t({ tr: 'Henüz bildirim yok.', en: 'No notifications yet.', fr: 'Aucune notification pour le moment.', it: 'Nessuna notifica al momento.', ar: 'لا توجد إشعارات بعد.' })}
                     </p>

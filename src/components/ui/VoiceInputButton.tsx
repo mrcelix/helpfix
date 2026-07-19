@@ -64,6 +64,8 @@ export function VoiceInputButton({ onResult, className }: { onResult: (text: str
       type="button"
       onClick={toggle}
       title={t({ tr: listening ? 'Dinleniyor… durdurmak için tıklayın' : 'Sesli komut', en: listening ? 'Listening… click to stop' : 'Voice input' })}
+      aria-label={t({ tr: listening ? 'Dinleniyor… durdurmak için tıklayın' : 'Sesli komut', en: listening ? 'Listening… click to stop' : 'Voice input' })}
+      aria-pressed={listening}
       className={
         className ??
         `shrink-0 w-6 h-6 rounded-md flex items-center justify-center transition-colors ${

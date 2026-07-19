@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useState, type ReactNode } from 'react'
 import { CheckCircle2, XCircle, X } from 'lucide-react'
+import { useLang } from '@/contexts/LangContext'
 
 export interface Toast {
   id: string
@@ -24,6 +25,7 @@ export function showGlobalToast(message: string, type: Toast['type'] = 'error') 
 }
 
 export function ToastProvider({ children }: { children: ReactNode }) {
+  const { t } = useLang()
   const [toasts, setToasts] = useState<Toast[]>([])
 
   const showToast = useCallback((message: string, type: Toast['type'] = 'error') => {
@@ -61,7 +63,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               <CheckCircle2 className="w-[18px] h-[18px] text-ok shrink-0 mt-0.5" />
             )}
             <span className="text-[13px] flex-1 leading-snug">{toast.message}</span>
-            <button onClick={() => dismiss(toast.id)} className="shrink-0 text-[var(--text-faint)] hover:text-[var(--text)]">
+            <button
+              onClick={() => dismiss(toast.id)}
+              title={t({ tr: 'Kapat', en: 'Dismiss' })}
+              aria-label={t({ tr: 'Kapat', en: 'Dismiss' })}
+              className="shrink-0 text-[var(--text-faint)] hover:text-[var(--text)]"
+            >
               <X className="w-3.5 h-3.5" />
             </button>
           </div>

@@ -118,6 +118,7 @@ function PanelCard({
         <button
           onClick={onNewTab}
           title={t({ tr: 'Yeni sekmede aç', en: 'Open in new tab' })}
+          aria-label={t({ tr: 'Yeni sekmede aç', en: 'Open in new tab' })}
           className="w-[38px] h-[38px] shrink-0 flex items-center justify-center rounded-lg border border-[var(--border)] text-[var(--text-faint)] hover:border-brand hover:text-brand-dim transition-colors"
         >
           <ExternalLink className="w-4 h-4" />

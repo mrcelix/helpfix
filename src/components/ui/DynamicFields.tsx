@@ -64,13 +64,30 @@ export function FieldSchemaEditor({
               <option value="select">{t({ tr: 'Seçim Listesi', en: 'Select List' })}</option>
             </select>
             <div className="flex items-center gap-0.5 shrink-0">
-              <button onClick={() => moveField(idx, -1)} disabled={idx === 0} className="disabled:opacity-30 text-[var(--text-faint)]">
+              <button
+                onClick={() => moveField(idx, -1)}
+                disabled={idx === 0}
+                title={t({ tr: 'Yukarı taşı', en: 'Move up' })}
+                aria-label={t({ tr: 'Yukarı taşı', en: 'Move up' })}
+                className="disabled:opacity-30 text-[var(--text-faint)]"
+              >
                 <ChevronUp className="w-3.5 h-3.5" />
               </button>
-              <button onClick={() => moveField(idx, 1)} disabled={idx === fields.length - 1} className="disabled:opacity-30 text-[var(--text-faint)]">
+              <button
+                onClick={() => moveField(idx, 1)}
+                disabled={idx === fields.length - 1}
+                title={t({ tr: 'Aşağı taşı', en: 'Move down' })}
+                aria-label={t({ tr: 'Aşağı taşı', en: 'Move down' })}
+                className="disabled:opacity-30 text-[var(--text-faint)]"
+              >
                 <ChevronDown className="w-3.5 h-3.5" />
               </button>
-              <button onClick={() => removeField(idx)} className="text-[var(--text-faint)] hover:text-p1">
+              <button
+                onClick={() => removeField(idx)}
+                title={t({ tr: 'Alanı sil', en: 'Delete field' })}
+                aria-label={t({ tr: 'Alanı sil', en: 'Delete field' })}
+                className="text-[var(--text-faint)] hover:text-p1"
+              >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
             </div>

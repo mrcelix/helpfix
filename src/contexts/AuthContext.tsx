@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
+import { useLang } from '@/contexts/LangContext'
 import type { UserRole } from '@/types/database'
 
 interface Profile {
@@ -17,6 +18,7 @@ interface AuthContextValue {
   session: Session | null
   profile: Profile | null
   loading: boolean
+  profileError: boolean
   signInWithPassword: (email: string, password: string) => Promise<{ error: string | null }>
   signOut: () => Promise<void>
   sendPasswordResetEmail: (email: string) => Promise<{ error: string | null }>
@@ -28,9 +30,11 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const { t } = useLang()
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [profileError, setProfileError] = useState(false)
 
   async function loadProfile(userId: string) {
     const { data, error } = await supabase
@@ -41,9 +45,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (error || !data) {
       setProfile(null)
+      setProfileError(true)
       return
     }
 
+    setProfileError(false)
     setProfile({
       id: data.id,
       tenantId: data.tenant_id,
@@ -99,7 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function updateFullName(fullName: string) {
-    if (!session?.user) return { error: 'Oturum yok' }
+    if (!session?.user) return { error: t({ tr: 'Oturum yok', en: 'No active session' }) }
     const { error } = await supabase.from('user_profiles').update({ full_name: fullName }).eq('auth_user_id', session.user.id)
     if (!error) await loadProfile(session.user.id)
     return { error: error?.message ?? null }
@@ -111,7 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ session, profile, loading, signInWithPassword, signOut, sendPasswordResetEmail, updatePassword, updateFullName, refreshProfile }}
+      value={{ session, profile, loading, profileError, signInWithPassword, signOut, sendPasswordResetEmail, updatePassword, updateFullName, refreshProfile }}
     >
       {children}
     </AuthContext.Provider>

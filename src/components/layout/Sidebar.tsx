@@ -135,6 +135,7 @@ function SidebarContent({ onNavigate, collapsed = false }: { onNavigate?: () => 
  * yenilense de hatırlanır — modern admin panellerindeki standart
  * davranış. */
 export function Sidebar({ collapsed, onToggleCollapse }: { collapsed: boolean; onToggleCollapse: () => void }) {
+  const { t } = useLang()
   return (
     <aside
       className={cn(
@@ -145,7 +146,9 @@ export function Sidebar({ collapsed, onToggleCollapse }: { collapsed: boolean; o
       <SidebarContent collapsed={collapsed} />
       <button
         onClick={onToggleCollapse}
-        title={collapsed ? 'Genişlet' : 'Daralt'}
+        title={collapsed ? t({ tr: 'Genişlet', en: 'Expand' }) : t({ tr: 'Daralt', en: 'Collapse' })}
+        aria-label={collapsed ? t({ tr: 'Genişlet', en: 'Expand' }) : t({ tr: 'Daralt', en: 'Collapse' })}
+        aria-pressed={collapsed}
         className="absolute top-[72px] -right-3 w-6 h-6 rounded-full bg-[var(--panel)] border border-[var(--border)] shadow-md flex items-center justify-center text-[var(--text-faint)] hover:text-brand-dim hover:border-brand/40 transition-colors z-10"
       >
         {collapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
@@ -156,6 +159,7 @@ export function Sidebar({ collapsed, onToggleCollapse }: { collapsed: boolean; o
 
 /** Mobil (< lg): hamburger ile açılan slide-over drawer. */
 export function MobileSidebarDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { t } = useLang()
   if (!open) return null
   return (
     <div className="lg:hidden fixed inset-0 z-50 flex">
@@ -163,6 +167,8 @@ export function MobileSidebarDrawer({ open, onClose }: { open: boolean; onClose:
       <aside className="relative w-[248px] max-w-[80vw] h-full flex flex-col bg-[var(--panel)] border-r border-[var(--border)] shadow-2xl">
         <button
           onClick={onClose}
+          title={t({ tr: 'Kapat', en: 'Close' })}
+          aria-label={t({ tr: 'Kapat', en: 'Close' })}
           className="absolute top-4 right-3 w-7 h-7 rounded-md flex items-center justify-center text-[var(--text-faint)] hover:text-[var(--text)]"
         >
           <X className="w-4 h-4" />
