@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useOpenParam } from '@/hooks/useOpenParam'
 import { Plus, Search } from 'lucide-react'
 import { useLang, pickLang} from '@/contexts/LangContext'
@@ -9,12 +9,24 @@ import { useArticles, useLogSearch, useKbGapAnalysis, type KbSavedView } from '.
 import { ArticleDrawer } from './ArticleDrawer'
 import { NewArticleModal } from './NewArticleModal'
 
-const SAVED_VIEWS: { key: KbSavedView; label: { tr: string; en: string; fr?: string; it?: string; ar?: string } }[] = [
+const SAVED_VIEWS: { key: KbSavedView; label: { tr: string; en: string; fr?: string; it?: string; ar?: string }; managerOnly?: boolean }[] = [
   { key: 'published', label: { tr: 'Yayınlanan', en: 'Published', fr: 'Publié', it: 'Pubblicato', ar: 'المنشورة' } },
-  { key: 'drafts', label: { tr: 'Taslaklar', en: 'Drafts', fr: 'Brouillons', it: 'Bozze', ar: 'المسودات' } },
+  { key: 'drafts', label: { tr: 'Taslaklar', en: 'Drafts', fr: 'Brouillons', it: 'Bozze', ar: 'المسودات' }, managerOnly: true },
   { key: 'most_viewed', label: { tr: 'En Çok Görüntülenen', en: 'Most Viewed', fr: 'Les plus consultés', it: 'Più visualizzati', ar: 'الأكثر مشاهدة' } },
-  { key: 'needs_review', label: { tr: 'Gözden Geçirilmeli', en: 'Needs Review', fr: 'À revoir', it: 'Da rivedere', ar: 'بحاجة إلى مراجعة' } },
+  { key: 'needs_review', label: { tr: 'Gözden Geçirilmeli', en: 'Needs Review', fr: 'À revoir', it: 'Da rivedere', ar: 'بحاجة إلى مراجعة' }, managerOnly: true },
+  { key: 'archived', label: { tr: 'Arşivlenmiş', en: 'Archived', fr: 'Archivé', it: 'Archiviato', ar: 'مؤرشف' }, managerOnly: true },
 ]
+
+const STATUS_LABEL: Record<string, { tr: string; en: string }> = {
+  draft: { tr: 'Taslak', en: 'Draft' },
+  published: { tr: 'Yayınlandı', en: 'Published' },
+  archived: { tr: 'Arşivlendi', en: 'Archived' },
+}
+const STATUS_STYLE: Record<string, string> = {
+  draft: 'bg-[var(--panel-2)] border-[var(--border)] text-[var(--text-faint)]',
+  published: 'bg-ok/15 border-ok/30 text-ok',
+  archived: 'bg-[var(--panel-2)] border-[var(--border)] text-[var(--text-faint)]',
+}
 
 export function KnowledgeBasePage() {
   const { lang, t } = useLang()
@@ -29,14 +41,19 @@ export function KnowledgeBasePage() {
 
   const { data: articles, isLoading, error } = useArticles(view, search)
   const logSearch = useLogSearch()
-  const { data: gaps } = useKbGapAnalysis()
+  const { data: gaps, error: gapsError } = useKbGapAnalysis()
+
+  // articles her render'da güncellenir; ref ile en güncel sonuç sayısına
+  // erişerek debounce timeout'unun eski (stale) bir kapanışı loglamasını önler.
+  const articlesRef = useRef(articles)
+  articlesRef.current = articles
 
   // Sonuçsuz (veya sonuçlu) her aramayı debounce ile logla — Bilgi
   // Boşluğu Analizi'nin veri kaynağı.
   useEffect(() => {
     if (search.trim().length < 3) return
     const timeout = setTimeout(() => {
-      logSearch.mutate({ query: search, resultCount: articles?.length ?? 0 })
+      logSearch.mutate({ query: search, resultCount: articlesRef.current?.length ?? 0 })
     }, 1200)
     return () => clearTimeout(timeout)
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -60,6 +77,12 @@ export function KnowledgeBasePage() {
           </Button>
         )}
       </div>
+
+      {canManage && gapsError && (
+        <div className="text-[11.5px] text-p1 mb-3">
+          {t({ tr: 'Bilgi boşluğu analizi yüklenemedi.', en: 'Failed to load knowledge gap analysis.' })}
+        </div>
+      )}
 
       {canManage && !!gaps?.length && (
         <div className="bg-p2-tint border border-p2/40 rounded-xl p-3.5 mb-4">
@@ -88,7 +111,7 @@ export function KnowledgeBasePage() {
       </div>
 
       <div className="flex items-center gap-1.5 mb-3 flex-wrap">
-        {SAVED_VIEWS.map((v) => (
+        {SAVED_VIEWS.filter((v) => !v.managerOnly || canManage).map((v) => (
           <button
             key={v.key}
             onClick={() => setView(v.key)}
@@ -109,6 +132,7 @@ export function KnowledgeBasePage() {
           <thead>
             <tr className="bg-[var(--panel-2)] border-b border-[var(--border)]">
               <Th>{t({ tr: 'Başlık', en: 'Title', fr: 'Titre', it: 'Titolo', ar: 'العنوان' })}</Th>
+              <Th>{t({ tr: 'Durum', en: 'Status', fr: 'Statut', it: 'Stato', ar: 'الحالة' })}</Th>
               <Th>{t({ tr: 'Kategori', en: 'Category', fr: 'Catégorie', it: 'Categoria', ar: 'الفئة' })}</Th>
               <Th>{t({ tr: 'Yazar', en: 'Author', fr: 'Auteur', it: 'Autore', ar: 'الكاتب' })}</Th>
               <Th>{t({ tr: 'Görüntülenme', en: 'Views', fr: 'Vues', it: 'Visualizzazioni', ar: 'المشاهدات' })}</Th>
@@ -119,21 +143,21 @@ export function KnowledgeBasePage() {
           <tbody>
             {isLoading && (
               <tr>
-                <td colSpan={6} className="text-center py-10 text-[var(--text-faint)]">
+                <td colSpan={7} className="text-center py-10 text-[var(--text-faint)]">
                   {t({ tr: 'Yükleniyor…', en: 'Loading…', fr: 'Chargement…', it: 'Caricamento…', ar: 'جارٍ التحميل…' })}
                 </td>
               </tr>
             )}
             {error && (
               <tr>
-                <td colSpan={6} className="text-center py-10 text-p1">
+                <td colSpan={7} className="text-center py-10 text-p1">
                   {t({ tr: 'Bir hata oluştu.', en: 'Something went wrong.', fr: "Une erreur s'est produite.", it: 'Si è verificato un errore.', ar: 'حدث خطأ ما.' })}
                 </td>
               </tr>
             )}
             {!isLoading && !error && articles?.length === 0 && (
               <tr>
-                <td colSpan={6} className="text-center py-14 text-[var(--text-faint)]">
+                <td colSpan={7} className="text-center py-14 text-[var(--text-faint)]">
                   {t({ tr: 'Bu görünümde makale yok.', en: 'No articles in this view.', fr: 'Aucun article dans cette vue.', it: 'Nessun articolo in questa vista.', ar: 'لا توجد مقالات في هذا العرض.' })}
                 </td>
               </tr>
@@ -142,9 +166,22 @@ export function KnowledgeBasePage() {
               <tr
                 key={a.id}
                 onClick={() => setSelectedId(a.id)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    setSelectedId(a.id)
+                  }
+                }}
                 className="border-b border-[var(--border)] last:border-0 hover:bg-[var(--row-hover)] cursor-pointer"
               >
                 <td className="px-3.5 py-3 font-semibold">{a.title}</td>
+                <td className="px-3.5 py-3">
+                  <span className={`text-[10px] font-bold rounded-full px-2 py-0.5 border ${STATUS_STYLE[a.status]}`}>
+                    {pickLang(STATUS_LABEL[a.status], lang)}
+                  </span>
+                </td>
                 <td className="px-3.5 py-3 text-[var(--text-sub)]">{a.category ?? '—'}</td>
                 <td className="px-3.5 py-3 text-[var(--text-sub)]">{a.author?.full_name ?? '—'}</td>
                 <td className="px-3.5 py-3 text-[var(--text-faint)]">{a.view_count}</td>
@@ -162,7 +199,7 @@ export function KnowledgeBasePage() {
         </table>
       </div>
 
-      {selectedId && <ArticleDrawer id={selectedId} onClose={() => setSelectedId(null)} />}
+      {selectedId && <ArticleDrawer key={selectedId} id={selectedId} onClose={() => setSelectedId(null)} />}
       {showNewModal && <NewArticleModal onClose={() => setShowNewModal(false)} />}
     </div>
   )

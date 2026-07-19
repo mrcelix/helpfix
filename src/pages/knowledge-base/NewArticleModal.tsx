@@ -12,11 +12,17 @@ export function NewArticleModal({ onClose }: { onClose: () => void }) {
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
   const [category, setCategory] = useState('')
+  const [submitError, setSubmitError] = useState('')
 
   async function handleSubmit(status: ArticleStatus) {
     if (!title.trim() || !content.trim()) return
-    await createArticle.mutateAsync({ title: title.trim(), content: content.trim(), category: category.trim() || null, status })
-    onClose()
+    setSubmitError('')
+    try {
+      await createArticle.mutateAsync({ title: title.trim(), content: content.trim(), category: category.trim() || null, status })
+      onClose()
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : String(err))
+    }
   }
 
   return (
@@ -73,6 +79,7 @@ export function NewArticleModal({ onClose }: { onClose: () => void }) {
             className="w-full bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-3 py-2.5 text-[13px] outline-none focus:border-brand resize-none"
           />
         </div>
+        {submitError && <p className="text-[12px] text-p1">{submitError}</p>}
       </form>
     </Modal>
   )

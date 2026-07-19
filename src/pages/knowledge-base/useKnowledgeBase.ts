@@ -35,7 +35,7 @@ export interface ArticleDetail extends ArticleListItem {
   decision_tree: DecisionTree | null
 }
 
-export type KbSavedView = 'published' | 'drafts' | 'most_viewed' | 'needs_review'
+export type KbSavedView = 'published' | 'drafts' | 'most_viewed' | 'needs_review' | 'archived'
 
 const SELECT_LIST = `
   id, title, slug, category, status, view_count, helpful_count, unhelpful_count, updated_at,
@@ -60,6 +60,8 @@ export function useArticles(view: KbSavedView, search: string) {
         // Faydasız oyu faydalı oyundan fazla olan makaleler — gözden
         // geçirme ihtiyacı olan içeriği yüzeye çıkarır.
         query = query.eq('status', 'published').order('unhelpful_count', { ascending: false })
+      } else if (view === 'archived') {
+        query = query.eq('status', 'archived').order('updated_at', { ascending: false })
       }
 
       if (search.trim()) {
@@ -128,7 +130,7 @@ export function useCreateArticle() {
           category: input.category,
           status: input.status,
           author_id: profile.id,
-          published_at: null,
+          published_at: input.status === 'published' ? new Date().toISOString() : null,
           decision_tree: null,
         })
         .select('id')
@@ -144,8 +146,9 @@ export function useUpdateArticle(id: string) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (patch: Partial<{ title: string; content: string; category: string | null; status: ArticleStatus; decision_tree: DecisionTree | null }>) => {
+      const fullPatch = patch.status === 'published' ? { ...patch, published_at: new Date().toISOString() } : patch
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await supabase.from('knowledge_articles').update(patch as any).eq('id', id)
+      const { error } = await supabase.from('knowledge_articles').update(fullPatch as any).eq('id', id)
       if (error) throw error
     },
     onSuccess: () => {

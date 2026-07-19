@@ -87,7 +87,12 @@ export function DecisionTreeEditor({
               )}
               <span className="text-[10px] font-mono text-[var(--text-faint)] ml-auto">{key}</span>
               {key !== tree.startNode && (
-                <button onClick={() => deleteNode(key)} className="text-[var(--text-faint)] hover:text-p1">
+                <button
+                  onClick={() => deleteNode(key)}
+                  title={t({ tr: 'Düğümü sil', en: 'Delete node' })}
+                  aria-label={t({ tr: 'Düğümü sil', en: 'Delete node' })}
+                  className="text-[var(--text-faint)] hover:text-p1"
+                >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
               )}
@@ -120,7 +125,12 @@ export function DecisionTreeEditor({
                       </option>
                     ))}
                   </select>
-                  <button onClick={() => deleteOption(key, i)} className="text-[var(--text-faint)] hover:text-p1 shrink-0">
+                  <button
+                    onClick={() => deleteOption(key, i)}
+                    title={t({ tr: 'Seçeneği sil', en: 'Delete option' })}
+                    aria-label={t({ tr: 'Seçeneği sil', en: 'Delete option' })}
+                    className="text-[var(--text-faint)] hover:text-p1 shrink-0"
+                  >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>

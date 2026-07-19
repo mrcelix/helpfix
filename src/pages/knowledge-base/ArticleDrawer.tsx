@@ -10,7 +10,7 @@ import { DecisionTreeEditor } from './DecisionTreeEditor'
 export function ArticleDrawer({ id, onClose }: { id: string; onClose: () => void }) {
   const { t } = useLang()
   const { profile } = useAuth()
-  const { data: article, isLoading } = useArticleDetail(id)
+  const { data: article, isLoading, error } = useArticleDetail(id)
   const incrementView = useIncrementView()
   const voteArticle = useVoteArticle(id)
   const updateArticle = useUpdateArticle(id)
@@ -27,7 +27,9 @@ export function ArticleDrawer({ id, onClose }: { id: string; onClose: () => void
 
   return (
     <Drawer open onClose={onClose} title={article?.title ?? '…'} widthClass="w-[560px]">
-      {isLoading || !article ? (
+      {error ? (
+        <div className="text-p1 text-sm py-10 text-center">{t({ tr: 'Makale yüklenemedi.', en: 'Failed to load article.' })}</div>
+      ) : isLoading || !article ? (
         <div className="text-[var(--text-faint)] text-sm py-10 text-center">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</div>
       ) : (
         <div className="space-y-5">
@@ -44,6 +46,7 @@ export function ArticleDrawer({ id, onClose }: { id: string; onClose: () => void
               <select
                 value={article.status}
                 onChange={(e) => updateArticle.mutate({ status: e.target.value as 'draft' | 'published' | 'archived' })}
+                aria-label={t({ tr: 'Makale durumu', en: 'Article status' })}
                 className="ml-auto bg-[var(--panel-2)] border border-[var(--border)] rounded-lg px-2 py-1 text-[11px]"
               >
                 <option value="draft">{t({ tr: 'Taslak', en: 'Draft' })}</option>
@@ -93,24 +96,25 @@ export function ArticleDrawer({ id, onClose }: { id: string; onClose: () => void
               <div className="flex items-center justify-center gap-3">
                 <span className="text-[12px] text-[var(--text-faint)]">{t({ tr: 'Bu makale faydalı oldu mu?', en: 'Was this article helpful?' })}</span>
                 <button
-                  onClick={() => {
-                    voteArticle.mutate(true)
-                    setVoted(true)
-                  }}
+                  onClick={() => voteArticle.mutate(true, { onSuccess: () => setVoted(true) })}
+                  title={t({ tr: 'Faydalı', en: 'Helpful' })}
+                  aria-label={t({ tr: 'Faydalı', en: 'Helpful' })}
                   className="w-8 h-8 rounded-lg bg-[var(--panel-2)] border border-[var(--border)] flex items-center justify-center hover:border-ok hover:text-ok"
                 >
                   <ThumbsUp className="w-4 h-4" />
                 </button>
                 <button
-                  onClick={() => {
-                    voteArticle.mutate(false)
-                    setVoted(true)
-                  }}
+                  onClick={() => voteArticle.mutate(false, { onSuccess: () => setVoted(true) })}
+                  title={t({ tr: 'Faydalı değil', en: 'Not helpful' })}
+                  aria-label={t({ tr: 'Faydalı değil', en: 'Not helpful' })}
                   className="w-8 h-8 rounded-lg bg-[var(--panel-2)] border border-[var(--border)] flex items-center justify-center hover:border-p1 hover:text-p1"
                 >
                   <ThumbsDown className="w-4 h-4" />
                 </button>
               </div>
+            )}
+            {voteArticle.isError && (
+              <p className="text-[11px] text-p1 text-center mt-2">{t({ tr: 'Oy kaydedilemedi, tekrar deneyin.', en: 'Vote failed, please try again.' })}</p>
             )}
           </div>
         </div>
