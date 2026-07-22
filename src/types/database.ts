@@ -1342,12 +1342,47 @@ export interface Database {
           tenant_id: string
           module_code: string
           is_enabled: boolean
+          display_order: number | null
+          min_role: UserRole | null
+          custom_name: Record<string, string> | null
+          custom_icon: string | null
           updated_at: string
         }
-        Insert: Omit<Database['public']['Tables']['tenant_feature_flags']['Row'], 'updated_at'> & {
+        Insert: Omit<
+          Database['public']['Tables']['tenant_feature_flags']['Row'],
+          'is_enabled' | 'display_order' | 'min_role' | 'custom_name' | 'custom_icon' | 'updated_at'
+        > & {
+          is_enabled?: boolean
+          display_order?: number | null
+          min_role?: UserRole | null
+          custom_name?: Record<string, string> | null
+          custom_icon?: string | null
           updated_at?: string
         }
         Update: Partial<Database['public']['Tables']['tenant_feature_flags']['Insert']>
+        Relationships: []
+      }
+      tenant_dashboard_layouts: {
+        Row: {
+          tenant_id: string
+          surface: string
+          widget_id: string
+          is_visible: boolean
+          x: number
+          y: number
+          w: number
+          h: number
+          updated_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['tenant_dashboard_layouts']['Row'], 'is_visible' | 'x' | 'y' | 'w' | 'h' | 'updated_at'> & {
+          is_visible?: boolean
+          x?: number
+          y?: number
+          w?: number
+          h?: number
+          updated_at?: string
+        }
+        Update: Partial<Database['public']['Tables']['tenant_dashboard_layouts']['Insert']>
         Relationships: []
       }
       problem_fishbone_causes: {

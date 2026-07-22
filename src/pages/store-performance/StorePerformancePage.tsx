@@ -1,36 +1,36 @@
 import { useState } from 'react'
-import { Camera, AlertTriangle, Wifi, ChevronRight, Store as StoreIcon, RefreshCw, CheckCircle2, XCircle, Clock } from 'lucide-react'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from 'recharts'
+import { useSearchParams } from 'react-router-dom'
+import { Camera, AlertTriangle } from 'lucide-react'
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from 'recharts'
 import { useLang } from '@/contexts/LangContext'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/Button'
-import {
-  useStoreScorecard,
-  useCaptureSnapshot,
-  useStoreScoreTrend,
-  useStorePeriod,
-  scoreLevel,
-  type StoreScorecard,
-  type StorePeriod,
-} from './useStorePerformance'
-import { useIntegrationSummary, useSyncNow } from './useIntegrations'
+import { useStoreScorecard, useCaptureSnapshot, useStoreScoreTrend, useStorePeriod, scoreLevel, type StoreScorecard, type StorePeriod } from './useStorePerformance'
 import { StoreDetailDrawer } from './StoreDetailDrawer'
 import { HealthScoreTab } from './HealthScoreTab'
 import { IntegrationsTab } from './IntegrationsTab'
 import { LinesDevicesTab } from './LinesDevicesTab'
 import { InventorySlaTab } from './InventorySlaTab'
 import { PeriodSelector } from './PeriodSelector'
+import { DashboardGrid } from '@/components/dashboard/DashboardGrid'
+
+type PageTab = 'dashboard' | 'health-score' | 'history' | 'lines-devices' | 'inventory-sla' | 'integrations'
 
 export function StorePerformancePage() {
   const { t } = useLang()
   const { profile } = useAuth()
   const canManage = profile && ['tenant_admin', 'manager'].includes(profile.role)
-  const [pageTab, setPageTab] = useState<'dashboard' | 'health-score' | 'history' | 'lines-devices' | 'inventory-sla' | 'integrations'>('dashboard')
+  const [searchParams] = useSearchParams()
+  const initialTab = searchParams.get('tab')
+  const [pageTab, setPageTab] = useState<PageTab>(
+    (['dashboard', 'health-score', 'history', 'lines-devices', 'inventory-sla', 'integrations'] as string[]).includes(initialTab ?? '')
+      ? (initialTab as PageTab)
+      : 'dashboard'
+  )
   const [selectedStore, setSelectedStore] = useState<StoreScorecard | null>(null)
-  const [sortBy, setSortBy] = useState<'score' | 'name'>('score')
   const [period, setPeriod] = useStorePeriod()
 
-  const { data: scorecard, isLoading } = useStoreScorecard()
+  const { data: scorecard } = useStoreScorecard()
   const captureSnapshot = useCaptureSnapshot()
 
   const stores = scorecard ?? []
@@ -38,8 +38,6 @@ export function StorePerformancePage() {
   const totalOffline = stores.reduce((s, x) => s + (x.total_devices - x.online_devices), 0)
   const totalCritical = stores.reduce((s, x) => s + x.critical_open_incidents, 0)
   const worstStores = [...stores].sort((a, b) => a.score - b.score).slice(0, 3)
-
-  const sortedStores = [...stores].sort((a, b) => (sortBy === 'score' ? a.score - b.score : a.site_name.localeCompare(b.site_name)))
 
   return (
     <div>
@@ -129,115 +127,11 @@ export function StorePerformancePage() {
       {pageTab === 'inventory-sla' && <InventorySlaTab stores={stores} period={period} />}
       {pageTab === 'integrations' && <IntegrationsTab />}
 
-      {pageTab === 'dashboard' && (
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
-          <div className="border border-[var(--border)] rounded-[var(--radius-app)] overflow-hidden bg-[var(--panel)]">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)]">
-              <h3 className="font-display text-[14px] font-bold">{t({ tr: 'Mağaza Skor Kartı', en: 'Store Scorecard' })}</h3>
-              <select value={sortBy} onChange={(e) => setSortBy(e.target.value as 'score' | 'name')} className="text-[11.5px] font-semibold bg-[var(--panel-2)] border border-[var(--border)] rounded-md px-2 py-1">
-                <option value="score">{t({ tr: 'Skora göre (düşükten)', en: 'By score (lowest first)' })}</option>
-                <option value="name">{t({ tr: 'İsme göre', en: 'By name' })}</option>
-              </select>
-            </div>
-            {isLoading && <div className="text-[12px] text-[var(--text-faint)] py-10 text-center">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</div>}
-            {!isLoading && !stores.length && (
-              <div className="text-[12px] text-[var(--text-faint)] py-10 text-center px-6">
-                {t({ tr: "Henüz site tanımlı değil — Admin Panel > Siteler'den mağazalarınızı ekleyin.", en: 'No sites defined yet — add your stores via Admin Panel > Sites.' })}
-              </div>
-            )}
-            <div className="divide-y divide-[var(--border)]">
-              {sortedStores.map((s) => {
-                const level = scoreLevel(s.score)
-                return (
-                  <button key={s.site_id} onClick={() => setSelectedStore(s)} className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-[var(--row-hover)]">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 font-display font-bold text-[13px] ${level === 'good' ? 'bg-ok/15 text-ok' : level === 'warn' ? 'bg-p2-tint text-p2' : 'bg-p1-tint text-p1'}`}>
-                      {s.score}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[13px] font-semibold flex items-center gap-1.5">
-                        <StoreIcon className="w-3.5 h-3.5 text-[var(--text-faint)]" />
-                        {s.site_name}
-                        {s.is_headquarters && <span className="text-[9px] font-bold bg-brand-tint text-brand-dim rounded-full px-1.5 py-0.5">HQ</span>}
-                      </div>
-                      <div className="text-[11px] text-[var(--text-faint)] mt-0.5 flex items-center gap-2.5">
-                        <span className="flex items-center gap-1">
-                          <Wifi className="w-3 h-3" />
-                          {s.online_devices}/{s.total_devices}
-                        </span>
-                        <span>{t({ tr: 'SLA', en: 'SLA' })} %{s.sla_compliant_pct}</span>
-                        {s.critical_open_incidents > 0 && <span className="text-p1 font-bold">{s.critical_open_incidents} {t({ tr: 'kritik', en: 'critical' })}</span>}
-                      </div>
-                    </div>
-                    <ChevronRight className="w-4 h-4 text-[var(--text-faint)] shrink-0" />
-                  </button>
-                )
-              })}
-            </div>
-          </div>
-
-          <div className="border border-[var(--border)] rounded-[var(--radius-app)] bg-[var(--panel)] p-4">
-            <h3 className="font-display text-[14px] font-bold mb-3">{t({ tr: 'Skor Dağılımı', en: 'Score Distribution' })}</h3>
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={sortedStores.slice(0, 8).map((s) => ({ name: s.site_name.slice(0, 10), skor: s.score }))} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
-                <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10, fill: 'var(--text-faint)' }} />
-                <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: 'var(--text-faint)' }} width={70} />
-                <Tooltip contentStyle={{ background: 'var(--panel)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12 }} />
-                <Bar dataKey="skor" fill="#17B0A7" radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-
-          <IntegrationStatusWidget onOpenIntegrations={() => setPageTab('integrations')} />
-        </div>
-      )}
+      {pageTab === 'dashboard' && <DashboardGrid surface="store_performance_dashboard" />}
 
       {pageTab === 'history' && <StoreHistoryTab stores={stores} period={period} onOpenStore={setSelectedStore} />}
 
       {selectedStore && <StoreDetailDrawer store={selectedStore} period={period} onClose={() => setSelectedStore(null)} />}
-    </div>
-  )
-}
-
-function IntegrationStatusWidget({ onOpenIntegrations }: { onOpenIntegrations: () => void }) {
-  const { lang, t } = useLang()
-  const { data: summary, isLoading } = useIntegrationSummary()
-  const syncNow = useSyncNow()
-
-  return (
-    <div className="border border-[var(--border)] rounded-[var(--radius-app)] bg-[var(--panel)] p-4">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="font-display text-[14px] font-bold">{t({ tr: 'Entegrasyon Durumu', en: 'Integration Status' })}</h3>
-        <button
-          onClick={() => syncNow.mutate(undefined)}
-          disabled={syncNow.isPending}
-          title={t({ tr: 'Tümünü Şimdi Senkronize Et', en: 'Sync All Now' })}
-          className="p-1.5 rounded-md text-[var(--text-faint)] hover:text-brand-dim hover:bg-[var(--panel-2)] disabled:opacity-40"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${syncNow.isPending ? 'animate-spin' : ''}`} />
-        </button>
-      </div>
-      {isLoading && <p className="text-[11.5px] text-[var(--text-faint)] text-center py-4">{t({ tr: 'Yükleniyor…', en: 'Loading…' })}</p>}
-      {!isLoading && !summary?.length && (
-        <button onClick={onOpenIntegrations} className="text-[11.5px] text-[var(--text-faint)] hover:text-brand-dim text-left w-full py-2">
-          {t({ tr: 'Henüz entegrasyon tanımlanmadı. Kurmak için tıklayın →', en: 'No integrations set up yet. Click to configure →' })}
-        </button>
-      )}
-      <div className="flex flex-col gap-1.5">
-        {summary?.map((s) => {
-          const Icon = s.last_status === 'success' ? CheckCircle2 : s.last_status === 'error' ? XCircle : Clock
-          const cls = s.last_status === 'success' ? 'text-ok' : s.last_status === 'error' ? 'text-p1' : 'text-[var(--text-faint)]'
-          return (
-            <button key={s.site_id} onClick={onOpenIntegrations} className="flex items-center gap-2 text-left px-2 py-1.5 rounded-lg hover:bg-[var(--row-hover)]">
-              <Icon className={`w-3.5 h-3.5 shrink-0 ${cls}`} />
-              <span className="text-[12px] flex-1 min-w-0 truncate">{s.site_name}</span>
-              <span className="text-[10px] text-[var(--text-faint)] shrink-0">
-                {s.last_synced_at ? new Date(s.last_synced_at).toLocaleTimeString(lang === 'tr' ? 'tr-TR' : 'en-US', { hour: '2-digit', minute: '2-digit' }) : '—'}
-              </span>
-            </button>
-          )
-        })}
-      </div>
     </div>
   )
 }

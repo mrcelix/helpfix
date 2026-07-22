@@ -17,16 +17,20 @@ import {
   Store,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
+  ChevronDown,
+  LayoutPanelTop,
   type LucideIcon,
 } from 'lucide-react'
-import { useLang, pickLang} from '@/contexts/LangContext'
+import { useLang, pickLang, type Lang } from '@/contexts/LangContext'
 import { useAuth } from '@/contexts/AuthContext'
-import { NAV_MODULES } from '@/components/layout/nav-modules'
+import { NAV_MODULES, ICON_MAP } from '@/components/layout/nav-modules'
 import { AdminCatalogTab } from './AdminCatalogTab'
 import { AiUsageTab } from './AiUsageTab'
 import { EmailSettingsTab } from './EmailSettingsTab'
 import { TicketFieldsTab } from './TicketFieldsTab'
 import { SitesTab } from './SitesTab'
+import { DashboardLayoutTab } from './DashboardLayoutTab'
 import { OverviewTab } from './OverviewTab'
 import { NewUserModal } from './NewUserModal'
 import { EditUserModal } from './EditUserModal'
@@ -40,8 +44,9 @@ import {
   useDeleteUser,
   useDepartments,
   useCreateDepartment,
-  useFeatureFlags,
   useToggleModule,
+  useNavConfig,
+  useUpdateNavConfig,
   useAuditLog,
   ROLE_LABEL,
   type TenantUser,
@@ -50,13 +55,14 @@ import type { UserRole } from '@/types/database'
 
 const ROLE_OPTIONS: UserRole[] = ['tenant_admin', 'manager', 'agent', 'requester']
 
-type AdminTab = 'overview' | 'users' | 'departments' | 'modules' | 'catalog' | 'audit' | 'ai' | 'email' | 'ticket-fields' | 'sites'
+type AdminTab = 'overview' | 'users' | 'departments' | 'modules' | 'dashboard-layout' | 'catalog' | 'audit' | 'ai' | 'email' | 'ticket-fields' | 'sites'
 
 const ADMIN_TABS: { key: AdminTab; label: { tr: string; en: string }; icon: LucideIcon }[] = [
   { key: 'overview', label: { tr: 'Genel Bakış', en: 'Overview' }, icon: LayoutDashboard },
   { key: 'users', label: { tr: 'Kullanıcılar', en: 'Users' }, icon: UsersIcon },
   { key: 'departments', label: { tr: 'Departmanlar', en: 'Departments' }, icon: Building2 },
   { key: 'modules', label: { tr: 'Modüller', en: 'Modules' }, icon: ToggleLeft },
+  { key: 'dashboard-layout', label: { tr: 'Ekran Düzeni', en: 'Screen Layout' }, icon: LayoutPanelTop },
   { key: 'catalog', label: { tr: 'Katalog', en: 'Catalog' }, icon: Package },
   { key: 'audit', label: { tr: 'Denetim Günlüğü', en: 'Audit Log' }, icon: ScrollText },
   { key: 'ai', label: { tr: 'AI Kullanımı', en: 'AI Usage' }, icon: Sparkles },
@@ -139,6 +145,7 @@ export function AdminPage() {
           {tab === 'users' && <UsersTab />}
           {tab === 'departments' && <DepartmentsTab />}
           {tab === 'modules' && <ModulesTab />}
+          {tab === 'dashboard-layout' && <DashboardLayoutTab />}
           {tab === 'catalog' && <AdminCatalogTab />}
           {tab === 'audit' && <AuditLogTab />}
           {tab === 'ai' && <AiUsageTab />}
@@ -364,17 +371,44 @@ function DepartmentsTab() {
   )
 }
 
+const MIN_ROLE_OPTIONS: { value: UserRole | null; label: { tr: string; en: string } }[] = [
+  { value: null, label: { tr: 'Herkes', en: 'Everyone' } },
+  { value: 'agent', label: { tr: 'Teknisyen ve üzeri', en: 'Agent and above' } },
+  { value: 'manager', label: { tr: 'Yönetici ve üzeri', en: 'Manager and above' } },
+  { value: 'tenant_admin', label: { tr: 'Sadece Admin', en: 'Admin only' } },
+]
+
+const ICON_CHOICES = Object.keys(ICON_MAP)
+
 function ModulesTab() {
   const { lang, t } = useLang()
-  const { data: flags, isLoading, error } = useFeatureFlags()
+  const { data: navConfig, isLoading, error } = useNavConfig()
   const toggleModule = useToggleModule()
+  const updateNavConfig = useUpdateNavConfig()
+  const [editingCode, setEditingCode] = useState<string | null>(null)
+
+  const sortedModules = [...NAV_MODULES].sort(
+    (a, b) => (navConfig?.[a.code]?.order ?? 0) - (navConfig?.[b.code]?.order ?? 0)
+  )
+
+  function move(code: string, direction: -1 | 1) {
+    const idx = sortedModules.findIndex((m) => m.code === code)
+    const swapIdx = idx + direction
+    if (swapIdx < 0 || swapIdx >= sortedModules.length) return
+    const a = sortedModules[idx]
+    const b = sortedModules[swapIdx]
+    const aOrder = navConfig?.[a.code]?.order ?? idx
+    const bOrder = navConfig?.[b.code]?.order ?? swapIdx
+    updateNavConfig.mutate({ moduleCode: a.code, order: bOrder })
+    updateNavConfig.mutate({ moduleCode: b.code, order: aOrder })
+  }
 
   return (
     <div>
       <p className="text-[12px] text-[var(--text-faint)] mb-4">
         {t({
-          tr: 'Bir modülü kapatırsan, tüm tenant kullanıcıları için sol menüden ve doğrudan URL erişiminden kaybolur.',
-          en: 'Disabling a module hides it from the sidebar and blocks direct URL access for all tenant users.',
+          tr: 'Bir modülü kapatırsan, tüm tenant kullanıcıları için sol menüden ve doğrudan URL erişiminden kaybolur. Sıra, minimum rol ve özel ad/ikon sadece sol menü görünümünü etkiler — sayfaya erişimi kısıtlamaz.',
+          en: "Disabling a module hides it from the sidebar and blocks direct URL access for all tenant users. Order, minimum role, and custom name/icon only affect the sidebar display — they don't restrict page access.",
         })}
       </p>
       {isLoading ? (
@@ -383,30 +417,168 @@ function ModulesTab() {
         <p className="text-p1 text-sm py-8 text-center">{t({ tr: 'Modül ayarları yüklenemedi.', en: 'Failed to load module settings.' })}</p>
       ) : (
         <div className="space-y-2">
-          {NAV_MODULES.map((m) => {
-            const Icon = m.icon
-            const enabled = flags?.[m.code] ?? true
+          {sortedModules.map((m, idx) => {
+            const cfg = navConfig?.[m.code]
+            const Icon = (cfg?.customIcon && ICON_MAP[cfg.customIcon]) || m.icon
+            const enabled = cfg?.isEnabled ?? true
+            const isEditing = editingCode === m.code
             return (
-              <div key={m.code} className="flex items-center gap-3 bg-[var(--panel)] border border-[var(--border)] rounded-xl px-4 py-3">
-                <Icon className="w-[17px] h-[17px] text-[var(--text-sub)]" />
-                <span className="font-semibold text-[13px] flex-1">{pickLang(m.name, lang)}</span>
-                {m.badge === 'beta' && (
-                  <span className="text-[9px] font-mono font-bold bg-purple-tint text-purple rounded-full px-1.5 py-0.5">BETA</span>
+              <div key={m.code} className="bg-[var(--panel)] border border-[var(--border)] rounded-xl overflow-hidden">
+                <div className="flex items-center gap-3 px-4 py-3">
+                  <div className="flex flex-col shrink-0 -my-1">
+                    <button
+                      onClick={() => move(m.code, -1)}
+                      disabled={idx === 0}
+                      title={t({ tr: 'Yukarı taşı', en: 'Move up' })}
+                      aria-label={t({ tr: 'Yukarı taşı', en: 'Move up' })}
+                      className="text-[var(--text-faint)] hover:text-brand-dim disabled:opacity-20"
+                    >
+                      <ChevronUp className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => move(m.code, 1)}
+                      disabled={idx === sortedModules.length - 1}
+                      title={t({ tr: 'Aşağı taşı', en: 'Move down' })}
+                      aria-label={t({ tr: 'Aşağı taşı', en: 'Move down' })}
+                      className="text-[var(--text-faint)] hover:text-brand-dim disabled:opacity-20"
+                    >
+                      <ChevronDown className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <Icon className="w-[17px] h-[17px] text-[var(--text-sub)] shrink-0" />
+                  <span className="font-semibold text-[13px] flex-1 truncate">
+                    {cfg?.customName?.[lang] || pickLang(m.name, lang)}
+                  </span>
+                  {cfg?.minRole && (
+                    <span className="text-[9px] font-bold bg-[var(--panel-2)] border border-[var(--border)] text-[var(--text-faint)] rounded-full px-1.5 py-0.5 shrink-0">
+                      {pickLang(ROLE_LABEL[cfg.minRole], lang)}+
+                    </span>
+                  )}
+                  {m.badge === 'beta' && (
+                    <span className="text-[9px] font-mono font-bold bg-purple-tint text-purple rounded-full px-1.5 py-0.5 shrink-0">BETA</span>
+                  )}
+                  <button
+                    onClick={() => setEditingCode(isEditing ? null : m.code)}
+                    title={t({ tr: 'Düzenle', en: 'Edit' })}
+                    aria-label={t({ tr: 'Düzenle', en: 'Edit' })}
+                    aria-pressed={isEditing}
+                    className={`p-1.5 rounded-md shrink-0 hover:bg-[var(--panel-2)] ${isEditing ? 'text-brand-dim' : 'text-[var(--text-faint)]'}`}
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => toggleModule.mutate({ moduleCode: m.code, isEnabled: !enabled })}
+                    aria-pressed={enabled}
+                    title={enabled ? t({ tr: 'Aktif — devre dışı bırak', en: 'Active — disable' }) : t({ tr: 'Pasif — etkinleştir', en: 'Inactive — enable' })}
+                    aria-label={enabled ? t({ tr: 'Aktif — devre dışı bırak', en: 'Active — disable' }) : t({ tr: 'Pasif — etkinleştir', en: 'Inactive — enable' })}
+                    className={`w-9 h-5 rounded-full relative transition-colors shrink-0 ${enabled ? 'bg-ok' : 'bg-[var(--border)]'}`}
+                  >
+                    <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${enabled ? 'left-[18px]' : 'left-0.5'}`} />
+                  </button>
+                </div>
+                {isEditing && (
+                  <ModuleEditPanel
+                    module={m}
+                    config={cfg}
+                    onUpdate={(patch) => updateNavConfig.mutate({ moduleCode: m.code, ...patch })}
+                  />
                 )}
-                <button
-                  onClick={() => toggleModule.mutate({ moduleCode: m.code, isEnabled: !enabled })}
-                  aria-pressed={enabled}
-                  title={enabled ? t({ tr: 'Aktif — devre dışı bırak', en: 'Active — disable' }) : t({ tr: 'Pasif — etkinleştir', en: 'Inactive — enable' })}
-                  aria-label={enabled ? t({ tr: 'Aktif — devre dışı bırak', en: 'Active — disable' }) : t({ tr: 'Pasif — etkinleştir', en: 'Inactive — enable' })}
-                  className={`w-9 h-5 rounded-full relative transition-colors shrink-0 ${enabled ? 'bg-ok' : 'bg-[var(--border)]'}`}
-                >
-                  <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all ${enabled ? 'left-[18px]' : 'left-0.5'}`} />
-                </button>
               </div>
             )
           })}
         </div>
       )}
+    </div>
+  )
+}
+
+function ModuleEditPanel({
+  module: m,
+  config,
+  onUpdate,
+}: {
+  module: (typeof NAV_MODULES)[number]
+  config?: { minRole: UserRole | null; customName: Partial<Record<Lang, string>> | null; customIcon: string | null }
+  onUpdate: (patch: { minRole?: UserRole | null; customName?: Partial<Record<Lang, string>> | null; customIcon?: string | null }) => void
+}) {
+  const { t } = useLang()
+  const [nameTr, setNameTr] = useState(config?.customName?.tr ?? '')
+  const [nameEn, setNameEn] = useState(config?.customName?.en ?? '')
+
+  function saveName() {
+    const trimmedTr = nameTr.trim()
+    const trimmedEn = nameEn.trim()
+    onUpdate({ customName: trimmedTr || trimmedEn ? { tr: trimmedTr || undefined, en: trimmedEn || undefined } : null })
+  }
+
+  return (
+    <div className="border-t border-[var(--border)] px-4 py-3.5 bg-[var(--panel-2)] space-y-3">
+      <div>
+        <label className="block text-[10px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1">
+          {t({ tr: 'Minimum Rol', en: 'Minimum Role' })}
+        </label>
+        <select
+          value={config?.minRole ?? ''}
+          onChange={(e) => onUpdate({ minRole: (e.target.value || null) as UserRole | null })}
+          className="w-full max-w-xs bg-[var(--panel)] border border-[var(--border)] rounded-lg px-2.5 py-2 text-[12.5px]"
+        >
+          {MIN_ROLE_OPTIONS.map((o) => (
+            <option key={o.value ?? 'all'} value={o.value ?? ''}>
+              {t(o.label)}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="grid grid-cols-2 gap-2 max-w-md">
+        <div>
+          <label className="block text-[10px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1">
+            {t({ tr: 'Özel Ad (TR)', en: 'Custom Name (TR)' })}
+          </label>
+          <input
+            value={nameTr}
+            onChange={(e) => setNameTr(e.target.value)}
+            onBlur={saveName}
+            placeholder={m.name.tr}
+            className="w-full bg-[var(--panel)] border border-[var(--border)] rounded-lg px-2.5 py-2 text-[12.5px]"
+          />
+        </div>
+        <div>
+          <label className="block text-[10px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1">
+            {t({ tr: 'Özel Ad (EN)', en: 'Custom Name (EN)' })}
+          </label>
+          <input
+            value={nameEn}
+            onChange={(e) => setNameEn(e.target.value)}
+            onBlur={saveName}
+            placeholder={m.name.en}
+            className="w-full bg-[var(--panel)] border border-[var(--border)] rounded-lg px-2.5 py-2 text-[12.5px]"
+          />
+        </div>
+      </div>
+      <div>
+        <label className="block text-[10px] font-bold text-[var(--text-faint)] uppercase tracking-wide mb-1.5">
+          {t({ tr: 'İkon', en: 'Icon' })}
+        </label>
+        <div className="flex flex-wrap gap-1.5 max-w-md">
+          {ICON_CHOICES.map((name) => {
+            const IconOption = ICON_MAP[name]
+            const active = (config?.customIcon ?? null) === name
+            return (
+              <button
+                key={name}
+                onClick={() => onUpdate({ customIcon: active ? null : name })}
+                title={name}
+                aria-pressed={active}
+                className={`w-8 h-8 rounded-md flex items-center justify-center border ${
+                  active ? 'bg-brand border-brand text-white' : 'bg-[var(--panel)] border-[var(--border)] text-[var(--text-faint)] hover:text-brand-dim'
+                }`}
+              >
+                <IconOption className="w-4 h-4" />
+              </button>
+            )
+          })}
+        </div>
+      </div>
     </div>
   )
 }

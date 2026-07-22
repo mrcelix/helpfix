@@ -140,6 +140,135 @@ export function useToggleModule() {
   })
 }
 
+// requester < agent < manager < tenant_admin — bir modülün min_role'üne
+// karşı kullanıcının rolünü eşik olarak karşılaştırmak için.
+export const ROLE_ORDER: UserRole[] = ['requester', 'agent', 'manager', 'tenant_admin']
+
+export interface NavModuleConfig {
+  isEnabled: boolean
+  order: number
+  minRole: UserRole | null
+  customName: Partial<Record<Lang, string>> | null
+  customIcon: string | null
+}
+
+/** Sidebar ve Admin > Modüller için tam menü yapılandırması — sıra,
+ * role göre görünürlük eşiği, özel ad/ikon. useFeatureFlags() (sade
+ * açık/kapalı haritası) App.tsx/OverviewTab.tsx'te değişmeden kalıyor;
+ * bu, sadece genişletilmiş alanlara ihtiyaç duyan yerler için ayrı bir
+ * sorgu. */
+export function useNavConfig() {
+  const { profile } = useAuth()
+  return useQuery({
+    queryKey: ['nav-config', profile?.tenantId],
+    enabled: !!profile,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('tenant_feature_flags')
+        .select('module_code, is_enabled, display_order, min_role, custom_name, custom_icon')
+      if (error) throw error
+      const byCode = new Map((data ?? []).map((r) => [r.module_code, r]))
+      const map: Record<string, NavModuleConfig> = {}
+      NAV_MODULES.forEach((m, idx) => {
+        const row = byCode.get(m.code)
+        map[m.code] = {
+          isEnabled: row?.is_enabled ?? true,
+          order: row?.display_order ?? idx,
+          minRole: (row?.min_role as UserRole | null) ?? null,
+          customName: (row?.custom_name as Partial<Record<Lang, string>> | null) ?? null,
+          customIcon: row?.custom_icon ?? null,
+        }
+      })
+      return map
+    },
+  })
+}
+
+export function useUpdateNavConfig() {
+  const qc = useQueryClient()
+  const { profile } = useAuth()
+  return useMutation({
+    mutationFn: async (input: {
+      moduleCode: string
+      order?: number
+      minRole?: UserRole | null
+      customName?: Partial<Record<Lang, string>> | null
+      customIcon?: string | null
+    }) => {
+      if (!profile) throw new Error('Profil yüklenmedi')
+      const { error } = await supabase.from('tenant_feature_flags').upsert(
+        {
+          tenant_id: profile.tenantId,
+          module_code: input.moduleCode,
+          ...(input.order !== undefined ? { display_order: input.order } : {}),
+          ...(input.minRole !== undefined ? { min_role: input.minRole } : {}),
+          ...(input.customName !== undefined ? { custom_name: input.customName } : {}),
+          ...(input.customIcon !== undefined ? { custom_icon: input.customIcon } : {}),
+        },
+        { onConflict: 'tenant_id,module_code', ignoreDuplicates: false }
+      )
+      if (error) throw error
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['nav-config'] })
+      qc.invalidateQueries({ queryKey: ['feature-flags'] })
+    },
+  })
+}
+
+// ------------------------------------------------------------------
+// EKRAN DÜZENİ (WIDGET YERLEŞİMİ) — tenant-geneli, sadece admin yazar
+// ------------------------------------------------------------------
+export interface DashboardLayoutRow {
+  widget_id: string
+  is_visible: boolean
+  x: number
+  y: number
+  w: number
+  h: number
+}
+
+export function useDashboardLayout(surface: string) {
+  const { profile } = useAuth()
+  return useQuery({
+    queryKey: ['dashboard-layout', surface, profile?.tenantId],
+    enabled: !!profile,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('tenant_dashboard_layouts')
+        .select('widget_id, is_visible, x, y, w, h')
+        .eq('surface', surface)
+      if (error) throw error
+      return data as DashboardLayoutRow[]
+    },
+  })
+}
+
+export function useSaveDashboardLayout() {
+  const qc = useQueryClient()
+  const { profile } = useAuth()
+  return useMutation({
+    mutationFn: async (input: { surface: string; widgets: DashboardLayoutRow[] }) => {
+      if (!profile) throw new Error('Profil yüklenmedi')
+      const rows = input.widgets.map((w) => ({
+        tenant_id: profile.tenantId,
+        surface: input.surface,
+        widget_id: w.widget_id,
+        is_visible: w.is_visible,
+        x: w.x,
+        y: w.y,
+        w: w.w,
+        h: w.h,
+      }))
+      const { error } = await supabase.from('tenant_dashboard_layouts').upsert(rows, { onConflict: 'tenant_id,surface,widget_id' })
+      if (error) throw error
+    },
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: ['dashboard-layout', variables.surface] })
+    },
+  })
+}
+
 // ------------------------------------------------------------------
 // DENETİM GÜNLÜĞÜ
 // ------------------------------------------------------------------

@@ -1,9 +1,9 @@
 import { NavLink, Link } from 'react-router-dom'
 import { Settings, X, ChevronLeft, ChevronRight } from 'lucide-react'
-import { NAV_MODULES } from './nav-modules'
+import { NAV_MODULES, ICON_MAP } from './nav-modules'
 import { useLang, pickLang} from '@/contexts/LangContext'
 import { useAuth } from '@/contexts/AuthContext'
-import { useFeatureFlags } from '@/pages/admin/useAdmin'
+import { useNavConfig, ROLE_ORDER } from '@/pages/admin/useAdmin'
 import { useNavBadgeCounts } from './useNavBadgeCounts'
 import { PoweredByFooter } from './PoweredByFooter'
 import { cn } from '@/lib/utils'
@@ -11,10 +11,16 @@ import { cn } from '@/lib/utils'
 function SidebarContent({ onNavigate, collapsed = false }: { onNavigate?: () => void; collapsed?: boolean }) {
   const { lang, t } = useLang()
   const { profile } = useAuth()
-  const { data: flags } = useFeatureFlags()
+  const { data: navConfig } = useNavConfig()
   const { data: badgeCounts } = useNavBadgeCounts()
 
-  const visibleModules = NAV_MODULES.filter((m) => flags?.[m.code] ?? true)
+  const myRoleIdx = profile ? ROLE_ORDER.indexOf(profile.role) : -1
+  const visibleModules = NAV_MODULES.filter((m) => {
+    const cfg = navConfig?.[m.code]
+    if (cfg && !cfg.isEnabled) return false
+    if (cfg?.minRole && myRoleIdx < ROLE_ORDER.indexOf(cfg.minRole)) return false
+    return true
+  }).sort((a, b) => (navConfig?.[a.code]?.order ?? 0) - (navConfig?.[b.code]?.order ?? 0))
 
   return (
     <>
@@ -40,14 +46,16 @@ function SidebarContent({ onNavigate, collapsed = false }: { onNavigate?: () => 
 
       <nav className={cn('flex-1 overflow-y-auto overflow-x-hidden py-1', collapsed ? 'px-2' : 'px-3')}>
         {visibleModules.map((mod) => {
-          const Icon = mod.icon
+          const cfg = navConfig?.[mod.code]
+          const Icon = (cfg?.customIcon && ICON_MAP[cfg.customIcon]) || mod.icon
+          const displayName = cfg?.customName?.[lang] || pickLang(mod.name, lang)
           const count = badgeCounts?.[mod.code] ?? 0
           return (
             <NavLink
               key={mod.code}
               to={mod.path}
               onClick={onNavigate}
-              title={collapsed ? pickLang(mod.name, lang) : undefined}
+              title={collapsed ? displayName : undefined}
               className={({ isActive }) =>
                 cn(
                   'flex items-center gap-2.5 py-2 rounded-lg text-[13.5px] font-medium mb-0.5 transition-colors relative',
@@ -72,7 +80,7 @@ function SidebarContent({ onNavigate, collapsed = false }: { onNavigate?: () => 
                   )}
                   {!collapsed && (
                     <>
-                      <span>{pickLang(mod.name, lang)}</span>
+                      <span>{displayName}</span>
                       {count > 0 && (
                         <span className="ml-auto text-[9.5px] font-bold bg-p1 text-white rounded-full min-w-[16px] h-[16px] px-1 flex items-center justify-center">
                           {count > 99 ? '99+' : count}
