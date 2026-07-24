@@ -404,8 +404,8 @@ function RequestFormEditor({
     <div className="max-w-lg">
       <p className="text-[11px] text-[var(--text-faint)] mb-2.5">
         {t({
-          tr: 'Bu hizmet talep edilirken standart not alanına ek olarak gösterilecek özel alanlar. "Bağlı Görünür" mantığı yakında eklenecek — şimdilik tüm alanlar her zaman görünür.',
-          en: 'Custom fields shown in addition to the standard notes field when this service is requested.',
+          tr: 'Bu hizmet talep edilirken standart not alanına ek olarak gösterilecek özel alanlar. Her alanın altındaki açılır menüden, o alanı başka bir alanın belirli bir değerine bağlı olarak göstermeyi seçebilirsiniz ("Bağlı görünür").',
+          en: 'Custom fields shown in addition to the standard notes field when this service is requested. Use the dropdown under each field to make it visible only when another field has a specific value.',
         })}
       </p>
       <FieldSchemaEditor fields={fields} onChange={setFields} />

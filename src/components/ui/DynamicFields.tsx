@@ -28,7 +28,14 @@ export function FieldSchemaEditor({
     onChange([...fields, { key: `alan_${fields.length + 1}`, label: '', type: 'text' }])
   }
   function removeField(idx: number) {
-    onChange(fields.filter((_, i) => i !== idx))
+    const removedKey = fields[idx].key
+    onChange(
+      fields
+        .filter((_, i) => i !== idx)
+        // Silinen alana bağlı bir "showIf" varsa onu da temizle, aksi halde
+        // artık var olmayan bir alana referans veren geçersiz bir koşul kalır.
+        .map((f) => (f.showIf?.field === removedKey ? { ...f, showIf: undefined } : f))
+    )
   }
   function moveField(idx: number, dir: -1 | 1) {
     const next = [...fields]
@@ -100,6 +107,13 @@ export function FieldSchemaEditor({
               className="w-full text-[11.5px] bg-[var(--panel-2)] border border-[var(--border)] rounded-md px-2 py-1.5"
             />
           )}
+          {fields.length > 1 && (
+            <ShowIfEditor
+              field={field}
+              otherFields={fields.filter((_, i) => i !== idx)}
+              onChange={(showIf) => patchField(idx, { showIf })}
+            />
+          )}
         </div>
       ))}
       {!fields.length && (
@@ -109,6 +123,69 @@ export function FieldSchemaEditor({
         <Plus className="w-3.5 h-3.5" />
         {t({ tr: 'Alan Ekle', en: 'Add Field' })}
       </button>
+    </div>
+  )
+}
+
+// Bir alanın koşullu görünürlüğünü ("showIf") ayarlamak için editördeki
+// her satırın altına eklenen küçük kontrol — hangi alana bağlı olduğunu
+// ve o alanın hangi değerinde görüneceğini seçtirir.
+function ShowIfEditor({
+  field,
+  otherFields,
+  onChange,
+}: {
+  field: FormFieldSchema
+  otherFields: FormFieldSchema[]
+  onChange: (showIf: FormFieldSchema['showIf']) => void
+}) {
+  const { t } = useLang()
+  const depField = otherFields.find((f) => f.key === field.showIf?.field)
+
+  return (
+    <div className="flex items-center gap-1.5 mt-1.5">
+      <select
+        value={field.showIf?.field ?? ''}
+        onChange={(e) => {
+          const depKey = e.target.value
+          if (!depKey) {
+            onChange(undefined)
+            return
+          }
+          const target = otherFields.find((f) => f.key === depKey)
+          onChange({ field: depKey, equals: target?.options?.[0] ?? '' })
+        }}
+        className="text-[11px] bg-[var(--panel-2)] border border-[var(--border)] rounded-md px-2 py-1 text-[var(--text-faint)]"
+      >
+        <option value="">{t({ tr: 'Her zaman görünür', en: 'Always visible' })}</option>
+        {otherFields.filter((f) => f.key).map((f) => (
+          <option key={f.key} value={f.key}>
+            {t({ tr: `Bağlı görünür — ${f.label || f.key}`, en: `Visible if — ${f.label || f.key}` })}
+          </option>
+        ))}
+      </select>
+      {field.showIf && (
+        depField?.type === 'select' ? (
+          <select
+            value={field.showIf.equals}
+            onChange={(e) => onChange({ field: field.showIf!.field, equals: e.target.value })}
+            className="text-[11px] bg-[var(--panel-2)] border border-[var(--border)] rounded-md px-2 py-1"
+          >
+            {(depField.options ?? []).map((opt) => (
+              <option key={opt} value={opt}>
+                {opt}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input
+            value={field.showIf.equals}
+            onChange={(e) => onChange({ field: field.showIf!.field, equals: e.target.value })}
+            placeholder={t({ tr: 'eşit olduğu değer', en: 'value it must equal' })}
+            className="flex-1 text-[11px] bg-[var(--panel-2)] border border-[var(--border)] rounded-md px-2 py-1"
+          />
+        )
+      )}
     </div>
   )
 }

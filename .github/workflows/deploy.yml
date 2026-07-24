@@ -40,6 +40,12 @@ jobs:
       - name: Bağımlılıkları kur
         run: npm ci
 
+      - name: Lint çalıştır
+        run: npm run lint
+
+      - name: Testleri çalıştır
+        run: npm run test
+
       - name: Ortam değişkenlerini doğrula (teşhis)
         run: |
           if [ -z "${{ secrets.VITE_SUPABASE_URL }}" ]; then

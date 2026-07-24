@@ -1,6 +1,6 @@
 # HelpFix — ITSM Platformu
 
-Multi-tenant, ITIL 4 uyumlu servis yönetimi platformu. Bu kod tabanı, önceden tasarlanan 37 dosyalık mockup setinin gerçek koda dökülmüş halidir — **Faz A/B/C** (proje iskeleti, veritabanı şeması, kimlik doğrulama + uygulama kabuğu) tamamlanmıştır.
+Multi-tenant, ITIL 4 uyumlu servis yönetimi platformu. Bu kod tabanı, önceden tasarlanan 37 dosyalık mockup setinin gerçek koda dökülmüş halidir. Servis Masası, Problem, Değişiklik, Katalog, CMDB, Bilgi Yönetimi, SLA, Projeler, Raporlama, İzleme, On-Call, AI Otomasyon, Satın Alma ve Mağaza Performansı dahil **14 modülün tamamı** gerçek Supabase sorgularıyla bağlı ve admin panelinden yönetilebiliyor.
 
 ## Stack
 
@@ -32,7 +32,7 @@ npm run dev
 ```
 src/
   components/
-    layout/       AppShell, Sidebar, Topbar, nav-modules.ts (kanonik 12 modül listesi)
+    layout/       AppShell, Sidebar, Topbar, nav-modules.ts (kanonik 14 modül listesi)
     ui/           Badge, Button gibi paylaşılan bileşenler
     ProtectedRoute.tsx
   contexts/       Auth, Theme (koyu/açık), Lang (TR/EN)
@@ -41,7 +41,7 @@ src/
     utils.ts      cn() sınıf birleştirici
   pages/
     Login.tsx
-    ComingSoon.tsx   Henüz kodlanmamış modüller için yer tutucu
+    ComingSoon.tsx   Savunma amaçlı yer tutucu — tüm 14 modül gerçek sayfalara bağlı olduğu için artık fiilen tetiklenmiyor
   types/
     database.ts   Supabase tablo tipleri (elle yazıldı, modül eklenince genişletilecek)
 
@@ -63,40 +63,36 @@ Tüm renkler `src/index.css` içindeki `@theme` bloğunda tanımlı ve **37 mock
 
 Koyu/açık tema `<html data-theme="dark|light">` üzerinden çalışır (`ThemeContext` ile yönetilir) — mockup'lardaki JS deseninin React karşılığı.
 
-## Şu Ana Kadar Yapılanlar (Faz A/B/C)
+## Mevcut Durum
 
 - ✅ Vite + React + TS + Tailwind v4 iskeleti
 - ✅ Supabase istemcisi + auth context (giriş/çıkış, oturum takibi)
-- ✅ Çekirdek veritabanı şeması: `tenants`, `user_profiles`, `departments`, `incidents`, `incident_comments`, `incident_timeline` + tenant-izolasyonlu RLS politikaları
-- ✅ Uygulama kabuğu: Sidebar (12 modülün tamamı, mockup'taki kanonik sırayla), Topbar (arama, TR/EN, tema, bildirim)
-- ✅ Giriş sayfası
-- ✅ Routing — her modül için bir route tanımlı; henüz kodlanmamış modüller "Yakında" sayfası gösteriyor
+- ✅ 70+ migration'dan oluşan veritabanı şeması: çekirdek tablolar (`tenants`, `user_profiles`, `departments`, `incidents`, ...) ve her modülün kendi tabloları, tamamı tenant-izolasyonlu RLS politikalarıyla
+- ✅ Uygulama kabuğu: Sidebar (14 modülün tamamı, mockup'taki kanonik sırayla), Topbar (arama, TR/EN, tema, bildirim)
+- ✅ Giriş sayfası, admin panel (kullanıcı/site/menü/widget/e-posta yönetimi)
+- ✅ Routing — 14 modülün tamamı gerçek sayfa bileşenlerine bağlı ve gerçek Supabase sorgularıyla çalışıyor
+- ✅ Vitest ile birim testleri + CI'da lint/test kapısı (bkz. "Test ve Kalite Kontrolü")
 
-## Sıradaki Adım (Faz D+)
-
-Modülleri tek tek gerçek Supabase sorgularıyla bağlama. Öncelik sırası kullanıcı tarafından belirlenecek — Servis Masası mantıklı bir ilk aday çünkü diğer modüllerin çoğu ona bağlanıyor (Problem, Değişiklik, CMDB, Bilgi Yönetimi ile çapraz bağlantılı).
-
-Yeni bir modül eklerken izlenecek desen:
-1. `supabase/migrations/000X_<modul>.sql` — tablo(lar) + RLS
+Yeni bir modül eklerken izlenen desen (referans için):
+1. `supabase/migrations/00XX_<modul>.sql` — tablo(lar) + RLS
 2. `src/types/database.ts` — tip tanımları ekle
 3. `src/pages/<modul>/` — liste/detay/form bileşenleri
-4. `src/App.tsx` — `ComingSoonPage` yerine gerçek route bileşenini bağla
+4. `src/App.tsx` — gerçek route bileşenini bağla
+
+## Test ve Kalite Kontrolü
+
+```bash
+npm run lint   # oxlint — statik analiz
+npm run test   # vitest — birim testleri (saf fonksiyonlar: format, priority, isFieldVisible, cn, ...)
+```
+
+`.github/workflows/deploy.yml`, `main`'e her push'ta build almadan önce `npm run lint` ve `npm run test`'i çalıştırır — biri başarısız olursa deploy adımına geçilmez. Yeni saf fonksiyon/hook eklerken yanına `*.test.ts` dosyası eklemek bu kalite kapısını güçlü tutar; React bileşenlerinin uçtan uca testi kapsam dışıdır (bkz. Kurulum sonrası tarayıcıda manuel doğrulama).
 
 ## Operasyonel Notlar (Zamanlanmış Görevler)
 
-**`capture_store_score_snapshots(p_tenant_id)`** (0051, Mağaza Performansı) — Mağaza Performansı > Geçmiş sekmesindeki "Günlük" periyot görünümü (`get_store_score_trend`, `p_period='day'`) bu fonksiyonun HER GÜN çalıştığını varsayar. Şu an sadece Mağaza Performansı sayfasındaki **"Anlık Görüntü Al"** butonuyla MANUEL tetikleniyor — otomatik bir zamanlayıcı yok.
+**`capture_store_score_snapshots(p_tenant_id)`** (0051, Mağaza Performansı) — Mağaza Performansı > Geçmiş sekmesindeki "Günlük" periyot görünümü (`get_store_score_trend`, `p_period='day'`) bu fonksiyonun HER GÜN çalıştığını varsayar. `0071_store_score_snapshot_cron.sql` migration'ı `pg_cron` uzantısını etkinleştirip bu fonksiyonu her tenant için her gün 01:00 UTC'de otomatik çalıştıran bir zamanlama ekler — bu migration uygulandıktan sonra elle bir şey yapmanız gerekmez. Mağaza Performansı sayfasındaki **"Anlık Görüntü Al"** butonu, cron'u beklemeden anlık bir snapshot almak isteyenler için hâlâ kullanılabilir.
 
-Otomatik günlük çalıştırma için önerilen yöntem: Supabase Dashboard → **Database → Extensions**'tan `pg_cron` uzantısını etkinleştirip SQL Editor'den aşağıdakine benzer bir zamanlama eklemek (bu adım **migration'lara dahil edilmedi** — proje kapsamı `pg_cron` kurulumunu otomatikleştirmiyor, elle yapılmalı):
-
-```sql
-select cron.schedule(
-  'capture-store-score-snapshots-daily',
-  '0 1 * * *', -- her gün 01:00 (UTC)
-  $$select capture_store_score_snapshots(t.id) from tenants t$$
-);
-```
-
-Bu adım atılmazsa "Günlük" periyot görünümü, sadece butona elle basılan günler için veri gösterir (diğer günler için "veri yok").
+`pg_cron` uzantısını desteklemeyen bir Postgres ortamında (örn. bazı self-hosted kurulumlar) migration bu adımda başarısız olur; bu durumda `0071` dosyasındaki `create extension` ve `cron.schedule` satırlarını atlayıp otomasyonu harici bir zamanlayıcıyla (örn. GitHub Actions cron tetikleyicisi + Supabase RPC çağrısı) kurmanız gerekir.
 
 ## GitHub'a Aktarma & Hostinger'a Otomatik Deploy
 
